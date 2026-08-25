@@ -21,4 +21,4 @@ WeKnora is pinned as an unmodified submodule under `upstream/weknora`. Product c
 
 Phase 0 is complete. The pinned v0.7.2 source and images were verified at the same commit; backend, frontend, MCP, Compose, bilingual Plain RAG, and two-user authorization probes passed. The probes confirmed that upstream same-workspace access is too broad for owner-private Personal Notes, so Phase 1 begins with the Product Gateway authorization boundary.
 
-See [Phase 0 baseline](docs/PHASE0_BASELINE.md), [runtime report](docs/PHASE0_RUNTIME_REPORT.md), [overall design](docs/OVERALL_DESIGN.md), and [downstream patch ledger](docs/UPSTREAM_PATCHES.md).
+See the [build and LAN deployment guide](docs/BUILD_AND_LAN_DEPLOYMENT.md), [Phase 0 baseline](docs/PHASE0_BASELINE.md), [runtime report](docs/PHASE0_RUNTIME_REPORT.md), [overall design](docs/OVERALL_DESIGN.md), and [downstream patch ledger](docs/UPSTREAM_PATCHES.md).
