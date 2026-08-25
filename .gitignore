@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.local/
+coverage/
+tmp/
+*.log
+docs/Archive.zip
+__pycache__/
+*.py[cod]

@@ -1,0 +1,29 @@
+services:
+  frontend:
+    ports: !override
+      - "127.0.0.1:${FRONTEND_PORT:-18080}:80"
+
+  app:
+    ports: !override
+      - "127.0.0.1:${APP_PORT:-18081}:8080"
+    env_file: !override
+      - ../../.local/phase0.env
+    depends_on:
+      mock-embedding:
+        condition: service_healthy
+
+  mock-embedding:
+    image: python:3.12-alpine
+    command: ["python", "/opt/mykb/mock_openai.py", "--host", "0.0.0.0", "--port", "19090"]
+    volumes:
+      - ../../tools/phase0/mock_openai.py:/opt/mykb/mock_openai.py:ro
+    expose:
+      - "19090"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:19090/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - WeKnora-network
+    restart: "no"

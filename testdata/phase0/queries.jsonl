@@ -1,0 +1,3 @@
+{"query":"MYKB_ALICE_PRIVATE_7F3A","expected_document":"alice-private.md","policy":"owner_only"}
+{"query":"MYKB_PUBLIC_RUNBOOK_42B9","expected_document":"public-handbook-en.md","policy":"published"}
+{"query":"MYKB_PUBLIC_ZH_91C2","expected_document":"public-handbook-zh.md","policy":"published"}

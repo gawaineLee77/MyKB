@@ -1,0 +1,89 @@
+name: Upstream Compatibility
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".gitmodules"
+      - "upstream/weknora"
+      - "scripts/**"
+      - "deploy/phase0/**"
+      - "tools/phase0/**"
+      - "testdata/phase0/**"
+      - "Makefile"
+      - ".github/workflows/upstream-compatibility.yml"
+  pull_request:
+    paths:
+      - ".gitmodules"
+      - "upstream/weknora"
+      - "scripts/**"
+      - "deploy/phase0/**"
+      - "tools/phase0/**"
+      - "testdata/phase0/**"
+      - "Makefile"
+      - ".github/workflows/upstream-compatibility.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - run: make phase0-check
+      - run: make phase0-compose-config
+
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+          cache-dependency-path: upstream/weknora/go.sum
+      - run: go mod download
+        working-directory: upstream/weknora
+      - run: make upstream-test-go
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: upstream/weknora/frontend
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: upstream/weknora/frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run type-check
+      - run: npm run build
+
+  mcp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: upstream/weknora/mcp-server
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install 3.12
+      - run: uv sync --python 3.12 --extra test
+      - run: uv run --python 3.12 python -m unittest discover -s . -p "test_*.py" -v

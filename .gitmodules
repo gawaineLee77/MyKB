@@ -1,0 +1,3 @@
+[submodule "upstream/weknora"]
+	path = upstream/weknora
+	url = https://github.com/Tencent/WeKnora.git
