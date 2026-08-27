@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "upstream_tag": "v0.7.2",
+  "upstream_commit": "3d5d8bfcdfeeea266b292b71cea616847af28d0f",
+  "expected_kb_route_count": 166,
+  "rules": [
+    {
+      "id": "delete-knowledge-base",
+      "action": "delete",
+      "method_regex": "^DELETE$",
+      "path_regex": "^/api/v1/knowledge-bases/:id$"
+    },
+    {
+      "id": "manage-kb-and-agent-grants",
+      "action": "manage_grants",
+      "method_regex": "^(?:GET|POST|PUT|DELETE)$",
+      "path_regex": "^/api/v1/(?:knowledge-bases|agents)/:id/shares(?:/|$)"
+    },
+    {
+      "id": "manage-organization-sharing-control-plane",
+      "action": "manage_grants",
+      "method_regex": "^(?:GET|POST|PUT|DELETE)$",
+      "path_regex": "^/api/v1/organizations(?:/|$)"
+    },
+    {
+      "id": "discover-owned-and-shared-kbs",
+      "action": "discover",
+      "method_regex": "^GET$",
+      "path_regex": "^/api/v1/(?:knowledge-bases|shared-knowledge-bases)$"
+    },
+    {
+      "id": "discover-agent-and-favorite-lists",
+      "action": "discover",
+      "method_regex": "^GET$",
+      "path_regex": "^/api/v1/(?:agents|shared-agents|user/favorites)$"
+    },
+    {
+      "id": "read-search-and-chat-posts",
+      "action": "read",
+      "method_regex": "^POST$",
+      "path_regex": "^/api/v1/(?:agent-chat/:session_id|knowledge-chat/:session_id|knowledge-search|messages/search)$"
+    },
+    {
+      "id": "read-kb-search-posts",
+      "action": "read",
+      "method_regex": "^POST$",
+      "path_regex": "^/api/v1/knowledge-bases/:id/(?:hybrid-search|faq/search|faq/entries/:entry_id/similar-questions)$"
+    },
+    {
+      "id": "read-session-lifecycle",
+      "action": "read",
+      "method_regex": "^(?:POST|PUT|DELETE)$",
+      "path_regex": "^/api/v1/(?:sessions(?:/|$)|messages/:session_id(?:/|$)|user/favorites(?:/|$)|shared-agents/disabled$)"
+    },
+    {
+      "id": "read-per-user-kb-pin",
+      "action": "read",
+      "method_regex": "^PUT$",
+      "path_regex": "^/api/v1/knowledge-bases/:id/pin$"
+    },
+    {
+      "id": "configure-kb-lifecycle",
+      "action": "configure",
+      "method_regex": "^(?:POST|PUT)$",
+      "path_regex": "^/api/v1/knowledge-bases(?:/copy|)$"
+    },
+    {
+      "id": "configure-kb-detail",
+      "action": "configure",
+      "method_regex": "^(?:POST|PUT)$",
+      "path_regex": "^/api/v1/knowledge-bases/:id(?:$|/duplicate$)"
+    },
+    {
+      "id": "configure-initialization",
+      "action": "configure",
+      "method_regex": "^(?:POST|PUT)$",
+      "path_regex": "^/api/v1/initialization/(?:config|initialize)/:kbId$"
+    },
+    {
+      "id": "configure-agents",
+      "action": "configure",
+      "method_regex": "^(?:POST|PUT|DELETE)$",
+      "path_regex": "^/api/v1/agents(?:$|/:id(?:$|/copy$))"
+    },
+    {
+      "id": "edit-kb-content-posts",
+      "action": "edit_content",
+      "method_regex": "^POST$",
+      "path_regex": "^/api/v1/(?:knowledge-bases/:id/(?:faq/(?:entries|entry)$|knowledge(?:/|$)|tags$)|knowledge(?:/|$)|chunks(?:/|$)|knowledgebase/:kb_id/wiki(?:/|$))"
+    },
+    {
+      "id": "edit-kb-content-puts",
+      "action": "edit_content",
+      "method_regex": "^PUT$",
+      "path_regex": "^/api/v1/(?:knowledge-bases/:id/(?:faq(?:/|$)|knowledge(?:/|$)|tags(?:/|$))|knowledge(?:/|$)|chunks(?:/|$)|knowledgebase/:kb_id/wiki(?:/|$))"
+    },
+    {
+      "id": "edit-kb-content-deletes",
+      "action": "edit_content",
+      "method_regex": "^DELETE$",
+      "path_regex": "^/api/v1/(?:knowledge-bases/:id/(?:faq(?:/|$)|knowledge(?:/|$)|tags(?:/|$))|knowledge(?:/|$)|chunks(?:/|$)|knowledgebase/:kb_id/wiki(?:/|$))"
+    },
+    {
+      "id": "read-kb-and-derived-content",
+      "action": "read",
+      "method_regex": "^GET$",
+      "path_regex": "^/api/v1/(?:knowledge-bases/:id(?:$|/(?:activity|faq(?:/|$)|files$|hybrid-search$|knowledge(?:/|$)|move-targets$|tags$))|knowledge(?:/:id(?:/|$)|/batch$|/search$)|chunks(?:/|$)|knowledgebase/:kb_id/wiki(?:/|$)|initialization/config/:kbId$)"
+    },
+    {
+      "id": "read-agents-and-sessions",
+      "action": "read",
+      "method_regex": "^GET$",
+      "path_regex": "^/api/v1/(?:agents/(?:placeholders$|type-presets$|:id$|:id/suggested-questions$)|messages(?:/|$)|sessions(?:/|$))"
+    },
+    {
+      "id": "read-async-progress",
+      "action": "read",
+      "method_regex": "^GET$",
+      "path_regex": "^/api/v1/(?:faq/import/progress|knowledge-bases/copy/progress|knowledge/move/progress)(?:/|$)"
+    }
+  ]
+}

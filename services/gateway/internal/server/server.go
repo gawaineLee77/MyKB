@@ -14,8 +14,11 @@ import (
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/apierror"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/note"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
@@ -33,6 +36,29 @@ type Dependencies struct {
 	Spaces     KnowledgeSpaceService
 	Notes      NoteService
 	Ingestions IngestionService
+	Library    AuthorizedLibraryService
+	Grants     GrantService
+	Directory  UserDirectory
+	Decisions  AuthorizationDecisionService
+}
+
+type AuthorizationDecisionService interface {
+	Decide(context.Context, string, authorization.Principal, http.Header) (authorization.Decision, error)
+}
+
+type AuthorizedLibraryService interface {
+	List(context.Context, library.View, int, int, authorization.Principal, http.Header) (library.Page, error)
+}
+
+type GrantService interface {
+	Create(context.Context, string, grant.Actor, grant.CreateRequest, http.Header) (grant.Grant, error)
+	List(context.Context, string, grant.Actor, http.Header) ([]grant.Grant, error)
+	Update(context.Context, string, string, grant.Actor, grant.UpdateRequest, http.Header) (grant.Grant, error)
+	Revoke(context.Context, string, string, grant.Actor, grant.RevokeRequest, http.Header) (grant.Grant, error)
+}
+
+type UserDirectory interface {
+	ListTenantMembers(context.Context, uint64, string, int, int, http.Header) (weknora.TenantMemberPage, error)
 }
 
 type IngestionService interface {
@@ -123,6 +149,7 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 	}
 	registerNoteRoutes(mux, dependencies)
 	registerIngestionRoutes(mux, dependencies)
+	registerSharingRoutes(mux, dependencies)
 	mux.HandleFunc("POST /api/v1/knowledge-spaces", func(w http.ResponseWriter, r *http.Request) {
 		principal, ok := resolvePrincipal(w, r, dependencies.Principals)
 		if !ok {
@@ -205,6 +232,7 @@ func requestIDMiddleware(next http.Handler) http.Handler {
 				id = "unavailable"
 			}
 		}
+		r.Header.Set("X-Request-ID", id)
 		w.Header().Set("X-Request-ID", id)
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestIDKey{}, id)))
 	})

@@ -96,6 +96,7 @@ case "$operation" in
       --build-arg "VITE_FRONTEND_COMMIT=weknora-$upstream_version-mindcreek-$ui_version" \
       --file "$ROOT/images/mindcreek-ui/Dockerfile" \
       "$ROOT"
+    "$ROOT/scripts/build-gateway-image-offline.sh" "${platform#linux/}"
     ;;
   list)
     require_docker

@@ -4,6 +4,7 @@ import test from 'node:test'
 import {
   buildKnowledgeSpaceRequest,
   isSelectionEnabled,
+  permissionAffordances,
   type CapabilityDocument,
 } from './contracts.ts'
 
@@ -70,4 +71,16 @@ test('rejects missing required fields before submission', () => {
     }),
     /required/,
   )
+})
+
+test('derives permission-aware UI affordances without elevating viewers or editors', () => {
+  assert.deepEqual(permissionAffordances('viewer'), {
+    canRead: true, canEditContent: false, canEditMetadata: false, canManageGrants: false, canDelete: false,
+  })
+  assert.deepEqual(permissionAffordances('editor'), {
+    canRead: true, canEditContent: true, canEditMetadata: true, canManageGrants: false, canDelete: false,
+  })
+  assert.deepEqual(permissionAffordances('owner'), {
+    canRead: true, canEditContent: true, canEditMetadata: true, canManageGrants: true, canDelete: true,
+  })
 })

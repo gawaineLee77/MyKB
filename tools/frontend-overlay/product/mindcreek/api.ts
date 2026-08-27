@@ -1,7 +1,64 @@
 import { del, get, patch, post, postUpload } from '@/utils/request'
 import { listModels, type ModelConfig } from '@/api/model'
 
-import type { CapabilityDocument, KnowledgeSpaceRequest } from './contracts'
+import type { CapabilityDocument, KnowledgeRole, KnowledgeSpaceRequest } from './contracts'
+
+export interface KnowledgeLibraryItem {
+  id: string
+  name: string
+  description: string
+  type: string
+  creator_id: string
+  role: KnowledgeRole
+  product_mode?: 'personal_notes' | 'rag' | 'ontology'
+}
+
+export interface KnowledgeLibraryPage {
+  items: KnowledgeLibraryItem[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface KnowledgeAccess {
+  knowledge_base_id: string
+  role: KnowledgeRole
+  product_mode?: 'personal_notes' | 'rag' | 'ontology'
+  can_read: boolean
+  can_edit_content: boolean
+  can_edit_metadata: boolean
+  can_manage_grants: boolean
+  can_delete: boolean
+}
+
+export interface TenantMember {
+  user_id: string
+  email: string
+  username: string
+  avatar?: string
+  role: string
+  status: string
+}
+
+export interface TenantMemberPage {
+  items: TenantMember[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface KnowledgeGrant {
+  id: string
+  knowledge_base_id: string
+  subject_type: 'user'
+  subject_id: string
+  permission: 'viewer' | 'editor'
+  granted_by: string
+  created_at: string
+  updated_at: string
+  expires_at?: string
+  revision: number
+}
 
 export interface KnowledgeSpaceResult {
   knowledge_base_id: string
@@ -108,6 +165,68 @@ export async function createKnowledgeSpace(
 
 export async function getProductProfile(kbId: string): Promise<ProductProfile> {
   const response = await get<{ success: boolean; data: ProductProfile }>(`/api/v1/knowledge-bases/${kbId}/product-profile`)
+  return response.data
+}
+
+export async function listKnowledgeLibrary(view: 'owned' | 'shared', page = 1): Promise<KnowledgeLibraryPage> {
+  const response = await get<{ success: boolean; data: KnowledgeLibraryPage }>(
+    `/api/v1/mindcreek/knowledge-bases?view=${view}&page=${page}&page_size=24`,
+  )
+  return response.data
+}
+
+export async function getKnowledgeAccess(kbId: string): Promise<KnowledgeAccess> {
+  const response = await get<{ success: boolean; data: KnowledgeAccess }>(
+    `/api/v1/mindcreek/knowledge-bases/${kbId}/access`,
+  )
+  return response.data
+}
+
+export async function searchTenantUsers(query: string): Promise<TenantMemberPage> {
+  const response = await get<{ success: boolean; data: TenantMemberPage }>(
+    `/api/v1/mindcreek/users?q=${encodeURIComponent(query)}&page=1&page_size=20`,
+  )
+  return response.data
+}
+
+export async function listKnowledgeGrants(kbId: string): Promise<KnowledgeGrant[]> {
+  const response = await get<{ success: boolean; data: KnowledgeGrant[] }>(
+    `/api/v1/mindcreek/knowledge-bases/${kbId}/grants`,
+  )
+  return response.data
+}
+
+export async function createKnowledgeGrant(
+  kbId: string,
+  subjectId: string,
+  permission: 'viewer' | 'editor',
+  expiresAt?: string,
+): Promise<KnowledgeGrant> {
+  const response = await post<{ success: boolean; data: KnowledgeGrant }>(
+    `/api/v1/mindcreek/knowledge-bases/${kbId}/grants`,
+    { subject_type: 'user', subject_id: subjectId, permission, expires_at: expiresAt || undefined },
+  )
+  return response.data
+}
+
+export async function updateKnowledgeGrant(
+  kbId: string,
+  grant: KnowledgeGrant,
+  permission: 'viewer' | 'editor',
+  expiresAt?: string,
+): Promise<KnowledgeGrant> {
+  const response = await patch<{ success: boolean; data: KnowledgeGrant }>(
+    `/api/v1/mindcreek/knowledge-bases/${kbId}/grants/${grant.id}`,
+    { expected_revision: grant.revision, permission, expires_at: expiresAt || undefined },
+  )
+  return response.data
+}
+
+export async function revokeKnowledgeGrant(kbId: string, grant: KnowledgeGrant): Promise<KnowledgeGrant> {
+  const response = await del<{ success: boolean; data: KnowledgeGrant }>(
+    `/api/v1/mindcreek/knowledge-bases/${kbId}/grants/${grant.id}`,
+    { expected_revision: grant.revision },
+  )
   return response.data
 }
 

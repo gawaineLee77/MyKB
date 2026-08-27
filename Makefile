@@ -1,4 +1,4 @@
-.PHONY: help images-pull images-build images-list images-save images-pull-amd64 images-build-amd64 images-list-amd64 images-save-amd64 phase0-check phase0-compose-config phase0-up phase0-ps phase0-runtime-check phase0-probe phase0-down phase1-route-policy-check phase1-gateway-test phase1-check phase1-compose-config phase1-build phase1-gateway-build-offline phase1-up phase1-ps phase1-probe phase1-runtime-check phase1-migration-probe phase1-gate-b-probe phase1-gate-b phase1-gate-c-probe phase1-gate-c phase1-gate-d-probe phase1-gate-d phase1-down stage1-check stage1-compose-config stage1-ui-build stage1-up stage1-ps stage1-runtime-check stage1-down upstream-status upstream-test upstream-test-go upstream-test-frontend upstream-test-mcp
+.PHONY: help images-pull images-build images-list images-save images-pull-amd64 images-build-amd64 images-list-amd64 images-save-amd64 phase0-check phase0-compose-config phase0-up phase0-ps phase0-runtime-check phase0-probe phase0-down phase1-route-policy-check phase1-gateway-test phase1-check phase1-compose-config phase1-build phase1-gateway-build-offline phase1-up phase1-ps phase1-probe phase1-runtime-check phase1-migration-probe phase1-gate-b-probe phase1-gate-b phase1-gate-c-probe phase1-gate-c phase1-gate-d-probe phase1-gate-d phase1-down phase2-sharing-model-check phase2-route-actions-check phase2-gate-a-static-check phase2-gate-b-static-check phase2-gate-c-static-check phase2-gate-d-static-check phase2-upstream-contract-check phase2-clean-copy-check phase2-check phase2-gate-a phase2-gate-b-probe phase2-gate-b phase2-gate-c phase2-gate-d stage1-check stage1-compose-config stage1-ui-build stage1-up stage1-ps stage1-runtime-check stage1-down upstream-status upstream-test upstream-test-go upstream-test-frontend upstream-test-mcp
 
 help:
 	@echo "MindCreek repository commands"
@@ -32,6 +32,15 @@ help:
 	@echo "  make phase1-gate-c          Run Personal Notes CRUD, quota, and recovery acceptance"
 	@echo "  make phase1-gate-d          Run Plain RAG ingestion, retrieval, chat, and citation acceptance"
 	@echo "  make phase1-down            Stop Phase 1 containers (preserve volumes)"
+	@echo "  make phase2-sharing-model-check Verify the Phase 2 upstream sharing-model map"
+	@echo "  make phase2-route-actions-check Verify every Phase 2 KB route action"
+	@echo "  make phase2-check           Run inherited Phase 1 checks and current Phase 2 checks"
+	@echo "  make phase2-gate-a          Run Gate A static, unit, and migration lifecycle checks"
+	@echo "  make phase2-gate-b          Run private-sharing, role, revocation, and audit acceptance"
+	@echo "  make phase2-gate-c          Verify and build the authorized sharing UI"
+	@echo "  make phase2-upstream-contract-check Verify the pinned or candidate WeKnora seams"
+	@echo "  make phase2-clean-copy-check Reconstruct and validate a clean Phase 2 checkout"
+	@echo "  make phase2-gate-d          Run the Phase 2 release and clean-copy contract"
 	@echo "  make stage1-check          Verify the MindCreek overlay and upstream boundary"
 	@echo "  make stage1-compose-config Validate the Stage 1 Compose distribution"
 	@echo "  make stage1-ui-build       Build the branded MindCreek UI image"
@@ -148,6 +157,48 @@ phase1-gate-b:
 
 phase1-down:
 	./scripts/phase1-compose.sh down
+
+phase2-sharing-model-check:
+	./scripts/check-phase2-sharing-model.sh
+
+phase2-route-actions-check:
+	./scripts/check-phase2-route-actions.sh
+
+phase2-gate-a-static-check:
+	./scripts/check-phase2-gate-a.sh
+
+phase2-gate-b-static-check:
+	./scripts/check-phase2-gate-b.sh
+
+phase2-gate-c-static-check:
+	./scripts/check-phase2-gate-c.sh
+
+phase2-gate-d-static-check:
+	./scripts/check-phase2-gate-d.sh
+
+phase2-upstream-contract-check:
+	./scripts/check-phase2-upstream-contract.sh
+
+phase2-clean-copy-check:
+	./scripts/phase2-clean-copy-check.sh
+
+phase2-check: phase1-check phase2-sharing-model-check phase2-route-actions-check phase2-gate-a-static-check phase2-gate-b-static-check phase2-gate-c-static-check phase2-gate-d-static-check phase2-upstream-contract-check
+
+phase2-gate-a: phase2-check
+	python3 ./scripts/phase1-migration-probe.py
+
+phase2-gate-b-probe:
+	python3 ./scripts/phase2-gate-b-probe.py
+
+phase2-gate-b:
+	./scripts/phase1-runtime-check.sh
+	python3 ./scripts/phase1-migration-probe.py
+	python3 ./scripts/phase2-gate-b-probe.py
+
+phase2-gate-c: phase2-gate-c-static-check
+	./scripts/mindcreek-compose.sh build frontend
+
+phase2-gate-d: phase2-check phase2-clean-copy-check
 
 stage1-check: phase0-check
 	./tools/frontend-overlay/check.sh

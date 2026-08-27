@@ -155,11 +155,25 @@ func TestV072Contracts(t *testing.T) {
 		case "/api/v1/knowledge-bases/kb-deterministic":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"id":"kb-deterministic","name":"Notes","type":"document","tenant_id":42,"creator_id":"user-1","embedding_model_id":"model-1"}}`))
 		case "/api/v1/knowledge-bases":
-			if r.Method != http.MethodPost || r.Header.Get("Authorization") != "Bearer contract-token" {
+			if r.Header.Get("Authorization") != "Bearer contract-token" {
 				http.Error(w, "invalid create request", http.StatusBadRequest)
 				return
 			}
-			_, _ = w.Write([]byte(`{"success":true,"data":{"id":"kb-created","name":"Notes","type":"document","tenant_id":42,"creator_id":"user-1","embedding_model_id":"model-1"}}`))
+			if r.Method == http.MethodGet {
+				_, _ = w.Write([]byte(`{"success":true,"data":[{"id":"kb-deterministic","name":"Notes","type":"document","tenant_id":42,"creator_id":"user-1"}]}`))
+				return
+			}
+			if r.Method == http.MethodPost {
+				_, _ = w.Write([]byte(`{"success":true,"data":{"id":"kb-created","name":"Notes","type":"document","tenant_id":42,"creator_id":"user-1","embedding_model_id":"model-1"}}`))
+				return
+			}
+			http.Error(w, "invalid method", http.StatusMethodNotAllowed)
+		case "/api/v1/tenants/42/members":
+			if r.URL.Query().Get("q") != "bob" || r.URL.Query().Get("page") != "1" || r.URL.Query().Get("page_size") != "20" {
+				http.Error(w, "invalid member query", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"success":true,"data":{"members":[{"user_id":"user-2","email":"bob@example.test","username":"Bob","role":"viewer","status":"active"}],"total":1,"page":1,"page_size":20}}`))
 		default:
 			http.NotFound(w, r)
 		}
@@ -199,6 +213,14 @@ func TestV072Contracts(t *testing.T) {
 	kb, err := client.GetKnowledgeBase(context.Background(), "kb-deterministic", headers)
 	if err != nil || kb.CreatorID != "user-1" {
 		t.Fatalf("GetKnowledgeBase() = %+v, %v", kb, err)
+	}
+	listed, err := client.ListKnowledgeBases(context.Background(), headers)
+	if err != nil || len(listed) != 1 || listed[0].ID != "kb-deterministic" {
+		t.Fatalf("ListKnowledgeBases() = %+v, %v", listed, err)
+	}
+	members, err := client.ListTenantMembers(context.Background(), 42, "bob", 1, 20, headers)
+	if err != nil || members.Total != 1 || members.Items[0].UserID != "user-2" {
+		t.Fatalf("ListTenantMembers() = %+v, %v", members, err)
 	}
 	created, err := client.CreateKnowledgeBase(context.Background(), CreateKnowledgeBaseRequest{
 		ID: "kb-created", Name: "Notes", Type: "document", EmbeddingModelID: "model-1",

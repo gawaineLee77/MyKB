@@ -18,7 +18,6 @@ copy_anchor embed.html
 copy_anchor src/views/auth/Login.vue
 copy_anchor src/components/menu.vue
 copy_anchor src/router/index.ts
-copy_anchor src/views/knowledge/KnowledgeBaseList.vue
 copy_anchor src/utils/request.ts
 copy_anchor src/assets/theme/theme.css
 copy_anchor src/i18n/locales/en-US.ts
@@ -38,12 +37,13 @@ grep -q 'MindCreek Stage 1 product theme' "$TARGET/src/assets/theme/theme.css"
 grep -q 'mindcreekCreateKnowledgeSpace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekNotesWorkspace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekRAGWorkspace' "$TARGET/src/router/index.ts"
-grep -q "router.push('/platform/mindcreek/create')" "$TARGET/src/views/knowledge/KnowledgeBaseList.vue"
-grep -q "getProductProfile" "$TARGET/src/views/knowledge/KnowledgeBaseList.vue"
+grep -q 'mindcreek/KnowledgeLibrary.vue' "$TARGET/src/router/index.ts"
 grep -q 'export function patch' "$TARGET/src/utils/request.ts"
 grep -q 'Create a knowledge space' "$TARGET/src/mindcreek/CreateKnowledgeSpace.vue"
 grep -q 'A quiet place for working notes' "$TARGET/src/mindcreek/NotesWorkspace.vue"
 grep -q 'Managed Plain RAG preset' "$TARGET/src/mindcreek/RAGWorkspace.vue"
+grep -q 'Shared with me' "$TARGET/src/mindcreek/KnowledgeLibrary.vue"
+grep -q 'Share knowledge base' "$TARGET/src/mindcreek/SharingDialog.vue"
 grep -q "index_profile: 'notes_plain'" "$TARGET/src/mindcreek/contracts.ts"
 test -f "$TARGET/src/assets/img/mindcreek-mark.png"
 test -f "$TARGET/public/mindcreek-favicon.png"

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/preset"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
@@ -21,6 +22,20 @@ type upstreamStub struct {
 	uploadCalls int
 	retryCalls  int
 	cancelCalls int
+}
+
+type roleAuthorizer struct {
+	role    authorization.Role
+	actions []authorization.Action
+}
+
+func (s *roleAuthorizer) Authorize(_ context.Context, kbID string, _ authorization.Principal, action authorization.Action, _ http.Header) (authorization.Decision, error) {
+	s.actions = append(s.actions, action)
+	decision := authorization.Decision{KnowledgeBaseID: kbID, Role: s.role}
+	if !decision.Allows(action) {
+		return decision, authorization.ErrDenied
+	}
+	return decision, nil
 }
 
 func (s *upstreamStub) GetKnowledgeBase(context.Context, string, http.Header) (weknora.KnowledgeBase, error) {
@@ -104,6 +119,52 @@ func TestInvalidTypeAndFutureProfilesStopBeforeUpstream(t *testing.T) {
 			t.Fatal("graph profile reached upstream")
 		}
 	})
+}
+
+func TestViewerAndEditorPlainRAGBoundaries(t *testing.T) {
+	identity := access.Identity{UserID: "grantee", TenantID: 42}
+	t.Run("viewer", func(t *testing.T) {
+		upstream := &upstreamStub{}
+		authorizer := &roleAuthorizer{role: authorization.RoleViewer}
+		service, err := NewService(profileStub{value: plainProfile(t)}, upstream, authorizer)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := service.List(context.Background(), "kb-rag", 1, 20, identity, nil); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := service.Upload(context.Background(), "kb-rag", "guide.md", 4, strings.NewReader("body"), identity, nil); errorCode(err) != "resource.not_found" {
+			t.Fatalf("viewer Upload() error = %v", err)
+		}
+		if upstream.uploadCalls != 0 {
+			t.Fatal("viewer mutation reached upstream")
+		}
+	})
+	t.Run("editor", func(t *testing.T) {
+		upstream := &upstreamStub{}
+		authorizer := &roleAuthorizer{role: authorization.RoleEditor}
+		service, err := NewService(profileStub{value: plainProfile(t)}, upstream, authorizer)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := service.Upload(context.Background(), "kb-rag", "guide.md", 4, strings.NewReader("body"), identity, nil); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := service.Retry(context.Background(), "kb-rag", "doc-1", identity, nil); err != nil {
+			t.Fatal(err)
+		}
+		if upstream.uploadCalls != 1 || upstream.retryCalls != 1 {
+			t.Fatalf("editor calls = %+v", upstream)
+		}
+	})
+}
+
+func errorCode(err error) string {
+	typed, ok := err.(*Error)
+	if !ok {
+		return ""
+	}
+	return typed.Code
 }
 
 func plainProfile(t *testing.T) profile.Profile {

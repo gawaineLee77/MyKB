@@ -1,4 +1,23 @@
 export type KnowledgeModeID = 'personal_notes' | 'rag' | 'ontology'
+export type KnowledgeRole = 'owner' | 'editor' | 'viewer'
+
+export interface PermissionAffordances {
+  canRead: boolean
+  canEditContent: boolean
+  canEditMetadata: boolean
+  canManageGrants: boolean
+  canDelete: boolean
+}
+
+export function permissionAffordances(role: KnowledgeRole): PermissionAffordances {
+  return {
+    canRead: true,
+    canEditContent: role === 'owner' || role === 'editor',
+    canEditMetadata: role === 'owner' || role === 'editor',
+    canManageGrants: role === 'owner',
+    canDelete: role === 'owner',
+  }
+}
 
 export interface IndexProfileCapability {
   id: string

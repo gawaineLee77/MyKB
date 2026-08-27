@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/audit"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
 )
@@ -38,6 +41,57 @@ type fakeResolver struct {
 	chunks    map[string]string
 	agents    map[string]weknora.AgentScope
 	sessions  map[string]bool
+}
+
+type actionMatcherFunc func(string, string) (authorization.Action, bool)
+
+func (function actionMatcherFunc) Match(method, path string) (authorization.Action, bool) {
+	return function(method, path)
+}
+
+type decisionStub struct {
+	roles map[string]authorization.Role
+	errs  map[string]error
+}
+
+func (s *decisionStub) Decide(_ context.Context, kbID string, _ authorization.Principal, _ http.Header) (authorization.Decision, error) {
+	if err := s.errs[kbID]; err != nil {
+		return authorization.Decision{}, err
+	}
+	return authorization.Decision{KnowledgeBaseID: kbID, Role: s.roles[kbID]}, nil
+}
+
+func (s *decisionStub) Authorize(ctx context.Context, kbID string, principal authorization.Principal, action authorization.Action, headers http.Header) (authorization.Decision, error) {
+	decision, err := s.Decide(ctx, kbID, principal, headers)
+	if err != nil {
+		return authorization.Decision{}, err
+	}
+	if !decision.Allows(action) {
+		return decision, authorization.ErrDenied
+	}
+	return decision, nil
+}
+
+type sessionScopeStub struct {
+	items map[string][]string
+}
+
+type auditRecorderStub struct {
+	events []audit.Event
+}
+
+func (s *auditRecorderStub) Record(_ context.Context, event audit.Event) error {
+	s.events = append(s.events, event)
+	return nil
+}
+
+func (s *sessionScopeStub) ListKnowledgeBases(_ context.Context, sessionID string) ([]string, error) {
+	return s.items[sessionID], nil
+}
+
+func (s *sessionScopeStub) RecordKnowledgeBases(_ context.Context, sessionID string, kbIDs []string, _ time.Time) error {
+	s.items[sessionID] = unique(append(s.items[sessionID], kbIDs...))
+	return nil
 }
 
 func (f *fakeResolver) KnowledgeBaseForKnowledge(_ context.Context, id string, _ http.Header) (string, error) {
@@ -92,6 +146,151 @@ func TestNoteSharingDeniedForOwner(t *testing.T) {
 	err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "alice", TenantID: 42})
 	if errorCode(err) != "personal_notes.sharing_disabled" {
 		t.Fatalf("share error = %v", err)
+	}
+}
+
+func TestPhase2RoleActionEnforcement(t *testing.T) {
+	actions := actionMatcherFunc(func(method, _ string) (authorization.Action, bool) {
+		switch method {
+		case http.MethodGet:
+			return authorization.ActionRead, true
+		case http.MethodPost:
+			return authorization.ActionEditContent, true
+		case http.MethodPut:
+			return authorization.ActionConfigure, true
+		default:
+			return "", false
+		}
+	})
+	tests := []struct {
+		name   string
+		role   authorization.Role
+		method string
+		allow  bool
+	}{
+		{name: "viewer reads", role: authorization.RoleViewer, method: http.MethodGet, allow: true},
+		{name: "viewer cannot edit", role: authorization.RoleViewer, method: http.MethodPost},
+		{name: "editor edits", role: authorization.RoleEditor, method: http.MethodPost, allow: true},
+		{name: "editor cannot configure", role: authorization.RoleEditor, method: http.MethodPut},
+		{name: "owner configures", role: authorization.RoleOwner, method: http.MethodPut, allow: true},
+		{name: "peer cannot read", role: authorization.RoleNone, method: http.MethodGet},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gate, err := NewPhase2Gate(&fakeProfiles{items: map[string]profile.Profile{}}, &fakeResolver{}, actions, &decisionStub{
+				roles: map[string]authorization.Role{"kb-1": test.role}, errs: map[string]error{},
+			}, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			request := mustRequest(test.method, "http://gateway/api/v1/knowledge-bases/kb-1", "")
+			err = gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "user-1", TenantID: 42})
+			if test.allow && err != nil {
+				t.Fatalf("authorized request failed: %v", err)
+			}
+			if !test.allow && errorCode(err) != "resource.not_found" {
+				t.Fatalf("denied request error = %v", err)
+			}
+		})
+	}
+}
+
+func TestPhase2EditorConfigurationIsMetadataOnly(t *testing.T) {
+	gate, err := NewPhase2Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}}, &fakeResolver{},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionConfigure, true }),
+		&decisionStub{roles: map[string]authorization.Role{"kb-1": authorization.RoleEditor}, errs: map[string]error{}}, nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		name  string
+		body  string
+		allow bool
+	}{
+		{name: "name and description", body: `{"name":"Updated","description":"Safe metadata"}`, allow: true},
+		{name: "index configuration", body: `{"name":"Updated","config":{"chunking_config":{"chunk_size":1}}}`, allow: false},
+		{name: "missing required name", body: `{"description":"Only"}`, allow: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			request := mustRequest(http.MethodPut, "http://gateway/api/v1/knowledge-bases/kb-1", test.body)
+			request.Header.Set("Content-Type", "application/json")
+			err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "editor", TenantID: 42})
+			if test.allow && err != nil {
+				t.Fatalf("metadata update denied: %v", err)
+			}
+			if !test.allow && errorCode(err) != "resource.not_found" {
+				t.Fatalf("unsafe update error = %v", err)
+			}
+		})
+	}
+}
+
+func TestPhase2ListFiltersEveryUnauthorizedKB(t *testing.T) {
+	gate, err := NewPhase2Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}},
+		&fakeResolver{},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionDiscover, true }),
+		&decisionStub{roles: map[string]authorization.Role{
+			"owned": authorization.RoleOwner, "shared": authorization.RoleViewer, "peer": authorization.RoleNone,
+		}, errs: map[string]error{}},
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodGet, "http://app/api/v1/knowledge-bases", "")
+	request = request.WithContext(WithIdentity(request.Context(), Identity{UserID: "alice", TenantID: 42}))
+	response := &http.Response{
+		StatusCode: http.StatusOK, Header: make(http.Header), Request: request,
+		Body: io.NopCloser(strings.NewReader(`{"success":true,"data":[{"id":"owned"},{"id":"shared"},{"id":"peer"}]}`)),
+	}
+	if err := gate.FilterResponse(response); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(response.Body)
+	if strings.Contains(string(body), "peer") || !strings.Contains(string(body), "owned") || !strings.Contains(string(body), "shared") {
+		t.Fatalf("filtered response = %s", body)
+	}
+}
+
+func TestPhase2SessionScopeIsReauthorized(t *testing.T) {
+	scopes := &sessionScopeStub{items: map[string][]string{"session-1": {"kb-1"}}}
+	gate, err := NewPhase2Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}},
+		&fakeResolver{sessions: map[string]bool{"session-1": true}},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true }),
+		&decisionStub{roles: map[string]authorization.Role{"kb-1": authorization.RoleNone}, errs: map[string]error{}},
+		scopes,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodGet, "http://gateway/api/v1/messages/session-1/load", "")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "revoked-user", TenantID: 42}); errorCode(err) != "resource.not_found" {
+		t.Fatalf("revoked session scope error = %v", err)
+	}
+}
+
+func TestPhase2DeniedHighValueActionIsAudited(t *testing.T) {
+	recorder := &auditRecorderStub{}
+	gate, err := NewPhase2Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}}, &fakeResolver{},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionDelete, true }),
+		&decisionStub{roles: map[string]authorization.Role{"kb-1": authorization.RoleViewer}, errs: map[string]error{}},
+		nil, recorder,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodDelete, "http://gateway/api/v1/knowledge-bases/kb-1", "")
+	request.Header.Set("X-Request-ID", "request-denied")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "bob", TenantID: 42}); errorCode(err) != "resource.not_found" {
+		t.Fatalf("delete denial = %v", err)
+	}
+	if len(recorder.events) != 1 || recorder.events[0].Action != "authorization.denied.delete" || recorder.events[0].Outcome != audit.OutcomeDenied {
+		t.Fatalf("audit events = %+v", recorder.events)
 	}
 }
 

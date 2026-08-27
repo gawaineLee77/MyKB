@@ -10,13 +10,14 @@ From the repository root:
 
 ```sh
 make images-pull   # pull runtime dependencies and UI build bases
-make images-build  # build mindcreek-ui:stage1 from the pinned upstream source
+make images-build  # build mindcreek-ui:stage1 and mindcreek-gateway:phase2
 make images-list   # show whether every Stage 1 runtime image is available
 ```
 
 `manifests/stage1-external.txt` lists images fetched from registries.
 `manifests/stage1-runtime.txt` lists the final images needed by a MindCreek
-server. The locally built `mindcreek-ui:stage1` replaces the upstream UI image.
+server. The locally built `mindcreek-ui:stage1` replaces the upstream UI image,
+and `mindcreek-gateway:phase2` is the exclusive product API entry point.
 
 The original Phase 0 profile is also supported:
 

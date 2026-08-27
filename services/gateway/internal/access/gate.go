@@ -11,7 +11,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/audit"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/notespolicy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
@@ -49,8 +52,26 @@ type ResourceResolver interface {
 }
 
 type Gate struct {
-	profiles ProfileStore
-	resolver ResourceResolver
+	profiles  ProfileStore
+	resolver  ResourceResolver
+	actions   ActionMatcher
+	decisions DecisionService
+	sessions  SessionScopeStore
+	auditor   audit.Recorder
+}
+
+type ActionMatcher interface {
+	Match(string, string) (authorization.Action, bool)
+}
+
+type DecisionService interface {
+	Decide(context.Context, string, authorization.Principal, http.Header) (authorization.Decision, error)
+	Authorize(context.Context, string, authorization.Principal, authorization.Action, http.Header) (authorization.Decision, error)
+}
+
+type SessionScopeStore interface {
+	ListKnowledgeBases(context.Context, string) ([]string, error)
+	RecordKnowledgeBases(context.Context, string, []string, time.Time) error
 }
 
 type Error struct {
@@ -76,6 +97,20 @@ func NewGate(profiles ProfileStore, resolver ResourceResolver) (*Gate, error) {
 	return &Gate{profiles: profiles, resolver: resolver}, nil
 }
 
+func NewPhase2Gate(profiles ProfileStore, resolver ResourceResolver, actions ActionMatcher, decisions DecisionService, sessions SessionScopeStore, recorders ...audit.Recorder) (*Gate, error) {
+	if profiles == nil || resolver == nil || actions == nil || decisions == nil {
+		return nil, fmt.Errorf("profile store, resource resolver, route actions, and decisions are required")
+	}
+	if len(recorders) > 1 {
+		return nil, fmt.Errorf("at most one access audit recorder is supported")
+	}
+	gate := &Gate{profiles: profiles, resolver: resolver, actions: actions, decisions: decisions, sessions: sessions}
+	if len(recorders) == 1 {
+		gate.auditor = recorders[0]
+	}
+	return gate, nil
+}
+
 // AuthorizeRequest protects direct KB and indirect source/chunk routes.
 func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, identity Identity) error {
 	if isUnscopedDerivedTaskPath(request.URL.Path) {
@@ -85,6 +120,14 @@ func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, iden
 		return &Error{Code: "resource.not_found", Message: "Resource not found", StatusCode: http.StatusNotFound}
 	}
 	operation := operationFor(request)
+	var action authorization.Action
+	if g.decisions != nil {
+		var matched bool
+		action, matched = g.actions.Match(request.Method, request.URL.Path)
+		if !matched {
+			return &Error{Code: "security.action_unclassified", Message: "Resource policy is unavailable", StatusCode: http.StatusServiceUnavailable}
+		}
+	}
 	kbIDs, err := g.resolvePathKBIDs(ctx, request)
 	if err != nil {
 		return err
@@ -92,6 +135,9 @@ func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, iden
 	scope, err := g.resolveRequestScope(ctx, request)
 	if err != nil {
 		return err
+	}
+	if g.decisions != nil && strings.TrimSuffix(request.URL.Path, "/") == "/api/v1/messages/search" && len(scope.sessionIDs) == 0 {
+		return &Error{Code: "resource.not_found", Message: "Resource not found", StatusCode: http.StatusNotFound}
 	}
 	kbIDs = append(kbIDs, scope.kbIDs...)
 	for _, knowledgeID := range unique(scope.knowledgeIDs) {
@@ -108,14 +154,36 @@ func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, iden
 		}
 		kbIDs = append(kbIDs, agentScope.KnowledgeBaseIDs...)
 	}
-	for _, sessionID := range unique(append(sessionIDsFromPath(request.URL.Path), scope.sessionIDs...)) {
+	sessionIDs := unique(append(sessionIDsFromPath(request.URL.Path), scope.sessionIDs...))
+	for _, sessionID := range sessionIDs {
 		if err := g.resolver.ValidateSession(ctx, sessionID, request.Header); err != nil {
 			return translateResolverError(err)
 		}
+		if g.sessions != nil {
+			stored, err := g.sessions.ListKnowledgeBases(ctx, sessionID)
+			if err != nil {
+				return &Error{Code: "security.session_scope_unavailable", Message: "Session policy is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+			}
+			kbIDs = append(kbIDs, stored...)
+		}
 	}
-	for _, kbID := range unique(kbIDs) {
-		if err := g.authorizeKB(ctx, kbID, identity, operation); err != nil {
+	resolvedKBIDs := unique(kbIDs)
+	for _, kbID := range resolvedKBIDs {
+		var err error
+		if g.decisions != nil {
+			err = g.authorizeKBAction(ctx, kbID, identity, action, request)
+		} else {
+			err = g.authorizeKB(ctx, kbID, identity, operation)
+		}
+		if err != nil {
 			return err
+		}
+	}
+	if g.sessions != nil && len(resolvedKBIDs) > 0 {
+		for _, sessionID := range sessionIDs {
+			if err := g.sessions.RecordKnowledgeBases(ctx, sessionID, resolvedKBIDs, time.Now().UTC()); err != nil {
+				return &Error{Code: "security.session_scope_unavailable", Message: "Session policy is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+			}
 		}
 	}
 	return nil
@@ -268,6 +336,10 @@ func (g *Gate) resolvePathKBIDs(ctx context.Context, request *http.Request) ([]s
 				return scope.KnowledgeBaseIDs, translateResolverError(err)
 			}
 		}
+	case "initialization":
+		if len(segments) >= 5 && (segments[3] == "config" || segments[3] == "initialize") {
+			return one(segments[4]), nil
+		}
 	}
 	return nil, nil
 }
@@ -291,6 +363,93 @@ func (g *Gate) authorizeKB(ctx context.Context, kbID string, identity Identity, 
 	return &Error{Code: "security.authorization_failed", Message: "Authorization failed", StatusCode: http.StatusInternalServerError, Err: err}
 }
 
+func (g *Gate) authorizeKBAction(ctx context.Context, kbID string, identity Identity, action authorization.Action, request *http.Request) error {
+	principal := authorization.Principal{UserID: identity.UserID, TenantID: identity.TenantID}
+	_, err := g.decisions.Authorize(ctx, kbID, principal, action, request.Header)
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, authorization.ErrDenied) && action == authorization.ActionConfigure && isLimitedEditorConfiguration(request) {
+		decision, decideErr := g.decisions.Decide(ctx, kbID, principal, request.Header)
+		if decideErr == nil && decision.Role == authorization.RoleEditor {
+			return nil
+		}
+		if decideErr != nil {
+			err = decideErr
+		}
+	}
+	switch {
+	case errors.Is(err, authorization.ErrDenied), errors.Is(err, authorization.ErrNotFound):
+		g.recordDenied(ctx, kbID, identity, action, request.Header)
+		return &Error{Code: "resource.not_found", Message: "Resource not found", StatusCode: http.StatusNotFound, Err: err}
+	case errors.Is(err, authorization.ErrInvalid):
+		return &Error{Code: "security.authorization_invalid", Message: "Authorization request is invalid", StatusCode: http.StatusBadRequest, Err: err}
+	default:
+		return &Error{Code: "security.authorization_unavailable", Message: "Authorization service is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+	}
+}
+
+func isLimitedEditorConfiguration(request *http.Request) bool {
+	if request.Method != http.MethodPut || request.Body == nil {
+		return false
+	}
+	segments := splitPath(request.URL.Path)
+	if len(segments) != 4 || segments[0] != "api" || segments[1] != "v1" || segments[2] != "knowledge-bases" {
+		return false
+	}
+	body, err := io.ReadAll(io.LimitReader(request.Body, (64<<10)+1))
+	request.Body.Close()
+	request.Body = io.NopCloser(bytes.NewReader(body))
+	if err != nil || len(body) == 0 || len(body) > 64<<10 {
+		return false
+	}
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(body, &fields) != nil || len(fields) == 0 {
+		return false
+	}
+	for key := range fields {
+		if key != "name" && key != "description" {
+			return false
+		}
+	}
+	var name string
+	if raw, ok := fields["name"]; !ok || json.Unmarshal(raw, &name) != nil || strings.TrimSpace(name) == "" || len([]rune(name)) > 120 {
+		return false
+	}
+	if raw, ok := fields["description"]; ok {
+		var description string
+		if json.Unmarshal(raw, &description) != nil || len([]rune(description)) > 1000 {
+			return false
+		}
+	}
+	return true
+}
+
+func (g *Gate) recordDenied(ctx context.Context, kbID string, identity Identity, action authorization.Action, headers http.Header) {
+	if g.auditor == nil || !highValueAction(action) {
+		return
+	}
+	correlationID := strings.TrimSpace(headers.Get("X-Request-ID"))
+	if correlationID == "" {
+		return
+	}
+	_ = g.auditor.Record(ctx, audit.Event{
+		TenantID: identity.TenantID, KnowledgeBaseID: kbID, ActorUserID: identity.UserID,
+		Action: "authorization.denied." + string(action), TargetType: "knowledge_base", TargetID: kbID,
+		Outcome: audit.OutcomeDenied, ErrorCode: "resource.not_found", CorrelationID: correlationID,
+		CreatedAt: time.Now().UTC(),
+	})
+}
+
+func highValueAction(action authorization.Action) bool {
+	switch action {
+	case authorization.ActionEditContent, authorization.ActionConfigure, authorization.ActionManageGrants, authorization.ActionDelete:
+		return true
+	default:
+		return false
+	}
+}
+
 // FilterResponse removes Note Spaces not owned by the authenticated caller.
 func (g *Gate) FilterResponse(response *http.Response) error {
 	if response.Request.Method != http.MethodGet || !isFilterableListPath(response.Request.URL.Path) || response.StatusCode != http.StatusOK {
@@ -299,6 +458,9 @@ func (g *Gate) FilterResponse(response *http.Response) error {
 	identity, ok := IdentityFromContext(response.Request.Context())
 	if !ok {
 		return &Error{Code: "auth.principal_invalid", Message: "Authenticated principal is missing", StatusCode: http.StatusBadGateway}
+	}
+	if g.decisions != nil {
+		return g.filterPhase2Response(response, identity)
 	}
 	forbidden, err := g.profiles.ForbiddenPersonalNoteIDs(response.Request.Context(), identity.UserID)
 	if err != nil {
@@ -339,6 +501,69 @@ func (g *Gate) FilterResponse(response *http.Response) error {
 	response.ContentLength = int64(len(encoded))
 	response.Header.Set("Content-Length", strconv.Itoa(len(encoded)))
 	return nil
+}
+
+func (g *Gate) filterPhase2Response(response *http.Response, identity Identity) error {
+	body, err := io.ReadAll(io.LimitReader(response.Body, maxFilteredResponseBytes+1))
+	response.Body.Close()
+	if err != nil || len(body) > maxFilteredResponseBytes {
+		return &Error{Code: "upstream.invalid_response", Message: "Upstream list response cannot be filtered", StatusCode: http.StatusBadGateway, Err: err}
+	}
+	var envelope map[string]any
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return &Error{Code: "upstream.invalid_response", Message: "Upstream list response cannot be filtered", StatusCode: http.StatusBadGateway, Err: err}
+	}
+	items, setItems, ok := filterableItems(envelope)
+	if !ok {
+		return &Error{Code: "upstream.invalid_response", Message: "Upstream KB list has an unexpected shape", StatusCode: http.StatusBadGateway}
+	}
+	principal := authorization.Principal{UserID: identity.UserID, TenantID: identity.TenantID}
+	filtered := make([]any, 0, len(items))
+	for _, item := range items {
+		object, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		allowed := true
+		for _, kbID := range listItemKBReferences(response.Request.URL.Path, object) {
+			decision, err := g.decisions.Decide(response.Request.Context(), kbID, principal, response.Request.Header)
+			if errors.Is(err, authorization.ErrNotFound) || (err == nil && decision.Role == authorization.RoleNone) {
+				allowed = false
+				break
+			}
+			if err != nil {
+				return &Error{Code: "security.authorization_unavailable", Message: "Authorization service is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+			}
+		}
+		if allowed {
+			filtered = append(filtered, item)
+		}
+	}
+	setItems(filtered)
+	encoded, err := json.Marshal(envelope)
+	if err != nil {
+		return err
+	}
+	response.Body = io.NopCloser(bytes.NewReader(encoded))
+	response.ContentLength = int64(len(encoded))
+	response.Header.Set("Content-Length", strconv.Itoa(len(encoded)))
+	return nil
+}
+
+func listItemKBReferences(requestPath string, object map[string]any) []string {
+	trimmed := strings.TrimSuffix(requestPath, "/")
+	var references []string
+	if trimmed == "/api/v1/knowledge-bases" || strings.HasSuffix(trimmed, "/move-targets") {
+		references = append(references, stringValues(object["id"])...)
+	}
+	if trimmed == "/api/v1/user/favorites" {
+		resourceType, _ := object["resource_type"].(string)
+		if resourceType == "kb" || resourceType == "knowledge_base" {
+			references = append(references, stringValues(object["resource_id"])...)
+		}
+	}
+	collectReferences(object, &references)
+	return unique(references)
 }
 
 func operationFor(request *http.Request) notespolicy.Operation {
@@ -414,6 +639,7 @@ func sessionIDsFromPath(requestPath string) []string {
 func isFilterableListPath(requestPath string) bool {
 	trimmed := strings.TrimSuffix(requestPath, "/")
 	return trimmed == "/api/v1/knowledge-bases" || trimmed == "/api/v1/agents" ||
+		trimmed == "/api/v1/knowledge/search" || strings.HasSuffix(trimmed, "/move-targets") ||
 		trimmed == "/api/v1/shared-knowledge-bases" || trimmed == "/api/v1/shared-agents" ||
 		trimmed == "/api/v1/user/favorites" ||
 		strings.HasSuffix(trimmed, "/shared-knowledge-bases") || strings.HasSuffix(trimmed, "/shared-agents") ||

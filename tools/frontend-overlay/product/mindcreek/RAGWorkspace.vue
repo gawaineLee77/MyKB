@@ -2,14 +2,15 @@
   <main class="mc-rag">
     <header class="mc-rag-header">
       <button class="mc-back" type="button" @click="router.push('/platform/knowledge-bases')"><t-icon name="chevron-left" /> {{ text.back }}</button>
-      <div class="mc-title"><span>MindCreek · Plain RAG</span><h1>{{ text.title }}</h1><p>{{ text.subtitle }}</p></div>
+      <div class="mc-title"><span>MindCreek · Plain RAG</span><h1>{{ text.title }}</h1><p>{{ text.subtitle }}</p><em v-if="access" class="mc-role" :class="access.role">{{ roleLabel(access.role) }}</em></div>
       <div class="mc-header-actions">
         <button type="button" @click="router.push(`/platform/knowledge-bases/${kbId}`)">{{ text.details }}</button>
         <button class="primary" type="button" @click="router.push(`/platform/knowledge-bases/${kbId}/creatChat`)"><t-icon name="chat" /> {{ text.ask }}</button>
       </div>
     </header>
 
-    <section class="mc-upload" :class="{ dragging }" @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="onDrop">
+    <aside v-if="access && !access.can_edit_content" class="mc-view-only"><t-icon name="secured" /><div><strong>{{ text.viewOnly }}</strong><p>{{ text.viewOnlyHint }}</p></div></aside>
+    <section v-if="access?.can_edit_content" class="mc-upload" :class="{ dragging }" @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="onDrop">
       <input ref="fileInput" type="file" multiple :accept="acceptedTypes" hidden @change="onSelect" />
       <span class="mc-upload-icon"><t-icon name="upload" /></span>
       <div><strong>{{ text.upload }}</strong><p>{{ text.formats }}</p></div>
@@ -32,8 +33,8 @@
               <td><span class="mc-status" :class="`status-${document.parse_status}`"><i />{{ statusLabel(document.parse_status) }}</span></td>
               <td>{{ formatDate(document.updated_at) }}</td>
               <td class="mc-row-actions">
-                <button v-if="isActive(document.parse_status)" type="button" :disabled="busyId === document.id" @click="cancel(document)">{{ text.cancel }}</button>
-                <button v-if="canRetry(document.parse_status)" type="button" :disabled="busyId === document.id" @click="retry(document)">{{ text.retry }}</button>
+                <button v-if="access?.can_edit_content && isActive(document.parse_status)" type="button" :disabled="busyId === document.id" @click="cancel(document)">{{ text.cancel }}</button>
+                <button v-if="access?.can_edit_content && canRetry(document.parse_status)" type="button" :disabled="busyId === document.id" @click="retry(document)">{{ text.retry }}</button>
               </td>
             </tr>
           </tbody>
@@ -55,7 +56,7 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
-import { cancelRAGDocument, listRAGDocuments, retryRAGDocument, uploadRAGDocument, type RAGDocument, type RAGDocumentPage } from './api'
+import { cancelRAGDocument, getKnowledgeAccess, listRAGDocuments, retryRAGDocument, uploadRAGDocument, type KnowledgeAccess, type RAGDocument, type RAGDocumentPage } from './api'
 
 const route = useRoute()
 const router = useRouter()
@@ -69,18 +70,20 @@ const dragging = ref(false)
 const busyId = ref('')
 const listError = ref('')
 const operationError = ref('')
+const access = ref<KnowledgeAccess | null>(null)
 const page = reactive<RAGDocumentPage>({ items: [], total: 0, page: 1, page_size: 20 })
 let pollTimer: number | undefined
 
 const words = {
-  en: { back: 'Knowledge bases', title: 'Document knowledge base', subtitle: 'Upload documents and let WeKnora parse, chunk, and index them for hybrid retrieval.', details: 'Advanced view', ask: 'Ask this KB', upload: 'Drop documents here', formats: 'Markdown, text, PDF, Office, CSV, HTML, JSON or XML · up to 50 MiB each', choose: 'Choose files', uploading: 'Uploading…', documents: 'Documents', files: 'files', refresh: 'Refresh', loading: 'Loading documents…', retry: 'Retry', empty: 'No documents yet', emptyHint: 'Upload a file to start building this knowledge base.', document: 'Document', size: 'Size', status: 'Status', updated: 'Updated', actions: 'Actions', cancel: 'Cancel', preset: 'Managed Plain RAG preset', presetHint: 'Vector + keyword indexing, local storage, GraphRAG and Wiki generation disabled.' },
-  zh: { back: '知识库', title: '文档知识库', subtitle: '上传文档，由 WeKnora 完成解析、切分与索引，用于混合检索。', details: '高级视图', ask: '向知识库提问', upload: '拖放文档到这里', formats: '支持 Markdown、文本、PDF、Office、CSV、HTML、JSON 或 XML · 单文件不超过 50 MiB', choose: '选择文件', uploading: '正在上传…', documents: '文档', files: '个文件', refresh: '刷新', loading: '正在加载文档…', retry: '重试', empty: '暂无文档', emptyHint: '上传文件以开始构建知识库。', document: '文档', size: '大小', status: '状态', updated: '更新时间', actions: '操作', cancel: '取消', preset: '受管控的 Plain RAG 预设', presetHint: '向量 + 关键词索引、本地存储；GraphRAG 与 Wiki 生成功能保持关闭。' },
+  en: { back: 'Knowledge bases', title: 'Document knowledge base', subtitle: 'Upload documents and let WeKnora parse, chunk, and index them for hybrid retrieval.', details: 'Advanced view', ask: 'Ask this KB', upload: 'Drop documents here', formats: 'Markdown, text, PDF, Office, CSV, HTML, JSON or XML · up to 50 MiB each', choose: 'Choose files', uploading: 'Uploading…', documents: 'Documents', files: 'files', refresh: 'Refresh', loading: 'Loading documents…', retry: 'Retry', empty: 'No documents yet', emptyHint: 'An owner or editor can upload a file to start building this knowledge base.', document: 'Document', size: 'Size', status: 'Status', updated: 'Updated', actions: 'Actions', cancel: 'Cancel', preset: 'Managed Plain RAG preset', presetHint: 'Vector + keyword indexing, local storage, GraphRAG and Wiki generation disabled.', viewOnly: 'Viewer access', viewOnlyHint: 'You can read documents, search, chat, and open citations. Content and configuration controls are hidden.', owner: 'Owner', editor: 'Editor', viewer: 'Viewer' },
+  zh: { back: '知识库', title: '文档知识库', subtitle: '上传文档，由 WeKnora 完成解析、切分与索引，用于混合检索。', details: '高级视图', ask: '向知识库提问', upload: '拖放文档到这里', formats: '支持 Markdown、文本、PDF、Office、CSV、HTML、JSON 或 XML · 单文件不超过 50 MiB', choose: '选择文件', uploading: '正在上传…', documents: '文档', files: '个文件', refresh: '刷新', loading: '正在加载文档…', retry: '重试', empty: '暂无文档', emptyHint: '所有者或编辑者可以上传文件以开始构建知识库。', document: '文档', size: '大小', status: '状态', updated: '更新时间', actions: '操作', cancel: '取消', preset: '受管控的 Plain RAG 预设', presetHint: '向量 + 关键词索引、本地存储；GraphRAG 与 Wiki 生成功能保持关闭。', viewOnly: '查看者权限', viewOnlyHint: '你可以读取文档、检索、聊天并打开引用；内容与配置控件已隐藏。', owner: '所有者', editor: '编辑者', viewer: '查看者' },
 }
 const text = computed(() => locale.value.startsWith('zh') ? words.zh : words.en)
 
 function messageOf(error: unknown) {
   return error && typeof error === 'object' && 'message' in error ? String(error.message) : String(error || 'Unknown error')
 }
+function roleLabel(role: KnowledgeAccess['role']) { return text.value[role] }
 function isActive(status: string) { return ['pending', 'processing', 'finalizing'].includes(status) }
 function canRetry(status: string) { return ['failed', 'cancelled'].includes(status) }
 function statusLabel(status: string) {
@@ -124,13 +127,14 @@ async function retry(document: RAGDocument) { busyId.value = document.id; operat
 async function cancel(document: RAGDocument) { busyId.value = document.id; operationError.value = ''; try { await cancelRAGDocument(kbId.value, document.id); await loadList() } catch (error) { operationError.value = messageOf(error) } finally { busyId.value = '' } }
 async function changePage(delta: number) { page.page += delta; await loadList() }
 
-onMounted(async () => { await loadList(); pollTimer = window.setInterval(() => { if (page.items.some(item => isActive(item.parse_status))) void loadList() }, 3500) })
+onMounted(async () => { try { access.value = await getKnowledgeAccess(kbId.value) } catch (error) { listError.value = messageOf(error); return } await loadList(); pollTimer = window.setInterval(() => { if (page.items.some(item => isActive(item.parse_status))) void loadList() }, 3500) })
 onUnmounted(() => { if (pollTimer) window.clearInterval(pollTimer) })
 </script>
 
 <style scoped>
 .mc-rag { min-height: 100%; overflow: auto; padding: 38px clamp(24px, 5vw, 76px) 60px; color: #173c35; background: radial-gradient(circle at 90% 0, #def4eb 0, transparent 30%), #f7faf8; }
 .mc-rag-header { max-width: 1120px; margin: 0 auto 28px; display: grid; grid-template-columns: 150px 1fr auto; gap: 20px; align-items: start; }.mc-title { text-align: center; }.mc-title span { color: #1c8063; font: 700 11px/1.3 sans-serif; letter-spacing: 1.7px; text-transform: uppercase; }.mc-title h1 { margin: 5px 0 7px; font: 650 34px/1.15 Georgia, serif; }.mc-title p { margin: 0; color: #698079; }.mc-back, .mc-header-actions button, .mc-documents button, .mc-row-actions button { padding: 8px 11px; border: 1px solid #ccddd6; border-radius: 9px; color: #41665b; background: #fff; cursor: pointer; }.mc-back { border: 0; background: transparent; }.mc-header-actions { display: flex; gap: 8px; }.primary { color: #fff !important; border-color: #207d61 !important; background: #207d61 !important; }
+.mc-role { margin: 9px auto 0; padding: 4px 9px; display: table; border-radius: 99px; color: #43628a; background: #e9f1fb; font: 700 10px/1.3 sans-serif; text-transform: uppercase; }.mc-role.owner { color: #176047; background: #dff1ea; }.mc-role.editor { color: #805f16; background: #fff0c9; }.mc-view-only { max-width: 1060px; margin: 0 auto 16px; padding: 15px 18px; display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: center; border-radius: 12px; color: #43627a; background: #eaf2fa; }.mc-view-only p { margin: 3px 0 0; font-size: 12px; }
 .mc-upload { max-width: 1060px; margin: 0 auto 16px; padding: 24px 28px; display: grid; grid-template-columns: 48px 1fr auto; gap: 17px; align-items: center; border: 1.5px dashed #9fc6b8; border-radius: 15px; background: rgba(255,255,255,.87); transition: .15s; }.mc-upload.dragging { border-color: #207d61; background: #eef9f4; transform: scale(1.005); }.mc-upload-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 13px; color: #207d61; background: #dff3eb; font-size: 24px; }.mc-upload strong { font-size: 16px; }.mc-upload p { margin: 4px 0 0; color: #758a83; font-size: 12px; }.mc-upload button { padding: 10px 18px; border-radius: 9px; cursor: pointer; }.mc-operation-error { max-width: 1060px; margin: 0 auto 16px; color: #a33b3b; }
 .mc-documents { max-width: 1120px; margin: 0 auto; border: 1px solid #dce8e3; border-radius: 16px; background: #fff; box-shadow: 0 14px 40px rgba(43,84,72,.07); overflow: hidden; }.mc-documents > header { padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e6efeb; }.mc-documents h2 { display: inline; margin: 0 9px 0 0; font-size: 19px; }.mc-documents header span { color: #83958f; font-size: 12px; }.mc-table-wrap { overflow-x: auto; }table { width: 100%; border-collapse: collapse; }th, td { padding: 14px 18px; text-align: left; border-bottom: 1px solid #edf2f0; font-size: 13px; }th { color: #72867f; background: #fafcfb; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; }.mc-file { display: flex; gap: 12px; align-items: center; }.mc-file > span { width: 42px; padding: 8px 3px; text-align: center; border-radius: 8px; color: #276d59; background: #e5f3ed; font-size: 9px; font-weight: 700; }.mc-file strong, .mc-file small { display: block; max-width: 440px; }.mc-file small { margin-top: 3px; color: #a23c3c; white-space: normal; }.mc-status { display: inline-flex; gap: 7px; align-items: center; white-space: nowrap; }.mc-status i { width: 7px; height: 7px; border-radius: 50%; background: #82938e; }.status-completed { color: #197050; }.status-completed i { background: #21a171; }.status-pending, .status-processing, .status-finalizing { color: #8b6a1d; }.status-pending i, .status-processing i, .status-finalizing i { background: #d5a125; }.status-failed, .status-cancelled { color: #a13b3b; }.status-failed i, .status-cancelled i { background: #c84b4b; }.mc-row-actions { text-align: right; }.mc-empty { min-height: 230px; display: flex; flex-direction: column; gap: 9px; align-items: center; justify-content: center; color: #81938d; }.mc-empty > .t-icon { font-size: 34px; }.mc-empty.error { color: #a13b3b; }.mc-pagination { padding: 12px 18px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
 .mc-preset { max-width: 1060px; margin: 16px auto 0; padding: 14px 18px; display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; border-radius: 12px; color: #49665e; background: #eaf4f0; }.mc-preset p { margin: 3px 0 0; font-size: 12px; }.mc-preset > span { padding: 4px 9px; border-radius: 99px; color: #207d61; background: #fff; font-size: 11px; }.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }

@@ -118,20 +118,25 @@ def main() -> int:
             temporary_database,
         ]
     )
+    temporary_public_tables_before = psql_scalar(
+        user,
+        temporary_database,
+        "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'",
+    )
 
     try:
         migrate(database_url, "up")
         first_count = psql_scalar(
             user, temporary_database, "SELECT count(*) FROM mindcreek.schema_migrations"
         )
-        if first_count != "5":
-            fail(f"empty install applied {first_count} migrations, expected 5")
+        if first_count != "7":
+            fail(f"empty install applied {first_count} migrations, expected 7")
 
         migrate(database_url, "up")
         repeat_count = psql_scalar(
             user, temporary_database, "SELECT count(*) FROM mindcreek.schema_migrations"
         )
-        if repeat_count != "5":
+        if repeat_count != "7":
             fail("repeat migration was not idempotent")
 
         status = migrate(database_url, "status")
@@ -143,11 +148,13 @@ def main() -> int:
                 "000003 knowledge_space_requests",
                 "000004 note_revisions",
                 "000005 index_profiles",
+                "000006 kb_access_grants",
+                "000007 phase2_security_records",
             )
         ):
             fail("migration status did not report every product migration")
 
-        migrate(database_url, "down", "5")
+        migrate(database_url, "down", "7")
         rolled_back = psql_scalar(
             user,
             temporary_database,
@@ -155,17 +162,29 @@ def main() -> int:
             "to_regclass('mindcreek.kb_profiles'), '|', "
             "to_regclass('mindcreek.knowledge_space_requests'), '|', "
             "to_regclass('mindcreek.note_revisions'), '|', "
+            "to_regclass('mindcreek.index_profiles'), '|', "
+            "to_regclass('mindcreek.kb_access_grants'), '|', "
+            "to_regclass('mindcreek.session_kb_scopes'), '|', "
+            "to_regclass('mindcreek.kb_access_audit_events'), '|', "
             "(SELECT count(*) FROM mindcreek.schema_migrations))",
         )
-        if rolled_back != "||||0":
+        if rolled_back != "||||||||0":
             fail(f"rollback left unexpected product state: {rolled_back!r}")
 
         migrate(database_url, "up")
         forward_count = psql_scalar(
             user, temporary_database, "SELECT count(*) FROM mindcreek.schema_migrations"
         )
-        if forward_count != "5":
+        if forward_count != "7":
             fail("forward migration after rollback did not restore every version")
+
+        temporary_public_tables_after = psql_scalar(
+            user,
+            temporary_database,
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'",
+        )
+        if temporary_public_tables_after != temporary_public_tables_before:
+            fail("product migrations changed the temporary database public schema")
 
         public_tables_after = psql_scalar(
             user,
@@ -180,7 +199,9 @@ def main() -> int:
             "repeat_startup": "pass",
             "rollback_forward": "pass",
             "upstream_public_table_count_unchanged": True,
-            "applied_migrations": 5,
+            "temporary_public_schema_unchanged": True,
+            "live_public_schema_unchanged": True,
+            "applied_migrations": 7,
         }
         report_path = ROOT / ".local/phase1-migration-probe-report.json"
         report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

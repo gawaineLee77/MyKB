@@ -1,5 +1,6 @@
 # Final images required on the MindCreek Stage 1 server.
 mindcreek-ui:stage1
+mindcreek-gateway:phase2
 wechatopenai/weknora-app:v0.7.2
 wechatopenai/weknora-docreader:v0.7.2
 paradedb/paradedb:v0.22.2-pg17

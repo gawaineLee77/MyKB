@@ -185,6 +185,22 @@ type KnowledgeBase struct {
 	EmbeddingModelID string `json:"embedding_model_id"`
 }
 
+type TenantMember struct {
+	UserID   string `json:"user_id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Avatar   string `json:"avatar"`
+	Role     string `json:"role"`
+	Status   string `json:"status"`
+}
+
+type TenantMemberPage struct {
+	Items    []TenantMember `json:"items"`
+	Total    int            `json:"total"`
+	Page     int            `json:"page"`
+	PageSize int            `json:"page_size"`
+}
+
 type CreateKnowledgeBaseRequest struct {
 	ID                       string                   `json:"id"`
 	Name                     string                   `json:"name"`
@@ -288,6 +304,60 @@ func (c *Client) GetKnowledgeBase(ctx context.Context, kbID string, inbound http
 		return KnowledgeBase{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
 	}
 	return response.Data, nil
+}
+
+func (c *Client) ListKnowledgeBases(ctx context.Context, inbound http.Header) ([]KnowledgeBase, error) {
+	var response struct {
+		Success bool            `json:"success"`
+		Data    []KnowledgeBase `json:"data"`
+	}
+	if err := c.getJSON(ctx, "/api/v1/knowledge-bases", inbound, &response); err != nil {
+		return nil, err
+	}
+	if !response.Success {
+		return nil, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	for _, item := range response.Data {
+		if item.ID == "" || item.TenantID == 0 {
+			return nil, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+		}
+	}
+	return response.Data, nil
+}
+
+func (c *Client) ListTenantMembers(ctx context.Context, tenantID uint64, query string, page, pageSize int, inbound http.Header) (TenantMemberPage, error) {
+	if tenantID == 0 || page < 1 || pageSize < 1 || pageSize > 100 {
+		return TenantMemberPage{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest}
+	}
+	values := url.Values{
+		"page":      {fmt.Sprintf("%d", page)},
+		"page_size": {fmt.Sprintf("%d", pageSize)},
+	}
+	if query = strings.TrimSpace(query); query != "" {
+		values.Set("q", query)
+	}
+	var response struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Members  []TenantMember `json:"members"`
+			Total    int            `json:"total"`
+			Page     int            `json:"page"`
+			PageSize int            `json:"page_size"`
+		} `json:"data"`
+	}
+	path := fmt.Sprintf("/api/v1/tenants/%d/members", tenantID)
+	if err := c.getJSONQuery(ctx, path, values, inbound, &response); err != nil {
+		return TenantMemberPage{}, err
+	}
+	if !response.Success || response.Data.Total < 0 || response.Data.Page != page || response.Data.PageSize != pageSize {
+		return TenantMemberPage{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	for _, item := range response.Data.Members {
+		if item.UserID == "" || item.Status != "active" {
+			return TenantMemberPage{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+		}
+	}
+	return TenantMemberPage{Items: response.Data.Members, Total: response.Data.Total, Page: page, PageSize: pageSize}, nil
 }
 
 func (c *Client) CreateKnowledgeBase(ctx context.Context, input CreateKnowledgeBaseRequest, inbound http.Header) (KnowledgeBase, error) {

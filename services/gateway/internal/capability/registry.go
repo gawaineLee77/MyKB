@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-var phase1Values = map[string]bool{
+var releaseValues = map[string]bool{
 	"im":                  false,
 	"miniprogram":         false,
 	"cli":                 false,
@@ -55,7 +55,7 @@ type IndexProfile struct {
 	Enabled bool   `json:"enabled"`
 }
 
-// Load reads a capability registry and enforces the current Phase 1 gates.
+// Load reads a capability registry and enforces the current Phase 2 release gates.
 func Load(filename string) (*Registry, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -79,19 +79,19 @@ func Load(filename string) (*Registry, error) {
 }
 
 func (r *Registry) validate() error {
-	if r.SchemaVersion != 1 || r.Phase != "phase1" {
-		return fmt.Errorf("capability registry must use schema_version 1 and phase1")
+	if r.SchemaVersion != 1 || r.Phase != "phase2" {
+		return fmt.Errorf("capability registry must use schema_version 1 and phase2")
 	}
-	if len(r.Capabilities) != len(phase1Values) {
-		return fmt.Errorf("capability registry has %d flags; expected %d", len(r.Capabilities), len(phase1Values))
+	if len(r.Capabilities) != len(releaseValues) {
+		return fmt.Errorf("capability registry has %d flags; expected %d", len(r.Capabilities), len(releaseValues))
 	}
-	for key, expected := range phase1Values {
+	for key, expected := range releaseValues {
 		actual, ok := r.Capabilities[key]
 		if !ok {
 			return fmt.Errorf("capability registry is missing %q", key)
 		}
 		if actual != expected {
-			return fmt.Errorf("capability %q must be %t until its Phase 1 gate passes", key, expected)
+			return fmt.Errorf("capability %q must be %t in the Phase 2 release", key, expected)
 		}
 	}
 	return nil
@@ -123,8 +123,8 @@ func (r *Registry) Document(productVersion, upstreamVersion string) Document {
 
 // Keys returns the stable sorted flag names for diagnostics and tests.
 func Keys() []string {
-	keys := make([]string, 0, len(phase1Values))
-	for key := range phase1Values {
+	keys := make([]string, 0, len(releaseValues))
+	for key := range releaseValues {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)

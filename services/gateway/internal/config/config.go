@@ -14,7 +14,8 @@ const (
 	defaultUpstreamVersion  = "v0.7.2"
 	defaultUpstreamTimeout  = 5 * time.Second
 	defaultRoutePolicyFile  = "config/phase1-route-policy.json"
-	defaultCapabilitiesFile = "config/phase1-capabilities.json"
+	defaultRouteActionsFile = "config/phase2-route-actions.json"
+	defaultCapabilitiesFile = "config/phase2-capabilities.json"
 )
 
 // Config contains only process and upstream-connection settings.
@@ -25,6 +26,7 @@ type Config struct {
 	UpstreamVersion  string
 	UpstreamTimeout  time.Duration
 	RoutePolicyFile  string
+	RouteActionsFile string
 	CapabilitiesFile string
 	DatabaseURL      string
 }
@@ -36,6 +38,7 @@ func Load(buildVersion string) (Config, error) {
 		ProductVersion:   value("MINDCREEK_VERSION", buildVersion),
 		UpstreamVersion:  value("MINDCREEK_UPSTREAM_VERSION", defaultUpstreamVersion),
 		RoutePolicyFile:  value("MINDCREEK_ROUTE_POLICY_FILE", defaultRoutePolicyFile),
+		RouteActionsFile: value("MINDCREEK_ROUTE_ACTIONS_FILE", defaultRouteActionsFile),
 		CapabilitiesFile: value("MINDCREEK_CAPABILITIES_FILE", defaultCapabilitiesFile),
 		DatabaseURL:      optionalValue("MINDCREEK_DATABASE_URL"),
 	}

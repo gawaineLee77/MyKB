@@ -19,7 +19,7 @@ WeKnora is pinned as an unmodified submodule under `upstream/weknora`. Product c
 
 ## Current status
 
-Phase 0 and Phase 1 Gates A–D are complete. The product gateway now enforces owner-only Personal Notes, versioned revisions and quotas, plus guarded Plain RAG creation, multi-format ingestion, hybrid retrieval, normal chat, and citations. Stage 2 product pages are applied by the same assertion-checked frontend overlay without modifying the WeKnora submodule:
+Phase 0, Phase 1 Gates A–D, and Phase 2 Gates A–D are complete. The gateway now enforces private-by-default RAG knowledge bases, explicit Viewer/Editor grants, authorized owned/shared views, immediate revocation and expiry, session/citation reauthorization, and redacted audit records. The product UI adds `My KBs`, `Shared with me`, owner-only sharing controls, and permission-aware RAG workspaces. Personal Notes remain owner-only. Product pages are applied by the assertion-checked frontend overlay without modifying the WeKnora submodule:
 
 ```sh
 make stage1-check
@@ -31,8 +31,13 @@ make phase1-gateway-build-offline
 make phase1-up
 make phase1-gate-c
 make phase1-gate-d
+make phase2-check
+make phase2-gate-a
+make phase2-gate-b
+make phase2-gate-c
+make phase2-gate-d
 ```
 
-The seven-service Phase 1 runtime publishes only the frontend; the gateway and WeKnora app remain private. Corporate OAuth 2.0, closed registration, sharing/subscriptions, optional Note Wiki, GraphRAG, PixelRAG, and Ontology remain later tasks.
+The seven-service runtime publishes only the frontend; the gateway and WeKnora app remain private. Phase 2 implements explicit Viewer/Editor sharing while Personal Notes stay owner-only. Subscription and organization-public access remain Phase 3; corporate OAuth 2.0 and closed registration remain Phase 5.
 
-Docker build definitions, pinned image manifests, and offline-transfer commands live in [`images/`](images/README.md). Remaining work follows the [Phase 1 implementation plan](docs/PHASE1_IMPLEMENTATION_PLAN.md). See also the [build and LAN deployment guide](docs/BUILD_AND_LAN_DEPLOYMENT.md), [Gate C](docs/PHASE1_GATE_C.md), [Gate D](docs/PHASE1_GATE_D.md), [overall design](docs/OVERALL_DESIGN.md), and [downstream patch ledger](docs/UPSTREAM_PATCHES.md).
+Docker build definitions, pinned image manifests, and offline-transfer commands live in [`images/`](images/README.md). Current work is recorded in the [Phase 2 implementation plan](docs/PHASE2_IMPLEMENTATION_PLAN.md), [Gate D release record](docs/PHASE2_GATE_D.md), [sharing-model map](docs/PHASE2_SHARING_MODEL.md), and [route-action inventory](docs/PHASE2_ROUTE_ACTIONS.md). See also the [Phase 1 plan](docs/PHASE1_IMPLEMENTATION_PLAN.md), [build and LAN deployment guide](docs/BUILD_AND_LAN_DEPLOYMENT.md), [overall design](docs/OVERALL_DESIGN.md), and [downstream patch ledger](docs/UPSTREAM_PATCHES.md).

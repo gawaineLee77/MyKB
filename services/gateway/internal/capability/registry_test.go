@@ -8,7 +8,7 @@ import (
 )
 
 func TestLoadAndDocumentAgreeOnEveryFlag(t *testing.T) {
-	registry := loadTestRegistry(t, phase1Values)
+	registry := loadTestRegistry(t, releaseValues)
 	document := registry.Document("product-test", "v0.7.2")
 	if len(document.Capabilities) != len(Keys()) {
 		t.Fatalf("API flags=%d, known flags=%d", len(document.Capabilities), len(Keys()))
@@ -27,7 +27,7 @@ func TestLoadAndDocumentAgreeOnEveryFlag(t *testing.T) {
 }
 
 func TestLoadFailsClosedOnCapabilityDrift(t *testing.T) {
-	values := clone(phase1Values)
+	values := clone(releaseValues)
 	values["kb_personal_notes"] = false
 	filename := writeRegistry(t, values)
 	if _, err := Load(filename); err == nil {
@@ -36,7 +36,7 @@ func TestLoadFailsClosedOnCapabilityDrift(t *testing.T) {
 }
 
 func TestLoadRejectsUnknownOrMissingFlags(t *testing.T) {
-	values := clone(phase1Values)
+	values := clone(releaseValues)
 	delete(values, "ontology")
 	values["unknown"] = false
 	filename := writeRegistry(t, values)
@@ -57,7 +57,7 @@ func loadTestRegistry(t *testing.T, values map[string]bool) *Registry {
 func writeRegistry(t *testing.T, values map[string]bool) string {
 	t.Helper()
 	filename := filepath.Join(t.TempDir(), "capabilities.json")
-	payload, err := json.Marshal(Registry{SchemaVersion: 1, Phase: "phase1", Capabilities: values})
+	payload, err := json.Marshal(Registry{SchemaVersion: 1, Phase: "phase2", Capabilities: values})
 	if err != nil {
 		t.Fatal(err)
 	}

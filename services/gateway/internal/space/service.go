@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/notespolicy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/preset"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
@@ -30,9 +31,14 @@ type ProfileStore interface {
 }
 
 type Service struct {
-	requests RequestStore
-	profiles ProfileStore
-	upstream Upstream
+	requests   RequestStore
+	profiles   ProfileStore
+	upstream   Upstream
+	authorizer Authorizer
+}
+
+type Authorizer interface {
+	Authorize(context.Context, string, authorization.Principal, authorization.Action, http.Header) (authorization.Decision, error)
 }
 
 type CreateInput struct {
@@ -71,11 +77,18 @@ func (e *Error) Error() string {
 
 func (e *Error) Unwrap() error { return e.Err }
 
-func NewService(requests RequestStore, profiles ProfileStore, upstream Upstream) (*Service, error) {
+func NewService(requests RequestStore, profiles ProfileStore, upstream Upstream, authorizers ...Authorizer) (*Service, error) {
 	if requests == nil || profiles == nil || upstream == nil {
 		return nil, fmt.Errorf("creation request store, profile store, and upstream adapter are required")
 	}
-	return &Service{requests: requests, profiles: profiles, upstream: upstream}, nil
+	service := &Service{requests: requests, profiles: profiles, upstream: upstream}
+	if len(authorizers) > 1 {
+		return nil, fmt.Errorf("at most one knowledge-space authorizer is supported")
+	}
+	if len(authorizers) == 1 {
+		service.authorizer = authorizers[0]
+	}
+	return service, nil
 }
 
 func (s *Service) Create(ctx context.Context, input CreateInput, idempotencyKey string, identity access.Identity, headers http.Header) (CreateResult, error) {
@@ -161,7 +174,14 @@ func (s *Service) Create(ctx context.Context, input CreateInput, idempotencyKey 
 }
 
 func (s *Service) GetProfile(ctx context.Context, kbID string, identity access.Identity, headers http.Header) (profile.Profile, error) {
-	if _, err := s.upstream.GetKnowledgeBase(ctx, kbID, headers); err != nil {
+	if s.authorizer != nil {
+		if _, err := s.authorizer.Authorize(ctx, kbID, authorization.Principal{UserID: identity.UserID, TenantID: identity.TenantID}, authorization.ActionRead, headers); err != nil {
+			if errors.Is(err, authorization.ErrDenied) || errors.Is(err, authorization.ErrNotFound) {
+				return profile.Profile{}, &Error{Code: "resource.not_found", Message: "Resource not found", StatusCode: http.StatusNotFound, Err: err}
+			}
+			return profile.Profile{}, &Error{Code: "space.state_unavailable", Message: "Knowledge-space authorization is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+		}
+	} else if _, err := s.upstream.GetKnowledgeBase(ctx, kbID, headers); err != nil {
 		return profile.Profile{}, translateUpstreamError(err)
 	}
 	result, err := s.profiles.Get(ctx, kbID)
@@ -171,12 +191,14 @@ func (s *Service) GetProfile(ctx context.Context, kbID string, identity access.I
 	if err != nil {
 		return profile.Profile{}, &Error{Code: "space.state_unavailable", Message: "Knowledge-space profile is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
 	}
-	if err := notespolicy.Authorize(result, notespolicy.Principal{UserID: identity.UserID, TenantID: identity.TenantID}, notespolicy.Read); err != nil {
-		var policyError *notespolicy.Error
-		if errors.As(err, &policyError) {
-			return profile.Profile{}, &Error{Code: policyError.Code, Message: policyError.Message, StatusCode: policyError.StatusCode, Err: err}
+	if s.authorizer == nil {
+		if err := notespolicy.Authorize(result, notespolicy.Principal{UserID: identity.UserID, TenantID: identity.TenantID}, notespolicy.Read); err != nil {
+			var policyError *notespolicy.Error
+			if errors.As(err, &policyError) {
+				return profile.Profile{}, &Error{Code: policyError.Code, Message: policyError.Message, StatusCode: policyError.StatusCode, Err: err}
+			}
+			return profile.Profile{}, err
 		}
-		return profile.Profile{}, err
 	}
 	return result, nil
 }

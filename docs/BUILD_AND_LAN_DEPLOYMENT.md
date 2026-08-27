@@ -57,7 +57,7 @@ The verified Phase 1 runtime uses these images:
 | Image | Purpose | Required for the pilot |
 | --- | --- | --- |
 | `mindcreek-ui:stage1` | Branded UI plus Stage 2 product modules | Yes; built locally |
-| `mindcreek-gateway:phase1` | Product API, policy, profiles, notes, and ingestion guard | Yes; built locally |
+| `mindcreek-gateway:phase2` | Product API, private sharing, policy, profiles, notes, and ingestion guard | Yes; built locally |
 | `wechatopenai/weknora-app:v0.7.2` | WeKnora Go application | Yes |
 | `wechatopenai/weknora-docreader:v0.7.2` | PDF/Office/image parsing | Yes |
 | `paradedb/paradedb:v0.22.2-pg17` | PostgreSQL, vector, and keyword retrieval | Yes |

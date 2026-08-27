@@ -108,7 +108,7 @@ replaceExact(
   `        {
           path: "knowledge-bases",
           name: "knowledgeBaseList",
-          component: () => import("../views/knowledge/KnowledgeBaseList.vue"),
+          component: () => import("@/mindcreek/KnowledgeLibrary.vue"),
           meta: { requiresInit: true, requiresAuth: true }
         },
         // MindCreek Stage 2 product module. The source lives outside the upstream tree.
@@ -148,63 +148,6 @@ export function patch<T = any>(url: string, data = {}, config?: any): Promise<T>
 
 export function del<T = any>(url: string, data?: any): Promise<T> {`,
 )
-replaceExact(
-  'src/views/knowledge/KnowledgeBaseList.vue',
-  "import { useTenantModelReadiness } from '@/composables/useTenantModelReadiness'\n",
-  '',
-)
-replaceExact(
-  'src/views/knowledge/KnowledgeBaseList.vue',
-  `const handleCardClick = (kb: KB) => {
-  // Track this open in the per-user "recent" list before navigating —
-  // matches the user mental model "this is what I last worked on".
-  pins.touchRecent('kb', kb.id)
-  if (isInitialized(kb)) {
-    goDetail(kb.id)
-  } else {
-    goSettings(kb.id)
-  }
-}`,
-  `const handleCardClick = async (kb: KB) => {
-  pins.touchRecent('kb', kb.id)
-  try {
-    const { getProductProfile } = await import('@/mindcreek/api')
-    const productProfile = await getProductProfile(kb.id)
-    if (productProfile.product_mode === 'personal_notes') {
-      await router.push(\`/platform/mindcreek/notes/\${kb.id}\`)
-      return
-    }
-    if (productProfile.product_mode === 'rag' && productProfile.index_profile === 'plain') {
-      await router.push(\`/platform/mindcreek/rag/\${kb.id}\`)
-      return
-    }
-  } catch {
-    // Ordinary upstream KBs have no product profile and keep their native route.
-  }
-  if (isInitialized(kb)) goDetail(kb.id)
-  else goSettings(kb.id)
-}`,
-)
-replaceExact(
-  'src/views/knowledge/KnowledgeBaseList.vue',
-  'const { loaded: modelsReadyLoaded, isReadyForDocumentKb } = useTenantModelReadiness()\n',
-  '',
-)
-replaceExact(
-  'src/views/knowledge/KnowledgeBaseList.vue',
-  `const handleCreateKnowledgeBase = () => {
-  markContextualGuideDone('kbList')
-  // 无模型时仍打开创建向导，并定位到模型配置页；用户可在向导内添加模型，无需先跳转系统设置
-  const initialSection =
-    modelsReadyLoaded.value && !isReadyForDocumentKb.value ? 'models' : undefined
-  uiStore.openCreateKB('document', initialSection)
-}`,
-  `const handleCreateKnowledgeBase = () => {
-  markContextualGuideDone('kbList')
-  router.push('/platform/mindcreek/create')
-}`,
-)
-
 const translations = {
   'src/i18n/locales/en-US.ts': [
     ['Welcome to WeKnora', `Welcome to ${brand.name}`],

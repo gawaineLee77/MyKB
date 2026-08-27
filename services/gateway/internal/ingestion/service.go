@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/preset"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
@@ -38,8 +39,13 @@ type ProfileStore interface {
 }
 
 type Service struct {
-	profiles ProfileStore
-	upstream Upstream
+	profiles   ProfileStore
+	upstream   Upstream
+	authorizer Authorizer
+}
+
+type Authorizer interface {
+	Authorize(context.Context, string, authorization.Principal, authorization.Action, http.Header) (authorization.Decision, error)
 }
 
 type Error struct {
@@ -57,15 +63,19 @@ func (e *Error) Error() string {
 }
 func (e *Error) Unwrap() error { return e.Err }
 
-func NewService(profiles ProfileStore, upstream Upstream) (*Service, error) {
-	if profiles == nil || upstream == nil {
-		return nil, fmt.Errorf("profile store and upstream adapter are required")
+func NewService(profiles ProfileStore, upstream Upstream, authorizers ...Authorizer) (*Service, error) {
+	if profiles == nil || upstream == nil || len(authorizers) > 1 {
+		return nil, fmt.Errorf("profile store, upstream adapter, and at most one authorizer are required")
 	}
-	return &Service{profiles: profiles, upstream: upstream}, nil
+	service := &Service{profiles: profiles, upstream: upstream}
+	if len(authorizers) == 1 {
+		service.authorizer = authorizers[0]
+	}
+	return service, nil
 }
 
 func (s *Service) Upload(ctx context.Context, kbID, filename string, size int64, source io.Reader, identity access.Identity, headers http.Header) (weknora.Knowledge, error) {
-	config, err := s.authorize(ctx, kbID, identity, headers)
+	config, err := s.authorize(ctx, kbID, identity, authorization.ActionEditContent, headers)
 	if err != nil {
 		return weknora.Knowledge{}, err
 	}
@@ -84,7 +94,7 @@ func (s *Service) Upload(ctx context.Context, kbID, filename string, size int64,
 }
 
 func (s *Service) List(ctx context.Context, kbID string, page, pageSize int, identity access.Identity, headers http.Header) (weknora.KnowledgePage, error) {
-	if _, err := s.authorize(ctx, kbID, identity, headers); err != nil {
+	if _, err := s.authorize(ctx, kbID, identity, authorization.ActionRead, headers); err != nil {
 		return weknora.KnowledgePage{}, err
 	}
 	if page < 1 || pageSize < 1 || pageSize > MaxPageSize {
@@ -98,7 +108,7 @@ func (s *Service) List(ctx context.Context, kbID string, page, pageSize int, ide
 }
 
 func (s *Service) Get(ctx context.Context, kbID, knowledgeID string, identity access.Identity, headers http.Header) (weknora.Knowledge, error) {
-	if _, err := s.authorize(ctx, kbID, identity, headers); err != nil {
+	if _, err := s.authorize(ctx, kbID, identity, authorization.ActionRead, headers); err != nil {
 		return weknora.Knowledge{}, err
 	}
 	result, err := s.upstream.GetKnowledge(ctx, kbID, knowledgeID, headers)
@@ -109,8 +119,11 @@ func (s *Service) Get(ctx context.Context, kbID, knowledgeID string, identity ac
 }
 
 func (s *Service) Retry(ctx context.Context, kbID, knowledgeID string, identity access.Identity, headers http.Header) (weknora.Knowledge, error) {
-	if _, err := s.Get(ctx, kbID, knowledgeID, identity, headers); err != nil {
+	if _, err := s.authorize(ctx, kbID, identity, authorization.ActionEditContent, headers); err != nil {
 		return weknora.Knowledge{}, err
+	}
+	if _, err := s.upstream.GetKnowledge(ctx, kbID, knowledgeID, headers); err != nil {
+		return weknora.Knowledge{}, translateUpstream(err)
 	}
 	result, err := s.upstream.ReparseKnowledge(ctx, kbID, knowledgeID, headers)
 	if err != nil {
@@ -120,8 +133,11 @@ func (s *Service) Retry(ctx context.Context, kbID, knowledgeID string, identity 
 }
 
 func (s *Service) Cancel(ctx context.Context, kbID, knowledgeID string, identity access.Identity, headers http.Header) (weknora.Knowledge, error) {
-	if _, err := s.Get(ctx, kbID, knowledgeID, identity, headers); err != nil {
+	if _, err := s.authorize(ctx, kbID, identity, authorization.ActionEditContent, headers); err != nil {
 		return weknora.Knowledge{}, err
+	}
+	if _, err := s.upstream.GetKnowledge(ctx, kbID, knowledgeID, headers); err != nil {
+		return weknora.Knowledge{}, translateUpstream(err)
 	}
 	result, err := s.upstream.CancelKnowledge(ctx, kbID, knowledgeID, headers)
 	if err != nil {
@@ -130,11 +146,18 @@ func (s *Service) Cancel(ctx context.Context, kbID, knowledgeID string, identity
 	return result, nil
 }
 
-func (s *Service) authorize(ctx context.Context, kbID string, identity access.Identity, headers http.Header) (preset.EffectiveConfig, error) {
+func (s *Service) authorize(ctx context.Context, kbID string, identity access.Identity, action authorization.Action, headers http.Header) (preset.EffectiveConfig, error) {
 	if strings.TrimSpace(kbID) == "" || identity.UserID == "" || identity.TenantID == 0 {
 		return preset.EffectiveConfig{}, invalid("Knowledge base and authenticated principal are required")
 	}
-	if _, err := s.upstream.GetKnowledgeBase(ctx, kbID, headers); err != nil {
+	if s.authorizer != nil {
+		if _, err := s.authorizer.Authorize(ctx, kbID, authorization.Principal{UserID: identity.UserID, TenantID: identity.TenantID}, action, headers); err != nil {
+			if errors.Is(err, authorization.ErrDenied) || errors.Is(err, authorization.ErrNotFound) {
+				return preset.EffectiveConfig{}, &Error{Code: "resource.not_found", Message: "Resource not found", StatusCode: http.StatusNotFound, Err: err}
+			}
+			return preset.EffectiveConfig{}, &Error{Code: "ingestion.state_unavailable", Message: "Plain RAG authorization is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+		}
+	} else if _, err := s.upstream.GetKnowledgeBase(ctx, kbID, headers); err != nil {
 		return preset.EffectiveConfig{}, translateUpstream(err)
 	}
 	productProfile, err := s.profiles.Get(ctx, kbID)

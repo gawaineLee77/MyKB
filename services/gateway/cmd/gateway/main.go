@@ -12,14 +12,21 @@ import (
 	"time"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/audit"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
 	productdb "github.com/gawaineLee77/MyKB/services/gateway/internal/database"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ingestion"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/note"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/ownership"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/routeaction"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/server"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/sessionscope"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/space"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
 )
@@ -62,7 +69,39 @@ func main() {
 	if err != nil {
 		log.Fatalf("profile repository error: %v", err)
 	}
-	accessGate, err := access.NewGate(profiles, adapter)
+	grantRepository, err := grant.NewRepository(db)
+	if err != nil {
+		log.Fatalf("grant repository error: %v", err)
+	}
+	auditRepository, err := audit.NewRepository(db)
+	if err != nil {
+		log.Fatalf("access audit repository error: %v", err)
+	}
+	sessionScopes, err := sessionscope.NewRepository(db)
+	if err != nil {
+		log.Fatalf("session-scope repository error: %v", err)
+	}
+	ownerResolver, err := ownership.NewResolver(profiles, adapter)
+	if err != nil {
+		log.Fatalf("ownership resolver error: %v", err)
+	}
+	authorizationService, err := authorization.NewService(ownerResolver, grantRepository, nil)
+	if err != nil {
+		log.Fatalf("authorization service error: %v", err)
+	}
+	grantService, err := grant.NewService(grantRepository, ownerResolver, grant.WithAuditRecorder(auditRepository))
+	if err != nil {
+		log.Fatalf("grant service error: %v", err)
+	}
+	libraryService, err := library.NewService(adapter, authorizationService)
+	if err != nil {
+		log.Fatalf("authorized library error: %v", err)
+	}
+	routeActions, err := routeaction.Load(cfg.RouteActionsFile, cfg.UpstreamVersion)
+	if err != nil {
+		log.Fatalf("route-action policy error: %v", err)
+	}
+	accessGate, err := access.NewPhase2Gate(profiles, adapter, routeActions, authorizationService, sessionScopes, auditRepository)
 	if err != nil {
 		log.Fatalf("access gate error: %v", err)
 	}
@@ -70,7 +109,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("creation request repository error: %v", err)
 	}
-	spaceService, err := space.NewService(creationRequests, profiles, adapter)
+	spaceService, err := space.NewService(creationRequests, profiles, adapter, authorizationService)
 	if err != nil {
 		log.Fatalf("knowledge-space service error: %v", err)
 	}
@@ -82,7 +121,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("notes service error: %v", err)
 	}
-	ingestionService, err := ingestion.NewService(profiles, adapter)
+	ingestionService, err := ingestion.NewService(profiles, adapter, authorizationService)
 	if err != nil {
 		log.Fatalf("document ingestion service error: %v", err)
 	}
@@ -96,7 +135,11 @@ func main() {
 	}
 
 	log.Printf("mindcreek-gateway version=%s listen=%s", cfg.ProductVersion, cfg.ListenAddr)
-	dependencies := server.Dependencies{Principals: adapter, Access: accessGate, Spaces: spaceService, Notes: noteService, Ingestions: ingestionService}
+	dependencies := server.Dependencies{
+		Principals: adapter, Access: accessGate, Spaces: spaceService, Notes: noteService,
+		Ingestions: ingestionService, Library: libraryService, Grants: grantService, Directory: adapter,
+		Decisions: authorizationService,
+	}
 	if err := http.ListenAndServe(cfg.ListenAddr, server.NewGateway(cfg, capabilities, routePolicy, dependencies)); err != nil {
 		log.Fatalf("gateway stopped: %v", err)
 	}
