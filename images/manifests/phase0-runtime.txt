@@ -1,0 +1,7 @@
+# Original Phase 0 runtime images (one image reference per line).
+wechatopenai/weknora-ui:v0.7.2
+wechatopenai/weknora-app:v0.7.2
+wechatopenai/weknora-docreader:v0.7.2
+paradedb/paradedb:v0.22.2-pg17
+redis:7.0-alpine
+python:3.12-alpine

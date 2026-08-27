@@ -1,0 +1,91 @@
+/* MindCreek Stage 1 product theme. Appended to the ephemeral frontend build only. */
+:root {
+  --mindcreek-navy: #123047;
+  --mindcreek-teal: #138a86;
+  --mindcreek-green: #4faf73;
+  --mindcreek-aqua: #ddf7f4;
+  --td-brand-color-1: #edf9f7;
+  --td-brand-color-2: #d5f1ed;
+  --td-brand-color-3: #afe2dc;
+  --td-brand-color-4: #7dcec6;
+  --td-brand-color-5: #48b4ad;
+  --td-brand-color-6: #138a86;
+  --td-brand-color-7: #0f7472;
+  --td-brand-color-8: #0d5e5d;
+  --td-brand-color-9: #104b4b;
+  --td-brand-color-10: #123d3e;
+  --td-brand-color: var(--mindcreek-teal);
+  --td-brand-color-hover: #0f7472;
+  --td-brand-color-focus: #d5f1ed;
+  --td-brand-color-active: #0d5e5d;
+  --td-brand-color-disabled: #afe2dc;
+  --td-brand-color-light: #edf9f7;
+}
+
+:root[theme-mode="dark"] {
+  --td-brand-color: #59c6bd;
+  --td-brand-color-hover: #78d4cc;
+  --td-brand-color-focus: rgba(89, 198, 189, 0.22);
+  --td-brand-color-active: #3aaca5;
+  --td-brand-color-disabled: #2a6c69;
+  --td-brand-color-light: rgba(89, 198, 189, 0.14);
+}
+
+.mindcreek-brand,
+.aside_box .logo_box {
+  color: var(--mindcreek-navy);
+  text-decoration: none;
+}
+
+.mindcreek-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-logo .mindcreek-logo-image {
+  width: 44px !important;
+  height: 44px !important;
+  object-fit: contain;
+}
+
+.mindcreek-wordmark {
+  color: var(--mindcreek-navy);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.aside_box .logo_box .mindcreek-logo-image {
+  width: 34px !important;
+  height: 34px !important;
+  flex: 0 0 34px;
+  object-fit: contain;
+}
+
+.aside_box .logo_box .mindcreek-wordmark {
+  margin-left: 7px;
+  font-size: 19px;
+}
+
+html[theme-mode="dark"] .mindcreek-wordmark {
+  color: #ecfffc;
+}
+
+html[theme-mode="dark"] .header-logo .mindcreek-logo-image,
+html[theme-mode="dark"] .aside_box .logo_box .mindcreek-logo-image {
+  filter: none !important;
+}
+
+@media (max-width: 768px) {
+  .header-logo .mindcreek-logo-image {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .header-logo .mindcreek-wordmark {
+    font-size: 20px;
+  }
+}

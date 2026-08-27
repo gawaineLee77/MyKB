@@ -1,0 +1,10 @@
+# External runtime images.
+wechatopenai/weknora-app:v0.7.2
+wechatopenai/weknora-docreader:v0.7.2
+paradedb/paradedb:v0.22.2-pg17
+redis:7.0-alpine
+python:3.12-alpine
+
+# Build images for mindcreek-ui:stage1.
+node:24-alpine
+nginx:1.30.3-alpine@sha256:0d3b80406a13a767339fbe2f41406d6c7da727ab89cf8fae399e81f780f814d1

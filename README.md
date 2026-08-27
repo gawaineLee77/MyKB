@@ -1,6 +1,6 @@
-# MyKB
+# MindCreek
 
-MyKB is an upstream-first internal knowledge-base platform built around Tencent WeKnora. The product targets private Personal Notes, multi-format Plain RAG, governed sharing and subscriptions, an authorized agent/MCP surface, and later GraphRAG, PixelRAG, and ontology-guided knowledge graphs.
+MindCreek (repository: MyKB) is an upstream-first internal knowledge-base platform built around Tencent WeKnora. The product targets private Personal Notes, multi-format Plain RAG, governed sharing and subscriptions, an authorized agent/MCP surface, and later GraphRAG, PixelRAG, and ontology-guided knowledge graphs.
 
 ## Bootstrap
 
@@ -19,6 +19,20 @@ WeKnora is pinned as an unmodified submodule under `upstream/weknora`. Product c
 
 ## Current status
 
-Phase 0 is complete. The pinned v0.7.2 source and images were verified at the same commit; backend, frontend, MCP, Compose, bilingual Plain RAG, and two-user authorization probes passed. The probes confirmed that upstream same-workspace access is too broad for owner-private Personal Notes, so Phase 1 begins with the Product Gateway authorization boundary.
+Phase 0 and Phase 1 Gates A–D are complete. The product gateway now enforces owner-only Personal Notes, versioned revisions and quotas, plus guarded Plain RAG creation, multi-format ingestion, hybrid retrieval, normal chat, and citations. Stage 2 product pages are applied by the same assertion-checked frontend overlay without modifying the WeKnora submodule:
 
-See the [build and LAN deployment guide](docs/BUILD_AND_LAN_DEPLOYMENT.md), [Phase 0 baseline](docs/PHASE0_BASELINE.md), [runtime report](docs/PHASE0_RUNTIME_REPORT.md), [overall design](docs/OVERALL_DESIGN.md), and [downstream patch ledger](docs/UPSTREAM_PATCHES.md).
+```sh
+make stage1-check
+make stage1-compose-config
+make stage1-ui-build
+make stage1-up
+make stage1-runtime-check
+make phase1-gateway-build-offline
+make phase1-up
+make phase1-gate-c
+make phase1-gate-d
+```
+
+The seven-service Phase 1 runtime publishes only the frontend; the gateway and WeKnora app remain private. Corporate OAuth 2.0, closed registration, sharing/subscriptions, optional Note Wiki, GraphRAG, PixelRAG, and Ontology remain later tasks.
+
+Docker build definitions, pinned image manifests, and offline-transfer commands live in [`images/`](images/README.md). Remaining work follows the [Phase 1 implementation plan](docs/PHASE1_IMPLEMENTATION_PLAN.md). See also the [build and LAN deployment guide](docs/BUILD_AND_LAN_DEPLOYMENT.md), [Gate C](docs/PHASE1_GATE_C.md), [Gate D](docs/PHASE1_GATE_D.md), [overall design](docs/OVERALL_DESIGN.md), and [downstream patch ledger](docs/UPSTREAM_PATCHES.md).

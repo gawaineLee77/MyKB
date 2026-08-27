@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic OpenAI-compatible embedding endpoint for Phase 0 tests."""
+"""Deterministic OpenAI-compatible embedding and chat endpoint for local probes."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import re
+import time
 import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
@@ -40,7 +41,7 @@ def embed(text: str) -> list[float]:
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "MyKBPhase0Embedding/1.0"
+    server_version = "MindCreekMockOpenAI/2.0"
 
     def _json(self, status: int, payload: dict[str, Any]) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -59,21 +60,27 @@ class Handler(BaseHTTPRequestHandler):
                 200,
                 {
                     "object": "list",
-                    "data": [{"id": "mykb-phase0-embedding", "object": "model"}],
+                    "data": [
+                        {"id": "mindcreek-test-embedding", "object": "model"},
+                        {"id": "mindcreek-test-chat", "object": "model"},
+                    ],
                 },
             )
             return
         self._json(404, {"error": {"message": "not found"}})
 
     def do_POST(self) -> None:  # noqa: N802
-        if not self.path.rstrip("/").endswith("/embeddings"):
-            self._json(404, {"error": {"message": "not found"}})
-            return
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if length <= 0 or length > MAX_BODY_BYTES:
                 raise ValueError("invalid request size")
             payload = json.loads(self.rfile.read(length))
+            if self.path.rstrip("/").endswith("/chat/completions"):
+                self._chat(payload)
+                return
+            if not self.path.rstrip("/").endswith("/embeddings"):
+                self._json(404, {"error": {"message": "not found"}})
+                return
             raw_input = payload.get("input", [])
             inputs = [raw_input] if isinstance(raw_input, str) else list(raw_input)
             data = [
@@ -92,6 +99,57 @@ class Handler(BaseHTTPRequestHandler):
             )
         except (ValueError, TypeError, json.JSONDecodeError) as exc:
             self._json(400, {"error": {"message": str(exc)}})
+
+    def _chat(self, payload: dict[str, Any]) -> None:
+        serialized = json.dumps(payload.get("messages", []), ensure_ascii=False)
+        sentinels = re.findall(r"MINDCREEK_GATE_D_[A-Za-z0-9-]+", serialized)
+        suffix = f" Source sentinel: {sentinels[-1]}." if sentinels else ""
+        content = "MindCreek synthetic answer grounded in the retrieved knowledge." + suffix
+        model = str(payload.get("model", "mindcreek-test-chat"))
+        created = int(time.time())
+        if not payload.get("stream"):
+            self._json(
+                200,
+                {
+                    "id": "chatcmpl-mindcreek",
+                    "object": "chat.completion",
+                    "created": created,
+                    "model": model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {"role": "assistant", "content": content},
+                            "finish_reason": "stop",
+                        }
+                    ],
+                    "usage": {"prompt_tokens": 32, "completion_tokens": 12, "total_tokens": 44},
+                },
+            )
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        packets = [
+            {
+                "id": "chatcmpl-mindcreek",
+                "object": "chat.completion.chunk",
+                "created": created,
+                "model": model,
+                "choices": [{"index": 0, "delta": {"role": "assistant", "content": content}, "finish_reason": None}],
+            },
+            {
+                "id": "chatcmpl-mindcreek",
+                "object": "chat.completion.chunk",
+                "created": created,
+                "model": model,
+                "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+            },
+        ]
+        for packet in packets:
+            self.wfile.write(("data: " + json.dumps(packet, ensure_ascii=False) + "\n\n").encode("utf-8"))
+        self.wfile.write(b"data: [DONE]\n\n")
+        self.wfile.flush()
 
     def log_message(self, format_string: str, *args: object) -> None:
         print(f"mock-embedding: {format_string % args}")

@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "upstream_tag": "v0.7.2",
+  "upstream_commit": "3d5d8bfcdfeeea266b292b71cea616847af28d0f",
+  "expected_route_count": 373,
+  "rules": [
+    {
+      "id": "disable-development-swagger",
+      "classification": "disabled",
+      "path_regex": "^/swagger(?:/|$)"
+    },
+    {
+      "id": "disable-raw-and-capability-files",
+      "classification": "disabled",
+      "path_regex": "^(?:/files|/r/:token|/api/v1/files/presigned(?:-preview)?)$"
+    },
+    {
+      "id": "disable-im-and-wechat",
+      "classification": "disabled",
+      "path_regex": "^/api/v1/(?:im(?:/|$)|im-channels(?:/|$)|wechat(?:/|$)|agents/:id/im-channels(?:/|$))"
+    },
+    {
+      "id": "disable-public-embed",
+      "classification": "disabled",
+      "path_regex": "^/api/v1/(?:embed(?:/|$)|embed-channels(?:/|$)|agents/:id/embed-channels(?:/|$))"
+    },
+    {
+      "id": "disable-hosted-mcp",
+      "classification": "disabled",
+      "path_regex": "^/api/v1/(?:mcp-oauth(?:/|$)|mcp-services(?:/|$)|agent/(?:mcp-oauth-resolutions|tool-approvals)(?:/|$))"
+    },
+    {
+      "id": "disable-web-search",
+      "classification": "disabled",
+      "path_regex": "^/api/v1/(?:web-search|web-search-providers)(?:/|$)"
+    },
+    {
+      "id": "disable-external-data-sources",
+      "classification": "disabled",
+      "path_regex": "^/api/v1/datasource(?:/|$)"
+    },
+    {
+      "id": "disable-weknora-cloud",
+      "classification": "disabled",
+      "path_regex": "^/api/v1/(?:weknoracloud(?:/|$)|models/weknoracloud/status$)"
+    },
+    {
+      "id": "disable-future-index-profiles",
+      "classification": "disabled",
+      "path_regex": "^/api/v1/initialization/(?:asr/check|multimodal/test|extract(?:/|$))"
+    },
+    {
+      "id": "disable-cross-kb-evaluation",
+      "classification": "disabled",
+      "path_regex": "^/api/v1/evaluation$"
+    },
+    {
+      "id": "guard-kb-content",
+      "classification": "kb_policy_controlled",
+      "path_regex": "^/api/v1/(?:knowledge-bases|knowledgebase|knowledge|knowledge-chat|knowledge-search|chunks|faq)(?:/|$)"
+    },
+    {
+      "id": "guard-conversations",
+      "classification": "kb_policy_controlled",
+      "path_regex": "^/api/v1/(?:sessions|messages|agent-chat)(?:/|$)"
+    },
+    {
+      "id": "guard-agents-and-selections",
+      "classification": "kb_policy_controlled",
+      "path_regex": "^/api/v1/(?:agents|shared-agents|shared-knowledge-bases|user/favorites)(?:/|$)"
+    },
+    {
+      "id": "guard-organization-sharing",
+      "classification": "kb_policy_controlled",
+      "path_regex": "^/api/v1/organizations(?:/|$)"
+    },
+    {
+      "id": "guard-kb-initialization",
+      "classification": "kb_policy_controlled",
+      "path_regex": "^/api/v1/initialization/(?:config|initialize)(?:/|$)"
+    },
+    {
+      "id": "pass-health",
+      "classification": "pass_through",
+      "path_regex": "^/health$"
+    },
+    {
+      "id": "pass-phase1-auth-and-membership",
+      "classification": "pass_through",
+      "path_regex": "^/api/v1/(?:auth|tenants|me/invitations)(?:/|$)"
+    },
+    {
+      "id": "pass-phase1-platform-infrastructure",
+      "classification": "pass_through",
+      "path_regex": "^/api/v1/(?:models|system|vector-stores|storage-backends)(?:/|$)"
+    },
+    {
+      "id": "pass-phase1-approved-initialization",
+      "classification": "pass_through",
+      "path_regex": "^/api/v1/(?:initialization|chunker/preview)(?:/|$)"
+    },
+    {
+      "id": "pass-phase1-skills-catalog",
+      "classification": "pass_through",
+      "path_regex": "^/api/v1/skills$"
+    }
+  ]
+}

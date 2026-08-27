@@ -1,0 +1,5 @@
+{
+  "Replace": {
+    "internal/router/mindcreek_route_inventory_test.go": "../../tools/phase1/route_inventory_test.go"
+  }
+}

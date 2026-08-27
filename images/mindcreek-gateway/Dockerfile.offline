@@ -1,0 +1,15 @@
+FROM scratch
+
+ARG TARGETARCH
+ARG MINDCREEK_VERSION=0.2.0-phase1
+LABEL org.opencontainers.image.title="MindCreek Gateway" \
+      org.opencontainers.image.version="${MINDCREEK_VERSION}" \
+      org.opencontainers.image.source="https://github.com/gawaineLee77/MyKB" \
+      org.opencontainers.image.licenses="MIT"
+
+COPY .local/gateway-build/mindcreek-gateway-linux-${TARGETARCH} /mindcreek-gateway
+USER 65532:65532
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=3s --retries=6 \
+  CMD ["/mindcreek-gateway", "healthcheck"]
+ENTRYPOINT ["/mindcreek-gateway"]

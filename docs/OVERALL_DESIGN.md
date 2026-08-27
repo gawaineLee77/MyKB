@@ -4,9 +4,9 @@
 
 | Field | Value |
 |---|---|
-| Status | Proposed design, ready for implementation planning |
-| Document version | 0.4 |
-| Date | 2026-08-24 |
+| Status | Approved design; Phase 1 Gates A–D complete |
+| Document version | 0.6 |
+| Date | 2026-08-26 |
 | Base project | Tencent WeKnora |
 | Current approved upstream baseline | WeKnora v0.7.2 |
 | Deployment model | Self-hosted service for internal users |
@@ -264,7 +264,7 @@ This mode follows “human in command”: an LLM accelerates bootstrapping, but 
 
 ### 7.1 Identity and membership
 
-- Integrate the organization's OIDC provider where available.
+- Integrate the organization's OAuth 2.0 identity provider.
 - Disable public/self registration in production.
 - Support user suspension and session revocation.
 - Map identity groups to workspaces only through explicit configuration.
@@ -347,7 +347,7 @@ This mode follows “human in command”: an LLM accelerates bootstrapping, but 
 flowchart TB
     U[Internal User] --> RP[Reverse Proxy / TLS]
     A[Administrator] --> RP
-    IDP[OIDC Identity Provider] --> AUTH
+    IDP[OAuth 2.0 Identity Provider] --> AUTH
 
     RP --> WEB[Web Frontend]
     RP --> API[WeKnora-based API]
@@ -870,7 +870,7 @@ The preferred topology runs stock or near-stock WeKnora behind a product gateway
 - Model administration for approved providers
 - Server health, job inspection, and operational administration
 - Docker deployment assets needed for the chosen topology
-- OIDC and closed-registration capabilities
+- OAuth 2.0 identity-provider and closed-registration capabilities
 
 ### 13.3 Product extension layers
 
@@ -973,6 +973,32 @@ Critical security releases use an expedited path but keep the same authorization
 - Preserve product data during upstream upgrades and reconcile missing or deleted upstream resources idempotently.
 - Never rewrite upstream migrations or modify an already-applied product migration; add forward-only product migrations.
 
+### 13.9 MindCreek web UI evolution and branding
+
+The product name is **MindCreek**. Its visual identity uses a creek-shaped knowledge mark, deep navy, teal, and fresh green to communicate knowledge that accumulates and flows to the people who need it. Product naming, logos, browser metadata, and theme tokens are product-owned assets; WeKnora names that form compatibility contracts—API paths, headers, storage keys, provider identifiers, schema names, and backend logs—are not renamed.
+
+UI delivery follows three controlled stages:
+
+1. **Stage 1 — Branding overlay.** Copy the pinned upstream frontend into an ephemeral build directory, apply an assertion-checked MindCreek overlay, run frontend checks, and package a product-owned UI image. The committed upstream submodule remains unchanged.
+2. **Stage 2 — Product modules.** Add MindCreek-owned navigation and pages for Personal Notes, Plain RAG, sharing, subscriptions, and administration. These pages call the Product Gateway; unchanged upstream pages may remain temporarily behind the same shell.
+3. **Stage 3 — Independent frontend.** Replace the upstream SPA when product workflows justify it, while retaining the versioned gateway/adapter contract and the proven Nginx behavior for SPA fallback, uploads, downloads, and SSE chat.
+
+The diagram combines the Stage 1 build path with the target secured runtime. Until the Product Gateway is introduced, the branding-only image temporarily retains the upstream Nginx-to-WeKnora API proxy and must not be treated as authorization-complete.
+
+```mermaid
+flowchart LR
+    TAG[Pinned WeKnora frontend] --> COPY[Ephemeral build copy]
+    BRAND[MindCreek assets and overlay] --> APPLY[Guarded overlay]
+    COPY --> APPLY
+    APPLY --> TEST[Type-check, test, build]
+    TEST --> IMAGE[MindCreek UI image]
+    IMAGE --> BROWSER[Internal browser users]
+    BROWSER --> GATEWAY[Product Gateway / BFF]
+    GATEWAY --> WK[Private WeKnora API]
+```
+
+Stage 1 must fail when expected upstream anchors change, prompting an explicit compatibility review instead of silently producing a partially branded build. It preserves upstream authentication behavior, API paths, token/workspace handling, and Nginx proxy/SSE settings. The deployed image keeps the WeKnora MIT license and attribution. Branding and hidden controls are presentation only: they do not satisfy capability denial or private-KB authorization, which remain Product Gateway responsibilities.
+
 ## 14. Deployment design
 
 ### 14.1 Initial topology
@@ -1001,7 +1027,7 @@ flowchart LR
     end
 
     APP -->|Approved outbound path| MODELS[Internal or Approved Model Endpoints]
-    APP -->|OIDC| IDP[Identity Provider]
+    APP -->|OAuth 2.0| IDP[Identity Provider]
 ```
 
 Only the reverse proxy publishes a host port. PostgreSQL, Redis, object storage, parser, worker, and vector services are not published outside the private deployment network.
@@ -1012,7 +1038,7 @@ Only the reverse proxy publishes a host port. PostgreSQL, Redis, object storage,
 |---|---|
 | Orchestration | Docker Compose for the first single-server deployment; retain Helm only if Kubernetes is an expected near-term target. |
 | TLS and routing | Existing corporate reverse proxy or a dedicated Nginx/Traefik instance with organization certificates. |
-| Identity | Corporate OIDC; emergency local administrator account stored and audited separately. |
+| Identity | Corporate OAuth 2.0 provider; emergency local administrator account stored and audited separately. |
 | Metadata | PostgreSQL with encrypted backups. |
 | Queue/cache | Redis with authentication, persistence appropriate to queue semantics, and private networking. |
 | Object storage | MinIO on the same storage domain or approved S3-compatible service. |
@@ -1058,7 +1084,7 @@ All workers must be idempotent or safely retryable before horizontal scaling.
 
 ### 15.1 Identity and session security
 
-- Use OIDC Authorization Code flow with PKCE where supported.
+- Use OAuth 2.0 Authorization Code flow with PKCE; obtain the stable organization user identifier from the provider's validated token or user-information endpoint.
 - Disable public registration and invite links not limited to the organization.
 - Require secure, HTTP-only, same-site cookies or equally protected bearer-token handling.
 - Revoke sessions after password reset, user suspension, or major role change.
@@ -1253,6 +1279,8 @@ Audit records contain actor, effective principal, action, target, timestamp, req
 
 **Outcome:** Stock knowledge and agent functionality plus the priority Personal Notes and Plain RAG modes, without shipping or exposing Mini Program, CLI, or IM features.
 
+**Implementation status (2026-08-26):** Gates A–D are complete through Personal Notes and Plain RAG. Optional Note Wiki, final UI exclusion cleanup, and release packaging remain.
+
 - Preserve the upstream tree; omit Mini Program and CLI artifacts from the product build and deployment.
 - Add the centralized capability registry and product gateway deny rules.
 - Do not start IM workers or provide credentials; disable product-facing routes, settings, and UI.
@@ -1302,7 +1330,7 @@ Audit records contain actor, effective principal, action, target, timestamp, req
 
 **Outcome:** Production-ready internal pilot.
 
-- Integrate OIDC and disable self-registration.
+- Integrate the organization's OAuth 2.0 identity provider and disable self-registration.
 - Complete network isolation, TLS, secrets, backup, restore, logging, metrics, and alerting.
 - Run security, load, migration, and recovery tests.
 - Pilot with a small set of teams and collect usability/retrieval feedback.
@@ -1467,13 +1495,19 @@ The MVP is complete when:
 
 **Reason:** Business semantics are accountable organizational decisions; model output is useful assistance, not an authority.
 
+### ADR-013: Evolve the MindCreek UI outside the upstream boundary
+
+**Decision:** Begin with an assertion-checked, build-time MindCreek branding overlay applied to an ephemeral copy of the pinned WeKnora frontend. Move product workflows into product-owned modules and ultimately an independent SPA without committing edits inside the upstream submodule.
+
+**Reason:** This delivers a coherent product identity immediately, preserves a fast upstream upgrade path, and avoids coupling the eventual MindCreek experience to WeKnora's internal Vue component structure.
+
 ## 22. Open decisions before implementation
 
 The following choices do not block the overall design but must be resolved during Phase 0:
 
 | Decision | Recommended default |
 |---|---|
-| Identity provider | Corporate OIDC with closed registration |
+| Identity provider | Corporate OAuth 2.0 provider with closed registration |
 | Workspace administrator access to private content | Explicit audited override, hidden from routine UI |
 | Subscriber source download | Disabled; rendered preview and citations only |
 | Editor source download | Enabled unless policy forbids it |

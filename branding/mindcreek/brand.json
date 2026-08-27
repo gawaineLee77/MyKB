@@ -1,0 +1,12 @@
+{
+  "name": "MindCreek",
+  "description": "Private knowledge that grows, connects, and flows where work happens.",
+  "repositoryUrl": "https://github.com/gawaineLee77/MyKB",
+  "upstreamName": "WeKnora",
+  "palette": {
+    "navy": "#123047",
+    "teal": "#138A86",
+    "green": "#4FAF73",
+    "aqua": "#DDF7F4"
+  }
+}

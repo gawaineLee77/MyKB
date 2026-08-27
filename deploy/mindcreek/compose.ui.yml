@@ -1,0 +1,27 @@
+services:
+  frontend:
+    image: ${MINDCREEK_UI_IMAGE:-mindcreek-ui:stage1}
+    build:
+      context: ../..
+      dockerfile: images/mindcreek-ui/Dockerfile
+      args:
+        MINDCREEK_UI_VERSION: ${MINDCREEK_UI_VERSION:-0.1.0}
+        VITE_FRONTEND_COMMIT: weknora-${WEKNORA_VERSION:-v0.7.2}-mindcreek-${MINDCREEK_UI_VERSION:-0.1.0}
+    container_name: MindCreek-frontend
+
+  app:
+    container_name: MindCreek-app
+    env_file: !override
+      - ../../.local/mindcreek.env
+
+  docreader:
+    container_name: MindCreek-docreader
+
+  postgres:
+    container_name: MindCreek-postgres
+
+  redis:
+    container_name: MindCreek-redis
+
+  mock-embedding:
+    container_name: MindCreek-mock-embedding
