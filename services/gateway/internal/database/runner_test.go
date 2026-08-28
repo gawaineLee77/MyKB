@@ -37,10 +37,10 @@ func TestEmbeddedMigrationsIncludeKBAccessGrants(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(migrations) != 7 {
-		t.Fatalf("embedded migration count = %d, want 7", len(migrations))
+	if len(migrations) != 8 {
+		t.Fatalf("embedded migration count = %d, want 8", len(migrations))
 	}
-	grantMigration := migrations[len(migrations)-2]
+	grantMigration := migrations[len(migrations)-3]
 	if grantMigration.Version != 6 || grantMigration.Name != "kb_access_grants" {
 		t.Fatalf("last migration = %+v", grantMigration)
 	}
@@ -54,10 +54,22 @@ func TestEmbeddedMigrationsIncludeKBAccessGrants(t *testing.T) {
 			t.Errorf("grant migration is missing %q", required)
 		}
 	}
-	securityMigration := migrations[len(migrations)-1]
+	securityMigration := migrations[len(migrations)-2]
 	if securityMigration.Version != 7 || securityMigration.Name != "phase2_security_records" ||
 		!strings.Contains(securityMigration.UpSQL, "session_kb_scopes") ||
 		!strings.Contains(securityMigration.UpSQL, "kb_access_audit_events") {
 		t.Fatalf("Phase 2 security migration = %+v", securityMigration)
+	}
+	phase3Migration := migrations[len(migrations)-1]
+	if phase3Migration.Version != 8 || phase3Migration.Name != "phase3_publications" {
+		t.Fatalf("Phase 3 publication migration = %+v", phase3Migration)
+	}
+	for _, required := range []string{
+		"kb_publications", "organization_public", "kb_subscriptions",
+		"kb_content_revisions", "kb_activity_events", "last_seen_revision",
+	} {
+		if !strings.Contains(phase3Migration.UpSQL, required) {
+			t.Errorf("Phase 3 publication migration is missing %q", required)
+		}
 	}
 }

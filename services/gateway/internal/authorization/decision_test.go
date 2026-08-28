@@ -10,6 +10,8 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ownership"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/publication"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/subscription"
 )
 
 type ownerStub struct {
@@ -141,6 +143,66 @@ func TestDecisionFailsClosedWhenDependenciesFail(t *testing.T) {
 			_, err := service.Decide(context.Background(), "kb-1", Principal{UserID: "bob", TenantID: 42}, nil)
 			if !errors.Is(err, ErrUnavailable) {
 				t.Fatalf("Decide() error = %v", err)
+			}
+		})
+	}
+}
+
+type publicationReaderStub struct {
+	result publication.Publication
+	err    error
+}
+
+func (s publicationReaderStub) GetPublishedByKB(context.Context, string) (publication.Publication, error) {
+	return s.result, s.err
+}
+
+type subscriptionReaderStub struct {
+	result subscription.Subscription
+	err    error
+}
+
+func (s subscriptionReaderStub) Effective(context.Context, string, string, uint64) (subscription.Subscription, error) {
+	return s.result, s.err
+}
+
+func TestPublicationDerivedReadRolesNeverElevateEdits(t *testing.T) {
+	now := time.Date(2026, 8, 27, 14, 0, 0, 0, time.UTC)
+	owner := ownership.Ownership{KnowledgeBaseID: "kb-1", OwnerUserID: "alice", TenantID: 42, ProductMode: profile.ModeRAG}
+	basePublication := publication.Publication{
+		ID: "pub-1", KnowledgeBaseID: "kb-1", PublisherID: "alice", PublisherTenantID: 42,
+		Title: "Guide", Audience: publication.Audience{Type: publication.AudienceOrganization},
+		Status: publication.StatusPublished, PublishedRevision: 2, CreatedAt: now, PublishedAt: now,
+		UpdatedAt: now, RowVersion: 1, LastAuditCorrelationID: "request-0",
+	}
+	tests := []struct {
+		name         string
+		mode         publication.AccessMode
+		subscription subscriptionReaderStub
+		wantSource   Source
+	}{
+		{name: "organization public", mode: publication.AccessOrganizationPublic, wantSource: SourceOrganizationPublic},
+		{name: "subscriber", mode: publication.AccessSubscriber, subscription: subscriptionReaderStub{result: subscription.Subscription{ID: "sub-1", Status: subscription.StatusActive}}, wantSource: SourceSubscription},
+		{name: "not subscribed", mode: publication.AccessSubscriber, subscription: subscriptionReaderStub{err: subscription.ErrNotFound}, wantSource: SourceNone},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pub := basePublication
+			pub.AccessMode = test.mode
+			service, err := NewService(ownerStub{result: owner}, &grantReaderStub{err: grant.ErrNotFound}, func() time.Time { return now },
+				WithPublicationAccess(publicationReaderStub{result: pub}, test.subscription))
+			if err != nil {
+				t.Fatal(err)
+			}
+			decision, err := service.Decide(context.Background(), "kb-1", Principal{UserID: "bob", TenantID: 99}, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if decision.Source != test.wantSource {
+				t.Fatalf("source = %q, want %q", decision.Source, test.wantSource)
+			}
+			if test.wantSource != SourceNone && (!decision.Allows(ActionRead) || decision.Allows(ActionEditContent)) {
+				t.Fatalf("publication decision permissions = %+v", decision)
 			}
 		})
 	}

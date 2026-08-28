@@ -44,6 +44,10 @@ grep -q 'A quiet place for working notes' "$TARGET/src/mindcreek/NotesWorkspace.
 grep -q 'Managed Plain RAG preset' "$TARGET/src/mindcreek/RAGWorkspace.vue"
 grep -q 'Shared with me' "$TARGET/src/mindcreek/KnowledgeLibrary.vue"
 grep -q 'Share knowledge base' "$TARGET/src/mindcreek/SharingDialog.vue"
+grep -q 'Publish knowledge base' "$TARGET/src/mindcreek/PublicationDialog.vue"
+grep -q 'Organization public' "$TARGET/src/mindcreek/CatalogView.vue"
+grep -q 'data-testid="subscribed-tab"' "$TARGET/src/mindcreek/KnowledgeLibrary.vue"
+grep -q 'data-testid="discover-tab"' "$TARGET/src/mindcreek/KnowledgeLibrary.vue"
 grep -q "index_profile: 'notes_plain'" "$TARGET/src/mindcreek/contracts.ts"
 test -f "$TARGET/src/assets/img/mindcreek-mark.png"
 test -f "$TARGET/public/mindcreek-favicon.png"
@@ -55,4 +59,4 @@ test -z "$DIRTY" || {
   exit 1
 }
 
-echo "MindCreek Stage 2 overlay verified; upstream remains unchanged"
+echo "MindCreek Stage 3 overlay verified; upstream remains unchanged"

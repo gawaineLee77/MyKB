@@ -5,6 +5,7 @@ import {
   buildKnowledgeSpaceRequest,
   isSelectionEnabled,
   permissionAffordances,
+  publicationAffordances,
   type CapabilityDocument,
 } from './contracts.ts'
 
@@ -83,4 +84,11 @@ test('derives permission-aware UI affordances without elevating viewers or edito
   assert.deepEqual(permissionAffordances('owner'), {
     canRead: true, canEditContent: true, canEditMetadata: true, canManageGrants: true, canDelete: true,
   })
+})
+
+test('keeps publication-derived access read-only and subscription-aware', () => {
+  assert.deepEqual(publicationAffordances('subscriber', false), { canRead: false, canSubscribe: true, canDownload: false })
+  assert.deepEqual(publicationAffordances('subscriber', true), { canRead: true, canSubscribe: false, canDownload: false })
+  assert.deepEqual(publicationAffordances('organization_public', false), { canRead: true, canSubscribe: true, canDownload: false })
+  assert.deepEqual(publicationAffordances('organization_public', false, true), { canRead: true, canSubscribe: false, canDownload: true })
 })

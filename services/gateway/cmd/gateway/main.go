@@ -15,6 +15,7 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/audit"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/catalog"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
 	productdb "github.com/gawaineLee77/MyKB/services/gateway/internal/database"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
@@ -24,10 +25,13 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ownership"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/publication"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/revision"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/routeaction"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/server"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/sessionscope"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/space"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/subscription"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
 )
 
@@ -85,15 +89,42 @@ func main() {
 	if err != nil {
 		log.Fatalf("ownership resolver error: %v", err)
 	}
-	authorizationService, err := authorization.NewService(ownerResolver, grantRepository, nil)
+	revisionRepository, err := revision.NewRepository(db)
+	if err != nil {
+		log.Fatalf("content revision repository error: %v", err)
+	}
+	publicationRepository, err := publication.NewRepository(db)
+	if err != nil {
+		log.Fatalf("publication repository error: %v", err)
+	}
+	subscriptionRepository, err := subscription.NewRepository(db)
+	if err != nil {
+		log.Fatalf("subscription repository error: %v", err)
+	}
+	subscriptionService, err := subscription.NewService(subscriptionRepository, publicationRepository, revisionRepository,
+		subscription.WithAuditRecorder(auditRepository))
+	if err != nil {
+		log.Fatalf("subscription service error: %v", err)
+	}
+	publicationService, err := publication.NewService(publicationRepository, ownerResolver, revisionRepository,
+		publication.WithSubscriptionInvalidator(subscriptionRepository), publication.WithAuditRecorder(auditRepository))
+	if err != nil {
+		log.Fatalf("publication service error: %v", err)
+	}
+	authorizationService, err := authorization.NewService(ownerResolver, grantRepository, nil,
+		authorization.WithPublicationAccess(publicationRepository, subscriptionService))
 	if err != nil {
 		log.Fatalf("authorization service error: %v", err)
+	}
+	catalogService, err := catalog.NewService(publicationRepository, subscriptionService, revisionRepository)
+	if err != nil {
+		log.Fatalf("publication catalog error: %v", err)
 	}
 	grantService, err := grant.NewService(grantRepository, ownerResolver, grant.WithAuditRecorder(auditRepository))
 	if err != nil {
 		log.Fatalf("grant service error: %v", err)
 	}
-	libraryService, err := library.NewService(adapter, authorizationService)
+	libraryService, err := library.NewService(adapter, authorizationService, library.WithSubscriptions(subscriptionService))
 	if err != nil {
 		log.Fatalf("authorized library error: %v", err)
 	}
@@ -101,7 +132,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("route-action policy error: %v", err)
 	}
-	accessGate, err := access.NewPhase2Gate(profiles, adapter, routeActions, authorizationService, sessionScopes, auditRepository)
+	accessGate, err := access.NewPhase3Gate(profiles, adapter, routeActions, authorizationService, sessionScopes, auditRepository, revisionRepository, publicationService)
 	if err != nil {
 		log.Fatalf("access gate error: %v", err)
 	}
@@ -121,7 +152,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("notes service error: %v", err)
 	}
-	ingestionService, err := ingestion.NewService(profiles, adapter, authorizationService)
+	ingestionService, err := ingestion.NewPhase3Service(profiles, adapter, authorizationService, revisionRepository)
 	if err != nil {
 		log.Fatalf("document ingestion service error: %v", err)
 	}
@@ -138,7 +169,8 @@ func main() {
 	dependencies := server.Dependencies{
 		Principals: adapter, Access: accessGate, Spaces: spaceService, Notes: noteService,
 		Ingestions: ingestionService, Library: libraryService, Grants: grantService, Directory: adapter,
-		Decisions: authorizationService,
+		Decisions: authorizationService, Publications: publicationService, Catalog: catalogService,
+		Subscriptions: subscriptionService,
 	}
 	if err := http.ListenAndServe(cfg.ListenAddr, server.NewGateway(cfg, capabilities, routePolicy, dependencies)); err != nil {
 		log.Fatalf("gateway stopped: %v", err)

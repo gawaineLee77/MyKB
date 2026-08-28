@@ -11,6 +11,7 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/audit"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/publication"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
 )
 
@@ -50,15 +51,30 @@ func (function actionMatcherFunc) Match(method, path string) (authorization.Acti
 }
 
 type decisionStub struct {
-	roles map[string]authorization.Role
-	errs  map[string]error
+	roles   map[string]authorization.Role
+	sources map[string]authorization.Source
+	errs    map[string]error
 }
 
 func (s *decisionStub) Decide(_ context.Context, kbID string, _ authorization.Principal, _ http.Header) (authorization.Decision, error) {
 	if err := s.errs[kbID]; err != nil {
 		return authorization.Decision{}, err
 	}
-	return authorization.Decision{KnowledgeBaseID: kbID, Role: s.roles[kbID]}, nil
+	return authorization.Decision{KnowledgeBaseID: kbID, Role: s.roles[kbID], Source: s.sources[kbID]}, nil
+}
+
+type revisionRecorderStub struct{ calls []string }
+
+func (s *revisionRecorderStub) Increment(_ context.Context, kbID, _, eventType, _, _ string, _ time.Time) (int64, error) {
+	s.calls = append(s.calls, kbID+":"+eventType)
+	return int64(len(s.calls)), nil
+}
+
+type publicationLifecycleStub struct{ calls int }
+
+func (s *publicationLifecycleStub) UnpublishForDeletion(context.Context, string, publication.Actor, string, http.Header) error {
+	s.calls++
+	return nil
 }
 
 func (s *decisionStub) Authorize(ctx context.Context, kbID string, principal authorization.Principal, action authorization.Action, headers http.Header) (authorization.Decision, error) {
@@ -192,6 +208,42 @@ func TestPhase2RoleActionEnforcement(t *testing.T) {
 				t.Fatalf("denied request error = %v", err)
 			}
 		})
+	}
+}
+
+func TestPhase3PublicationReadCannotDownloadOriginalSource(t *testing.T) {
+	actions := actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true })
+	gate, err := NewPhase3Gate(&fakeProfiles{items: map[string]profile.Profile{}}, &fakeResolver{knowledge: map[string]string{"doc-1": "kb-1"}}, actions,
+		&decisionStub{roles: map[string]authorization.Role{"kb-1": authorization.RoleViewer}, sources: map[string]authorization.Source{"kb-1": authorization.SourceOrganizationPublic}, errs: map[string]error{}}, nil,
+		&auditRecorderStub{}, &revisionRecorderStub{}, &publicationLifecycleStub{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodGet, "http://gateway/api/v1/knowledge/doc-1/download", "")
+	request.Header.Set("X-Request-ID", "request-1")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "bob", TenantID: 42}); errorCode(err) != "resource.not_found" {
+		t.Fatalf("download error = %v", err)
+	}
+}
+
+func TestPhase3SuccessfulContentMutationRecordsRevision(t *testing.T) {
+	revisions := &revisionRecorderStub{}
+	gate, err := NewPhase3Gate(&fakeProfiles{items: map[string]profile.Profile{}}, &fakeResolver{}, actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionEditContent, true }),
+		&decisionStub{roles: map[string]authorization.Role{"kb-1": authorization.RoleEditor}, sources: map[string]authorization.Source{"kb-1": authorization.SourceUserGrant}, errs: map[string]error{}}, nil, &auditRecorderStub{}, revisions, &publicationLifecycleStub{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodPost, "http://gateway/api/v1/knowledge-bases/kb-1/knowledge", `{}`)
+	request.Header.Set("X-Request-ID", "request-2")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "editor", TenantID: 42}); err != nil {
+		t.Fatal(err)
+	}
+	response := &http.Response{StatusCode: http.StatusCreated, Header: make(http.Header), Request: request, Body: io.NopCloser(strings.NewReader(`{"success":true}`))}
+	if err := gate.FilterResponse(response); err != nil {
+		t.Fatal(err)
+	}
+	if len(revisions.calls) != 1 || revisions.calls[0] != "kb-1:kb.content_updated" {
+		t.Fatalf("revision calls = %v", revisions.calls)
 	}
 }
 

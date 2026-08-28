@@ -17,6 +17,7 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/notespolicy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/publication"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
 )
 
@@ -29,6 +30,15 @@ type Identity struct {
 }
 
 type identityKey struct{}
+type phase3RequestKey struct{}
+
+type phase3Request struct {
+	Identity      Identity
+	KBIDs         []string
+	Action        authorization.Action
+	Path          string
+	CorrelationID string
+}
 
 func WithIdentity(ctx context.Context, identity Identity) context.Context {
 	return context.WithValue(ctx, identityKey{}, identity)
@@ -52,12 +62,14 @@ type ResourceResolver interface {
 }
 
 type Gate struct {
-	profiles  ProfileStore
-	resolver  ResourceResolver
-	actions   ActionMatcher
-	decisions DecisionService
-	sessions  SessionScopeStore
-	auditor   audit.Recorder
+	profiles     ProfileStore
+	resolver     ResourceResolver
+	actions      ActionMatcher
+	decisions    DecisionService
+	sessions     SessionScopeStore
+	auditor      audit.Recorder
+	revisions    RevisionRecorder
+	publications PublicationLifecycle
 }
 
 type ActionMatcher interface {
@@ -72,6 +84,14 @@ type DecisionService interface {
 type SessionScopeStore interface {
 	ListKnowledgeBases(context.Context, string) ([]string, error)
 	RecordKnowledgeBases(context.Context, string, []string, time.Time) error
+}
+
+type RevisionRecorder interface {
+	Increment(context.Context, string, string, string, string, string, time.Time) (int64, error)
+}
+
+type PublicationLifecycle interface {
+	UnpublishForDeletion(context.Context, string, publication.Actor, string, http.Header) error
 }
 
 type Error struct {
@@ -108,6 +128,20 @@ func NewPhase2Gate(profiles ProfileStore, resolver ResourceResolver, actions Act
 	if len(recorders) == 1 {
 		gate.auditor = recorders[0]
 	}
+	return gate, nil
+}
+
+func NewPhase3Gate(profiles ProfileStore, resolver ResourceResolver, actions ActionMatcher, decisions DecisionService,
+	sessions SessionScopeStore, auditor audit.Recorder, revisions RevisionRecorder, publications PublicationLifecycle) (*Gate, error) {
+	if revisions == nil || publications == nil {
+		return nil, fmt.Errorf("Phase 3 revision recorder and publication lifecycle are required")
+	}
+	gate, err := NewPhase2Gate(profiles, resolver, actions, decisions, sessions, auditor)
+	if err != nil {
+		return nil, err
+	}
+	gate.revisions = revisions
+	gate.publications = publications
 	return gate, nil
 }
 
@@ -179,12 +213,29 @@ func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, iden
 			return err
 		}
 	}
+	if g.publications != nil && action == authorization.ActionDelete {
+		correlationID := strings.TrimSpace(request.Header.Get("X-Request-ID"))
+		if correlationID == "" {
+			return &Error{Code: "publication.unavailable", Message: "Publication lifecycle is unavailable", StatusCode: http.StatusServiceUnavailable}
+		}
+		for _, kbID := range resolvedKBIDs {
+			if err := g.publications.UnpublishForDeletion(ctx, kbID, publication.Actor{UserID: identity.UserID, TenantID: identity.TenantID}, correlationID, request.Header); err != nil {
+				return &Error{Code: "publication.unavailable", Message: "Publication lifecycle is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+			}
+		}
+	}
 	if g.sessions != nil && len(resolvedKBIDs) > 0 {
 		for _, sessionID := range sessionIDs {
 			if err := g.sessions.RecordKnowledgeBases(ctx, sessionID, resolvedKBIDs, time.Now().UTC()); err != nil {
 				return &Error{Code: "security.session_scope_unavailable", Message: "Session policy is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
 			}
 		}
+	}
+	if g.revisions != nil && len(resolvedKBIDs) > 0 {
+		*request = *request.WithContext(context.WithValue(request.Context(), phase3RequestKey{}, phase3Request{
+			Identity: identity, KBIDs: resolvedKBIDs, Action: action, Path: request.URL.Path,
+			CorrelationID: strings.TrimSpace(request.Header.Get("X-Request-ID")),
+		}))
 	}
 	return nil
 }
@@ -365,8 +416,13 @@ func (g *Gate) authorizeKB(ctx context.Context, kbID string, identity Identity, 
 
 func (g *Gate) authorizeKBAction(ctx context.Context, kbID string, identity Identity, action authorization.Action, request *http.Request) error {
 	principal := authorization.Principal{UserID: identity.UserID, TenantID: identity.TenantID}
-	_, err := g.decisions.Authorize(ctx, kbID, principal, action, request.Header)
+	decision, err := g.decisions.Authorize(ctx, kbID, principal, action, request.Header)
 	if err == nil {
+		if isOriginalSourceDownload(request.URL.Path) &&
+			(decision.Source == authorization.SourceSubscription || decision.Source == authorization.SourceOrganizationPublic) {
+			g.recordDenied(ctx, kbID, identity, action, request.Header)
+			return &Error{Code: "resource.not_found", Message: "Resource not found", StatusCode: http.StatusNotFound, Err: authorization.ErrDenied}
+		}
 		return nil
 	}
 	if errors.Is(err, authorization.ErrDenied) && action == authorization.ActionConfigure && isLimitedEditorConfiguration(request) {
@@ -387,6 +443,10 @@ func (g *Gate) authorizeKBAction(ctx context.Context, kbID string, identity Iden
 	default:
 		return &Error{Code: "security.authorization_unavailable", Message: "Authorization service is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
 	}
+}
+
+func isOriginalSourceDownload(requestPath string) bool {
+	return strings.HasSuffix(strings.TrimSuffix(requestPath, "/"), "/download")
 }
 
 func isLimitedEditorConfiguration(request *http.Request) bool {
@@ -452,6 +512,20 @@ func highValueAction(action authorization.Action) bool {
 
 // FilterResponse removes Note Spaces not owned by the authenticated caller.
 func (g *Gate) FilterResponse(response *http.Response) error {
+	if g.revisions != nil && response.StatusCode >= 200 && response.StatusCode < 300 {
+		if metadata, ok := response.Request.Context().Value(phase3RequestKey{}).(phase3Request); ok {
+			if eventType := revisionEvent(metadata.Action, metadata.Path); eventType != "" {
+				if metadata.CorrelationID == "" {
+					return &Error{Code: "activity.unavailable", Message: "Knowledge-base activity is unavailable", StatusCode: http.StatusServiceUnavailable}
+				}
+				for _, kbID := range metadata.KBIDs {
+					if _, err := g.revisions.Increment(response.Request.Context(), kbID, metadata.Identity.UserID, eventType, "", metadata.CorrelationID, time.Now().UTC()); err != nil {
+						return &Error{Code: "activity.unavailable", Message: "Knowledge-base activity is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+					}
+				}
+			}
+		}
+	}
 	if response.Request.Method != http.MethodGet || !isFilterableListPath(response.Request.URL.Path) || response.StatusCode != http.StatusOK {
 		return nil
 	}
@@ -501,6 +575,22 @@ func (g *Gate) FilterResponse(response *http.Response) error {
 	response.ContentLength = int64(len(encoded))
 	response.Header.Set("Content-Length", strconv.Itoa(len(encoded)))
 	return nil
+}
+
+func revisionEvent(action authorization.Action, requestPath string) string {
+	switch action {
+	case authorization.ActionEditContent:
+		return "kb.content_updated"
+	case authorization.ActionDelete:
+		return "kb.deleted"
+	case authorization.ActionConfigure:
+		segments := splitPath(requestPath)
+		if len(segments) >= 4 && segments[0] == "api" && segments[1] == "v1" &&
+			(segments[2] == "knowledge-bases" || segments[2] == "initialization") {
+			return "kb.content_updated"
+		}
+	}
+	return ""
 }
 
 func (g *Gate) filterPhase2Response(response *http.Response, identity Identity) error {

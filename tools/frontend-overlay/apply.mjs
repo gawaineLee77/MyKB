@@ -111,7 +111,7 @@ replaceExact(
           component: () => import("@/mindcreek/KnowledgeLibrary.vue"),
           meta: { requiresInit: true, requiresAuth: true }
         },
-        // MindCreek Stage 2 product module. The source lives outside the upstream tree.
+        // MindCreek Stage 3 product module. The source lives outside the upstream tree.
         {
           path: "mindcreek/create",
           name: "mindcreekCreateKnowledgeSpace",
@@ -204,4 +204,4 @@ copyFileSync(resolve(brandingRoot, 'assets/mindcreek-mark-ui.png'), pathFor('src
 copyFileSync(resolve(brandingRoot, 'assets/mindcreek-favicon.png'), pathFor('public/mindcreek-favicon.png'))
 appendFileSync(pathFor(themePath), `\n\n${readFileSync(resolve(brandingRoot, 'theme.css'), 'utf8')}\n`)
 
-console.log(`Applied ${brand.name} branding and Stage 2 product modules to ${frontendRoot}`)
+console.log(`Applied ${brand.name} branding and Stage 3 product modules to ${frontendRoot}`)

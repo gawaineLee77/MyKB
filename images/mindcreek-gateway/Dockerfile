@@ -4,7 +4,7 @@ WORKDIR /src/services/gateway
 COPY services/gateway/go.mod services/gateway/go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY services/gateway/ ./
-ARG MINDCREEK_VERSION=0.3.0-phase2
+ARG MINDCREEK_VERSION=0.4.0-phase3
 RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 go test ./... \
     && CGO_ENABLED=0 go build \

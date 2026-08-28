@@ -12,6 +12,8 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ownership"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/publication"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/subscription"
 )
 
 var (
@@ -58,9 +60,11 @@ type Principal struct {
 type Source string
 
 const (
-	SourceNone      Source = "none"
-	SourceOwner     Source = "owner"
-	SourceUserGrant Source = "user_grant"
+	SourceNone               Source = "none"
+	SourceOwner              Source = "owner"
+	SourceUserGrant          Source = "user_grant"
+	SourceSubscription       Source = "subscription"
+	SourceOrganizationPublic Source = "organization_public"
 )
 
 type Decision struct {
@@ -70,6 +74,8 @@ type Decision struct {
 	SourceTenantID  uint64
 	GrantID         string
 	GrantRevision   int64
+	PublicationID   string
+	SubscriptionID  string
 	ProductMode     profile.ProductMode
 }
 
@@ -97,20 +103,46 @@ type GrantReader interface {
 	EffectiveUserGrant(context.Context, string, string, time.Time) (grant.Grant, error)
 }
 
-type Service struct {
-	owners OwnerResolver
-	grants GrantReader
-	now    func() time.Time
+type PublicationReader interface {
+	GetPublishedByKB(context.Context, string) (publication.Publication, error)
 }
 
-func NewService(owners OwnerResolver, grants GrantReader, clock func() time.Time) (*Service, error) {
+type SubscriptionReader interface {
+	Effective(context.Context, string, string, uint64) (subscription.Subscription, error)
+}
+
+type Option func(*Service)
+
+func WithPublicationAccess(publications PublicationReader, subscriptions SubscriptionReader) Option {
+	return func(service *Service) {
+		service.publications = publications
+		service.subscriptions = subscriptions
+	}
+}
+
+type Service struct {
+	owners        OwnerResolver
+	grants        GrantReader
+	publications  PublicationReader
+	subscriptions SubscriptionReader
+	now           func() time.Time
+}
+
+func NewService(owners OwnerResolver, grants GrantReader, clock func() time.Time, options ...Option) (*Service, error) {
 	if owners == nil || grants == nil {
 		return nil, fmt.Errorf("owner resolver and grant reader are required")
 	}
 	if clock == nil {
 		clock = time.Now
 	}
-	return &Service{owners: owners, grants: grants, now: clock}, nil
+	service := &Service{owners: owners, grants: grants, now: clock}
+	for _, option := range options {
+		option(service)
+	}
+	if (service.publications == nil) != (service.subscriptions == nil) {
+		return nil, fmt.Errorf("publication and subscription readers must be configured together")
+	}
+	return service, nil
 }
 
 func (s *Service) Decide(ctx context.Context, kbID string, principal Principal, inbound http.Header) (Decision, error) {
@@ -133,30 +165,58 @@ func (s *Service) Decide(ctx context.Context, kbID string, principal Principal, 
 		base.Source = SourceOwner
 		return base, nil
 	}
-	if principal.TenantID != owner.TenantID {
-		return base, nil
-	}
 	if owner.IsPersonalNotes() {
 		return base, nil
 	}
-	effective, err := s.grants.EffectiveUserGrant(ctx, kbID, principal.UserID, s.now().UTC())
-	if errors.Is(err, grant.ErrNotFound) {
+	if principal.TenantID == owner.TenantID {
+		effective, err := s.grants.EffectiveUserGrant(ctx, kbID, principal.UserID, s.now().UTC())
+		if err == nil {
+			switch effective.Permission {
+			case grant.PermissionViewer:
+				base.Role = RoleViewer
+			case grant.PermissionEditor:
+				base.Role = RoleEditor
+			default:
+				return Decision{}, fmt.Errorf("%w: invalid effective grant permission", ErrUnavailable)
+			}
+			base.Source = SourceUserGrant
+			base.GrantID = effective.ID
+			base.GrantRevision = effective.Revision
+			return base, nil
+		}
+		if !errors.Is(err, grant.ErrNotFound) {
+			return Decision{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
+		}
+	}
+	if s.publications == nil {
+		return base, nil
+	}
+	pub, err := s.publications.GetPublishedByKB(ctx, kbID)
+	if errors.Is(err, publication.ErrNotFound) {
 		return base, nil
 	}
 	if err != nil {
 		return Decision{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
-	switch effective.Permission {
-	case grant.PermissionViewer:
-		base.Role = RoleViewer
-	case grant.PermissionEditor:
-		base.Role = RoleEditor
-	default:
-		return Decision{}, fmt.Errorf("%w: invalid effective grant permission", ErrUnavailable)
+	if !pub.VisibleTo(principal.TenantID) {
+		return base, nil
 	}
-	base.Source = SourceUserGrant
-	base.GrantID = effective.ID
-	base.GrantRevision = effective.Revision
+	base.PublicationID = pub.ID
+	if pub.AccessMode == publication.AccessOrganizationPublic {
+		base.Role = RoleViewer
+		base.Source = SourceOrganizationPublic
+		return base, nil
+	}
+	effectiveSubscription, err := s.subscriptions.Effective(ctx, pub.ID, principal.UserID, principal.TenantID)
+	if errors.Is(err, subscription.ErrNotFound) {
+		return base, nil
+	}
+	if err != nil {
+		return Decision{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
+	}
+	base.Role = RoleViewer
+	base.Source = SourceSubscription
+	base.SubscriptionID = effectiveSubscription.ID
 	return base, nil
 }
 

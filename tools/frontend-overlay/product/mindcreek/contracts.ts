@@ -1,5 +1,6 @@
 export type KnowledgeModeID = 'personal_notes' | 'rag' | 'ontology'
 export type KnowledgeRole = 'owner' | 'editor' | 'viewer'
+export type PublicationAccessMode = 'subscriber' | 'organization_public'
 
 export interface PermissionAffordances {
   canRead: boolean
@@ -16,6 +17,18 @@ export function permissionAffordances(role: KnowledgeRole): PermissionAffordance
     canEditMetadata: role === 'owner' || role === 'editor',
     canManageGrants: role === 'owner',
     canDelete: role === 'owner',
+  }
+}
+
+export function publicationAffordances(
+  accessMode: PublicationAccessMode,
+  subscribed: boolean,
+  owner = false,
+): { canRead: boolean; canSubscribe: boolean; canDownload: boolean } {
+  return {
+    canRead: owner || accessMode === 'organization_public' || subscribed,
+    canSubscribe: !owner && !subscribed,
+    canDownload: owner,
   }
 }
 

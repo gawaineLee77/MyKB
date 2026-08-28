@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "phase": "phase3",
+  "capabilities": {
+    "im": false,
+    "miniprogram": false,
+    "cli": false,
+    "embed": false,
+    "browser_extension": false,
+    "web_search": false,
+    "mcp": false,
+    "asr": false,
+    "data_analysis": false,
+    "external_connectors": false,
+    "kb_personal_notes": true,
+    "rag_plain": true,
+    "rag_graph": false,
+    "rag_pixel": false,
+    "ontology": false
+  }
+}

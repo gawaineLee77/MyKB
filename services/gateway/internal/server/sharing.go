@@ -60,12 +60,16 @@ func registerSharingRoutes(mux *http.ServeMux, dependencies Dependencies) {
 		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]any{
 			"knowledge_base_id": decision.KnowledgeBaseID,
 			"role":              decision.Role,
+			"access_source":     decision.Source,
+			"publication_id":    decision.PublicationID,
 			"product_mode":      decision.ProductMode,
 			"can_read":          decision.Allows(authorization.ActionRead),
 			"can_edit_content":  decision.Allows(authorization.ActionEditContent),
 			"can_edit_metadata": decision.Role == authorization.RoleOwner || decision.Role == authorization.RoleEditor,
 			"can_manage_grants": decision.Allows(authorization.ActionManageGrants),
 			"can_delete":        decision.Allows(authorization.ActionDelete),
+			"can_publish":       decision.Role == authorization.RoleOwner && decision.ProductMode != "personal_notes",
+			"can_download":      decision.Allows(authorization.ActionRead) && decision.Source != authorization.SourceSubscription && decision.Source != authorization.SourceOrganizationPublic,
 		}})
 	})
 

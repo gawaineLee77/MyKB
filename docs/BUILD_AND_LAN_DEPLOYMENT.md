@@ -2,9 +2,9 @@
 
 ## 1. Scope and current safety status
 
-The repository provides a verified **Phase 1 development runtime** based on unmodified WeKnora v0.7.2. Gates A–D cover the exclusive Product Gateway path, owner-only Personal Notes, recoverable revisions and quotas, and Plain RAG ingestion/retrieval/citations. It is suitable for development and a controlled LAN pilot, but it is not the final Phase 1 release: optional Note Wiki, excluded-UI cleanup, release packaging, corporate OAuth 2.0, and closed registration remain pending.
+The repository provides a verified **Phase 3 development runtime** based on unmodified WeKnora v0.7.2. Inherited gates cover the exclusive Product Gateway path, owner-only Personal Notes, Plain RAG, Viewer/Editor grants, publication, catalog discovery, subscriptions, organization-public read access, revision badges, and immediate inactivation. It is suitable for development and a controlled LAN pilot. Corporate OAuth 2.0, permanently closed registration, and unified Web/MCP agent scope remain later phases.
 
-The MindCreek frontend applies Stage 1 branding and Stage 2 Personal Notes/Plain RAG modules to a temporary copy of the pinned frontend. The product pages call the gateway; `upstream/weknora` remains unchanged.
+The MindCreek frontend applies Stage 1 branding and Stage 2 product modules—including Personal Notes, Plain RAG, sharing, Discover, and Subscribed—to a temporary copy of the pinned frontend. The product pages call the gateway; `upstream/weknora` remains unchanged.
 
 The recommended first topology is one internal server running Docker Compose. Only the frontend Nginx port is reachable from the LAN; the app API, PostgreSQL, Redis, and docreader remain private or loopback-only.
 
@@ -26,6 +26,8 @@ cd MyKB
 git submodule update --init --recursive
 make phase0-check
 make phase1-check
+make phase2-check
+make phase3-check
 make phase1-compose-config
 ```
 
@@ -52,12 +54,12 @@ cd ../..
 
 ## 4. Docker images to download
 
-The verified Phase 1 runtime uses these images:
+The verified Phase 3 runtime uses these images:
 
 | Image | Purpose | Required for the pilot |
 | --- | --- | --- |
 | `mindcreek-ui:stage1` | Branded UI plus Stage 2 product modules | Yes; built locally |
-| `mindcreek-gateway:phase2` | Product API, private sharing, policy, profiles, notes, and ingestion guard | Yes; built locally |
+| `mindcreek-gateway:phase3` | Product API, private sharing, publication, catalog, subscriptions, policy, notes, and ingestion guard | Yes; built locally |
 | `wechatopenai/weknora-app:v0.7.2` | WeKnora Go application | Yes |
 | `wechatopenai/weknora-docreader:v0.7.2` | PDF/Office/image parsing | Yes |
 | `paradedb/paradedb:v0.22.2-pg17` | PostgreSQL, vector, and keyword retrieval | Yes |
@@ -74,7 +76,7 @@ make images-build
 make images-list
 ```
 
-These Stage 1 archive commands use the pinned manifests and Dockerfile under `images/`. They predate the gateway and do not yet form the final Phase 1 offline bundle; P1-25 will add release packaging. Use
+These Stage 1 archive commands use the pinned manifests and Dockerfiles under `images/` and include the Phase 3 gateway. Use
 `./images/manage.sh pull phase0` when you specifically need the original
 upstream Phase 0 UI rather than the branded MindCreek UI.
 
@@ -101,7 +103,7 @@ openssl rand -hex 16       # exactly 32 characters; use for SYSTEM_AES_KEY
 
 Replace all sample credentials in `.local/mindcreek.env`. Keep `GIN_MODE=release`, `LLM_DEBUG_LOG=false`, cross-tenant access disabled, and RBAC enabled. Phase 1 preserves upstream registration; corporate OAuth 2.0 and permanently closed registration are scheduled for Phase 5.
 
-Build, start, and verify the loopback-only Phase 1 deployment:
+Build, start, and verify the loopback-only Phase 3 deployment:
 
 ```sh
 make stage1-ui-build
@@ -110,6 +112,8 @@ make phase1-up
 make phase1-runtime-check
 make phase1-gate-c
 make phase1-gate-d
+make phase3-gate-b
+make phase3-gate-c
 make phase1-ps
 ```
 

@@ -16,13 +16,16 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/apierror"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/catalog"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/note"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/publication"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/space"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/subscription"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
 )
 
@@ -31,15 +34,37 @@ type PrincipalResolver interface {
 }
 
 type Dependencies struct {
-	Principals PrincipalResolver
-	Access     *access.Gate
-	Spaces     KnowledgeSpaceService
-	Notes      NoteService
-	Ingestions IngestionService
-	Library    AuthorizedLibraryService
-	Grants     GrantService
-	Directory  UserDirectory
-	Decisions  AuthorizationDecisionService
+	Principals    PrincipalResolver
+	Access        *access.Gate
+	Spaces        KnowledgeSpaceService
+	Notes         NoteService
+	Ingestions    IngestionService
+	Library       AuthorizedLibraryService
+	Grants        GrantService
+	Directory     UserDirectory
+	Decisions     AuthorizationDecisionService
+	Publications  PublicationService
+	Catalog       CatalogService
+	Subscriptions SubscriptionService
+}
+
+type PublicationService interface {
+	Publish(context.Context, string, publication.Actor, publication.WriteRequest, http.Header) (publication.Publication, error)
+	Update(context.Context, string, publication.Actor, publication.WriteRequest, http.Header) (publication.Publication, error)
+	Unpublish(context.Context, string, publication.Actor, int64, string, http.Header) (publication.Publication, error)
+	GetForOwner(context.Context, string, publication.Actor, http.Header) (publication.Publication, error)
+}
+
+type CatalogService interface {
+	List(context.Context, catalog.Principal, catalog.Filter) (catalog.Page, error)
+	Get(context.Context, catalog.Principal, string) (catalog.Item, error)
+}
+
+type SubscriptionService interface {
+	Subscribe(context.Context, string, subscription.Actor, string) (subscription.Result, error)
+	Unsubscribe(context.Context, string, subscription.Actor, string) (subscription.Result, error)
+	MarkSeen(context.Context, string, subscription.Actor, string) (subscription.Result, error)
+	List(context.Context, subscription.Actor) ([]subscription.Item, error)
 }
 
 type AuthorizationDecisionService interface {
@@ -150,6 +175,7 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 	registerNoteRoutes(mux, dependencies)
 	registerIngestionRoutes(mux, dependencies)
 	registerSharingRoutes(mux, dependencies)
+	registerPublicationRoutes(mux, dependencies)
 	mux.HandleFunc("POST /api/v1/knowledge-spaces", func(w http.ResponseWriter, r *http.Request) {
 		principal, ok := resolvePrincipal(w, r, dependencies.Principals)
 		if !ok {

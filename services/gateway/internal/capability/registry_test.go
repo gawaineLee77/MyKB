@@ -57,7 +57,7 @@ func loadTestRegistry(t *testing.T, values map[string]bool) *Registry {
 func writeRegistry(t *testing.T, values map[string]bool) string {
 	t.Helper()
 	filename := filepath.Join(t.TempDir(), "capabilities.json")
-	payload, err := json.Marshal(Registry{SchemaVersion: 1, Phase: "phase2", Capabilities: values})
+	payload, err := json.Marshal(Registry{SchemaVersion: 1, Phase: "phase3", Capabilities: values})
 	if err != nil {
 		t.Fatal(err)
 	}

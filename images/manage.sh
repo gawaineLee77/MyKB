@@ -8,10 +8,10 @@ ARCHIVE_DIR="$ROOT/images/archives"
 usage() {
   cat >&2 <<'EOF'
 usage:
-  ./images/manage.sh pull [stage1|phase0] [linux/amd64|linux/arm64]
-  ./images/manage.sh build [stage1] [linux/amd64|linux/arm64]
-  ./images/manage.sh list [stage1|phase0] [linux/amd64|linux/arm64]
-  ./images/manage.sh save [stage1|phase0] [linux/amd64|linux/arm64]
+  ./images/manage.sh pull [phase3|stage1|phase0] [linux/amd64|linux/arm64]
+  ./images/manage.sh build [phase3|stage1] [linux/amd64|linux/arm64]
+  ./images/manage.sh list [phase3|stage1|phase0] [linux/amd64|linux/arm64]
+  ./images/manage.sh save [phase3|stage1|phase0] [linux/amd64|linux/arm64]
   ./images/manage.sh load <archive.tar> [linux/amd64|linux/arm64]
 EOF
   exit 2
@@ -22,9 +22,9 @@ profile_manifest() {
   profile=$2
 
   case "$operation:$profile" in
-    pull:stage1) printf '%s\n' "$MANIFEST_DIR/stage1-external.txt" ;;
+    pull:phase3|pull:stage1) printf '%s\n' "$MANIFEST_DIR/stage1-external.txt" ;;
     pull:phase0) printf '%s\n' "$MANIFEST_DIR/phase0-runtime.txt" ;;
-    list:stage1|save:stage1) printf '%s\n' "$MANIFEST_DIR/stage1-runtime.txt" ;;
+    list:phase3|save:phase3|list:stage1|save:stage1) printf '%s\n' "$MANIFEST_DIR/stage1-runtime.txt" ;;
     list:phase0|save:phase0) printf '%s\n' "$MANIFEST_DIR/phase0-runtime.txt" ;;
     *) usage ;;
   esac
@@ -84,7 +84,7 @@ case "$operation" in
   build)
     require_docker
     profile=${2:-stage1}
-    [ "$profile" = "stage1" ] || usage
+    [ "$profile" = "phase3" ] || [ "$profile" = "stage1" ] || usage
     platform=$(normalize_platform "${3:-}")
     ui_version=${MINDCREEK_UI_VERSION:-0.1.0}
     upstream_version=${WEKNORA_VERSION:-v0.7.2}
@@ -124,8 +124,9 @@ EOF
     architecture=$(platform_archive_architecture "$platform")
     archive="$ARCHIVE_DIR/mindcreek-$profile-$architecture.tar"
     checksum="$archive.sha256"
+    archive_manifest="$archive.manifest.txt"
 
-    if [ -e "$archive" ] || [ -e "$checksum" ]; then
+    if [ -e "$archive" ] || [ -e "$checksum" ] || [ -e "$archive_manifest" ]; then
       echo "refusing to overwrite existing archive: $archive" >&2
       exit 1
     fi
@@ -146,12 +147,18 @@ EOF
     # Word splitting is intentional: manifests contain one whitespace-free image per line.
     # shellcheck disable=SC2046
     docker save --platform "$platform" --output "$archive" $(read_manifest "$manifest")
-    if command -v sha256sum >/dev/null 2>&1; then
-      sha256sum "$archive" > "$checksum"
-    else
-      shasum -a 256 "$archive" > "$checksum"
-    fi
-    echo "Wrote $checksum"
+    cp "$manifest" "$archive_manifest"
+    (
+      cd "$ARCHIVE_DIR"
+      archive_name=$(basename "$archive")
+      checksum_name=$(basename "$checksum")
+      if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$archive_name" > "$checksum_name"
+      else
+        shasum -a 256 "$archive_name" > "$checksum_name"
+      fi
+    )
+    echo "Wrote $checksum and $archive_manifest"
     ;;
   load)
     require_docker

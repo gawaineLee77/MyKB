@@ -36,9 +36,9 @@ func TestListSeparatesOwnedAndShared(t *testing.T) {
 		{ID: "editor", Name: "Editor", TenantID: 42, CreatorID: "carol"},
 		{ID: "peer", Name: "Peer", TenantID: 42, CreatorID: "dave"},
 	}}, decisionStub{items: map[string]authorization.Decision{
-		"owned":  {Role: authorization.RoleOwner, ProductMode: profile.ModeRAG},
-		"viewer": {Role: authorization.RoleViewer},
-		"editor": {Role: authorization.RoleEditor},
+		"owned":  {Role: authorization.RoleOwner, Source: authorization.SourceOwner, ProductMode: profile.ModeRAG},
+		"viewer": {Role: authorization.RoleViewer, Source: authorization.SourceUserGrant},
+		"editor": {Role: authorization.RoleEditor, Source: authorization.SourceUserGrant},
 		"peer":   {Role: authorization.RoleNone},
 	}, errs: map[string]error{}})
 	if err != nil {
@@ -48,6 +48,10 @@ func TestListSeparatesOwnedAndShared(t *testing.T) {
 	owned, err := service.List(context.Background(), ViewOwned, 1, 20, principal, nil)
 	if err != nil || owned.Total != 1 || owned.Items[0].ID != "owned" || owned.Items[0].ProductMode != profile.ModeRAG {
 		t.Fatalf("owned = %+v, %v", owned, err)
+	}
+	last, err := service.List(context.Background(), ViewOwned, int(^uint(0)>>1), 20, principal, nil)
+	if err != nil || last.Total != 1 || len(last.Items) != 0 {
+		t.Fatalf("large-page owned = %+v, %v", last, err)
 	}
 	shared, err := service.List(context.Background(), ViewShared, 1, 20, principal, nil)
 	if err != nil || shared.Total != 2 || shared.Items[0].ID != "viewer" || shared.Items[1].ID != "editor" {

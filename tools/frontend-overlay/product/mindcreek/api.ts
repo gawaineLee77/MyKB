@@ -11,6 +11,11 @@ export interface KnowledgeLibraryItem {
   creator_id: string
   role: KnowledgeRole
   product_mode?: 'personal_notes' | 'rag' | 'ontology'
+	access_source: 'owner' | 'user_grant' | 'subscription' | 'organization_public'
+	publication_id?: string
+	current_revision?: number
+	last_seen_revision?: number
+	updated?: boolean
 }
 
 export interface KnowledgeLibraryPage {
@@ -29,6 +34,70 @@ export interface KnowledgeAccess {
   can_edit_metadata: boolean
   can_manage_grants: boolean
   can_delete: boolean
+	can_publish: boolean
+	can_download: boolean
+	access_source: 'owner' | 'user_grant' | 'subscription' | 'organization_public'
+	publication_id?: string
+}
+
+export type PublicationAccessMode = 'subscriber' | 'organization_public'
+export type PublicationAudience = { type: 'organization'; workspace_ids?: never[] } | { type: 'workspace_set'; workspace_ids: number[] }
+
+export interface Publication {
+  id: string
+  knowledge_base_id: string
+  publisher_id: string
+  publisher_tenant_id: number
+  title: string
+  description: string
+  tags: string[]
+  usage_guidance: string
+  audience: PublicationAudience
+  access_mode: PublicationAccessMode
+  status: 'published' | 'unpublished'
+  published_revision: number
+  created_at: string
+  published_at: string
+  unpublished_at?: string
+  updated_at: string
+  row_version: number
+}
+
+export interface Subscription {
+  id: string
+  publication_id: string
+  subscriber_id: string
+  subscriber_tenant_id: number
+  status: 'active' | 'inactive' | 'unsubscribed'
+  notification_enabled: boolean
+  last_seen_revision: number
+  created_at: string
+  updated_at: string
+  ended_at?: string
+}
+
+export interface CatalogItem {
+  publication: Publication
+  current_revision: number
+  subscribed: boolean
+  last_seen_revision?: number
+  updated: boolean
+  can_read: boolean
+  can_subscribe: boolean
+}
+
+export interface CatalogPage {
+  items: CatalogItem[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface SubscriptionItem {
+  subscription: Subscription
+  publication: Publication
+  current_revision: number
+  updated: boolean
 }
 
 export interface TenantMember {
@@ -168,10 +237,60 @@ export async function getProductProfile(kbId: string): Promise<ProductProfile> {
   return response.data
 }
 
-export async function listKnowledgeLibrary(view: 'owned' | 'shared', page = 1): Promise<KnowledgeLibraryPage> {
+export async function listKnowledgeLibrary(view: 'owned' | 'shared' | 'subscribed' | 'all', page = 1): Promise<KnowledgeLibraryPage> {
   const response = await get<{ success: boolean; data: KnowledgeLibraryPage }>(
     `/api/v1/mindcreek/knowledge-bases?view=${view}&page=${page}&page_size=24`,
   )
+  return response.data
+}
+
+export async function getKnowledgePublication(kbId: string): Promise<Publication> {
+  const response = await get<{ success: boolean; data: Publication }>(`/api/v1/mindcreek/knowledge-bases/${kbId}/publication`)
+  return response.data
+}
+
+export async function publishKnowledgeBase(kbId: string, input: {
+  title: string; description: string; tags: string[]; usage_guidance: string
+  audience: PublicationAudience; access_mode: PublicationAccessMode; expected_row_version?: number
+}): Promise<Publication> {
+  const response = await post<{ success: boolean; data: Publication }>(`/api/v1/mindcreek/knowledge-bases/${kbId}/publication`, input)
+  return response.data
+}
+
+export async function updateKnowledgePublication(kbId: string, publication: Publication, input: {
+  title: string; description: string; tags: string[]; usage_guidance: string
+  audience: PublicationAudience; access_mode: PublicationAccessMode
+}): Promise<Publication> {
+  const response = await patch<{ success: boolean; data: Publication }>(`/api/v1/mindcreek/knowledge-bases/${kbId}/publication`, { ...input, expected_row_version: publication.row_version })
+  return response.data
+}
+
+export async function unpublishKnowledgeBase(kbId: string, publication: Publication): Promise<Publication> {
+  const response = await del<{ success: boolean; data: Publication }>(`/api/v1/mindcreek/knowledge-bases/${kbId}/publication`, { expected_row_version: publication.row_version })
+  return response.data
+}
+
+export async function listCatalog(filters: { query?: string; tag?: string; accessMode?: PublicationAccessMode | ''; page?: number } = {}): Promise<CatalogPage> {
+  const query = new URLSearchParams({ page: String(filters.page || 1), page_size: '24' })
+  if (filters.query) query.set('q', filters.query)
+  if (filters.tag) query.set('tag', filters.tag)
+  if (filters.accessMode) query.set('access_mode', filters.accessMode)
+  const response = await get<{ success: boolean; data: CatalogPage }>(`/api/v1/mindcreek/catalog?${query}`)
+  return response.data
+}
+
+export async function subscribePublication(publicationId: string): Promise<{ item: SubscriptionItem; changed: boolean }> {
+  const response = await post<{ success: boolean; data: { item: SubscriptionItem; changed: boolean } }>(`/api/v1/mindcreek/publications/${publicationId}/subscription`)
+  return response.data
+}
+
+export async function unsubscribePublication(publicationId: string): Promise<{ item?: SubscriptionItem; changed: boolean }> {
+  const response = await del<{ success: boolean; data: { item?: SubscriptionItem; changed: boolean } }>(`/api/v1/mindcreek/publications/${publicationId}/subscription`)
+  return response.data
+}
+
+export async function markPublicationSeen(publicationId: string): Promise<{ item: SubscriptionItem; changed: boolean }> {
+  const response = await post<{ success: boolean; data: { item: SubscriptionItem; changed: boolean } }>(`/api/v1/mindcreek/publications/${publicationId}/mark-seen`)
   return response.data
 }
 

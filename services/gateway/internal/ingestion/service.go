@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
@@ -42,10 +43,15 @@ type Service struct {
 	profiles   ProfileStore
 	upstream   Upstream
 	authorizer Authorizer
+	revisions  RevisionRecorder
 }
 
 type Authorizer interface {
 	Authorize(context.Context, string, authorization.Principal, authorization.Action, http.Header) (authorization.Decision, error)
+}
+
+type RevisionRecorder interface {
+	Increment(context.Context, string, string, string, string, string, time.Time) (int64, error)
 }
 
 type Error struct {
@@ -74,6 +80,18 @@ func NewService(profiles ProfileStore, upstream Upstream, authorizers ...Authori
 	return service, nil
 }
 
+func NewPhase3Service(profiles ProfileStore, upstream Upstream, authorizer Authorizer, revisions RevisionRecorder) (*Service, error) {
+	if authorizer == nil || revisions == nil {
+		return nil, fmt.Errorf("Phase 3 authorizer and revision recorder are required")
+	}
+	service, err := NewService(profiles, upstream, authorizer)
+	if err != nil {
+		return nil, err
+	}
+	service.revisions = revisions
+	return service, nil
+}
+
 func (s *Service) Upload(ctx context.Context, kbID, filename string, size int64, source io.Reader, identity access.Identity, headers http.Header) (weknora.Knowledge, error) {
 	config, err := s.authorize(ctx, kbID, identity, authorization.ActionEditContent, headers)
 	if err != nil {
@@ -89,6 +107,9 @@ func (s *Service) Upload(ctx context.Context, kbID, filename string, size int64,
 	result, err := s.upstream.UploadKnowledge(ctx, kbID, base, source, headers)
 	if err != nil {
 		return weknora.Knowledge{}, translateUpstream(err)
+	}
+	if err := s.recordRevision(ctx, kbID, identity, "kb.content_updated", headers); err != nil {
+		return weknora.Knowledge{}, err
 	}
 	return result, nil
 }
@@ -115,7 +136,24 @@ func (s *Service) Get(ctx context.Context, kbID, knowledgeID string, identity ac
 	if err != nil {
 		return weknora.Knowledge{}, translateUpstream(err)
 	}
+	if err := s.recordRevision(ctx, kbID, identity, "kb.content_updated", headers); err != nil {
+		return weknora.Knowledge{}, err
+	}
 	return result, nil
+}
+
+func (s *Service) recordRevision(ctx context.Context, kbID string, identity access.Identity, eventType string, headers http.Header) error {
+	if s.revisions == nil {
+		return nil
+	}
+	correlationID := strings.TrimSpace(headers.Get("X-Request-ID"))
+	if correlationID == "" {
+		return &Error{Code: "ingestion.state_unavailable", Message: "Plain RAG activity state is unavailable", StatusCode: http.StatusServiceUnavailable}
+	}
+	if _, err := s.revisions.Increment(ctx, kbID, identity.UserID, eventType, "", correlationID, time.Now().UTC()); err != nil {
+		return &Error{Code: "ingestion.state_unavailable", Message: "Plain RAG activity state is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+	}
+	return nil
 }
 
 func (s *Service) Retry(ctx context.Context, kbID, knowledgeID string, identity access.Identity, headers http.Header) (weknora.Knowledge, error) {
