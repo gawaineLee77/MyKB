@@ -27,6 +27,29 @@ func TestLoadAndDocumentAgreeOnEveryFlag(t *testing.T) {
 	if !document.Capabilities["mcp"] {
 		t.Fatal("authenticated MCP is not advertised in Phase 4")
 	}
+	if !document.Capabilities["managed_models"] || document.Capabilities["user_model_overrides"] {
+		t.Fatal("Phase 5 managed-model defaults or override default are incorrect")
+	}
+}
+
+func TestLoadRetainsFrozenPhase4Contract(t *testing.T) {
+	filename := writeRegistryForPhase(t, "phase4", phase4Values)
+	registry, err := Load(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if registry.Phase != "phase4" || len(registry.Capabilities) != len(phase4Values) {
+		t.Fatalf("unexpected Phase 4 registry: %+v", registry)
+	}
+}
+
+func TestUserModelOverridesMayBeExplicitlyEnabled(t *testing.T) {
+	values := clone(releaseValues)
+	values["user_model_overrides"] = true
+	registry := loadTestRegistry(t, values)
+	if !registry.Capabilities["user_model_overrides"] {
+		t.Fatal("explicit override capability was not preserved")
+	}
 }
 
 func TestLoadFailsClosedOnCapabilityDrift(t *testing.T) {
@@ -58,9 +81,13 @@ func loadTestRegistry(t *testing.T, values map[string]bool) *Registry {
 }
 
 func writeRegistry(t *testing.T, values map[string]bool) string {
+	return writeRegistryForPhase(t, "phase5", values)
+}
+
+func writeRegistryForPhase(t *testing.T, phase string, values map[string]bool) string {
 	t.Helper()
 	filename := filepath.Join(t.TempDir(), "capabilities.json")
-	payload, err := json.Marshal(Registry{SchemaVersion: 1, Phase: "phase4", Capabilities: values})
+	payload, err := json.Marshal(Registry{SchemaVersion: 1, Phase: phase, Capabilities: values})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -225,6 +225,59 @@ type KnowledgeBase struct {
 	EmbeddingModelID string `json:"embedding_model_id"`
 }
 
+// Model is the deliberately narrow model descriptor used by MindCreek.
+// Endpoint URLs, credentials, provider-specific configuration, and timestamps
+// are intentionally not represented at this boundary.
+type Model struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	Type        string `json:"type"`
+	Source      string `json:"source"`
+	Description string `json:"description"`
+	IsDefault   bool   `json:"is_default"`
+	IsBuiltin   bool   `json:"is_builtin"`
+	Status      string `json:"status"`
+}
+
+type ModelWriteRequest struct {
+	Name        string               `json:"name"`
+	DisplayName string               `json:"display_name,omitempty"`
+	Type        string               `json:"type"`
+	Source      string               `json:"source"`
+	Description string               `json:"description,omitempty"`
+	Parameters  ModelWriteParameters `json:"parameters"`
+}
+
+type ModelWriteParameters struct {
+	BaseURL             string                         `json:"base_url"`
+	APIKey              string                         `json:"api_key,omitempty"`
+	Provider            string                         `json:"provider"`
+	InterfaceType       string                         `json:"interface_type,omitempty"`
+	EmbeddingParameters *ModelEmbeddingWriteParameters `json:"embedding_parameters,omitempty"`
+}
+
+type ModelEmbeddingWriteParameters struct {
+	Dimension            int `json:"dimension"`
+	TruncatePromptTokens int `json:"truncate_prompt_tokens"`
+}
+
+type ModelTestRequest struct {
+	Type      string `json:"-"`
+	ModelID   string `json:"modelId,omitempty"`
+	ModelName string `json:"modelName"`
+	BaseURL   string `json:"baseUrl,omitempty"`
+	APIKey    string `json:"apiKey,omitempty"`
+	Provider  string `json:"provider,omitempty"`
+	Source    string `json:"source,omitempty"`
+	Dimension int    `json:"dimension,omitempty"`
+}
+
+type ModelTestResult struct {
+	Available bool `json:"available"`
+	Dimension int  `json:"dimension,omitempty"`
+}
+
 type TenantMember struct {
 	UserID   string `json:"user_id"`
 	Email    string `json:"email"`
@@ -361,6 +414,94 @@ func (c *Client) ListKnowledgeBases(ctx context.Context, inbound http.Header) ([
 		if item.ID == "" || item.TenantID == 0 {
 			return nil, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
 		}
+	}
+	return response.Data, nil
+}
+
+// ListModels returns only the safe model descriptor fields needed by the
+// product model facade. Sensitive upstream response fields are ignored.
+func (c *Client) ListModels(ctx context.Context, inbound http.Header) ([]Model, error) {
+	var response struct {
+		Success bool    `json:"success"`
+		Data    []Model `json:"data"`
+	}
+	if err := c.getJSON(ctx, "/api/v1/models", inbound, &response); err != nil {
+		return nil, err
+	}
+	if !response.Success || response.Data == nil {
+		return nil, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	return response.Data, nil
+}
+
+func (c *Client) CreateModel(ctx context.Context, input ModelWriteRequest, inbound http.Header) (Model, error) {
+	var response struct {
+		Success bool  `json:"success"`
+		Data    Model `json:"data"`
+	}
+	if err := c.sendJSON(ctx, http.MethodPost, "/api/v1/models", nil, inbound, input, &response); err != nil {
+		return Model{}, err
+	}
+	if !response.Success || response.Data.ID == "" {
+		return Model{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	return response.Data, nil
+}
+
+func (c *Client) UpdateModel(ctx context.Context, id string, input ModelWriteRequest, inbound http.Header) (Model, error) {
+	var response struct {
+		Success bool  `json:"success"`
+		Data    Model `json:"data"`
+	}
+	if err := c.sendJSON(ctx, http.MethodPut, "/api/v1/models/"+url.PathEscape(id), nil, inbound, input, &response); err != nil {
+		return Model{}, err
+	}
+	if !response.Success || response.Data.ID != id {
+		return Model{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	return response.Data, nil
+}
+
+func (c *Client) ReplaceModelCredential(ctx context.Context, id, apiKey string, inbound http.Header) error {
+	var response struct {
+		Success bool `json:"success"`
+	}
+	payload := map[string]string{"api_key": apiKey}
+	if err := c.sendJSON(ctx, http.MethodPut, "/api/v1/models/"+url.PathEscape(id)+"/credentials", nil, inbound, payload, &response); err != nil {
+		return err
+	}
+	if !response.Success {
+		return &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	return nil
+}
+
+func (c *Client) DeleteModel(ctx context.Context, id string, inbound http.Header) error {
+	var response map[string]any
+	return c.sendJSON(ctx, http.MethodDelete, "/api/v1/models/"+url.PathEscape(id), nil, inbound, nil, &response)
+}
+
+func (c *Client) TestModel(ctx context.Context, input ModelTestRequest, inbound http.Header) (ModelTestResult, error) {
+	path := ""
+	switch input.Type {
+	case "KnowledgeQA":
+		path = "/api/v1/initialization/remote/check"
+	case "Embedding":
+		path = "/api/v1/initialization/embedding/test"
+	case "Rerank":
+		path = "/api/v1/initialization/rerank/check"
+	default:
+		return ModelTestResult{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest}
+	}
+	var response struct {
+		Success bool            `json:"success"`
+		Data    ModelTestResult `json:"data"`
+	}
+	if err := c.sendJSON(ctx, http.MethodPost, path, nil, inbound, input, &response); err != nil {
+		return ModelTestResult{}, err
+	}
+	if !response.Success {
+		return ModelTestResult{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
 	}
 	return response.Data, nil
 }

@@ -32,3 +32,24 @@ func TestLoadRejectsInvalidTimeout(t *testing.T) {
 		t.Fatal("Load() accepted a zero timeout")
 	}
 }
+
+func TestLoadModelOverridePolicy(t *testing.T) {
+	t.Setenv("MINDCREEK_MODEL_OVERRIDE_PROVIDERS", " OpenAI, generic,OPENAI ")
+	t.Setenv("MINDCREEK_MODEL_OVERRIDE_HOSTS", " Models.Internal.Example, api.example.org ")
+	t.Setenv("MINDCREEK_MODEL_OVERRIDE_ALLOW_HTTP", "true")
+	t.Setenv("MINDCREEK_USER_MODEL_OVERRIDES", "true")
+	cfg, err := Load("test-version")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.ModelOverrideProviders) != 2 || !cfg.ModelOverrideProviders["openai"] || !cfg.ModelOverrideHosts["models.internal.example"] || !cfg.ModelOverrideAllowHTTP || !cfg.ModelOverridesEnabled {
+		t.Fatalf("model override policy = %+v", cfg)
+	}
+}
+
+func TestLoadRejectsInvalidModelOverrideBooleans(t *testing.T) {
+	t.Setenv("MINDCREEK_USER_MODEL_OVERRIDES", "sometimes")
+	if _, err := Load("test-version"); err == nil {
+		t.Fatal("Load() accepted an invalid override capability value")
+	}
+}

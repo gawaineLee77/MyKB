@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-var releaseValues = map[string]bool{
+var phase4Values = map[string]bool{
 	"im":                  false,
 	"miniprogram":         false,
 	"cli":                 false,
@@ -26,6 +26,16 @@ var releaseValues = map[string]bool{
 	"rag_pixel":           false,
 	"ontology":            false,
 }
+
+var releaseValues = func() map[string]bool {
+	values := make(map[string]bool, len(phase4Values)+2)
+	for key, value := range phase4Values {
+		values[key] = value
+	}
+	values["managed_models"] = true
+	values["user_model_overrides"] = false
+	return values
+}()
 
 // Registry is the validated, immutable capability source for this process.
 type Registry struct {
@@ -55,7 +65,8 @@ type IndexProfile struct {
 	Enabled bool   `json:"enabled"`
 }
 
-// Load reads a capability registry and enforces the current Phase 4 release gates.
+// Load reads a capability registry and supports the frozen Phase 4 contract and
+// the current Phase 5 Gate A contract.
 func Load(filename string) (*Registry, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -79,19 +90,23 @@ func Load(filename string) (*Registry, error) {
 }
 
 func (r *Registry) validate() error {
-	if r.SchemaVersion != 1 || r.Phase != "phase4" {
-		return fmt.Errorf("capability registry must use schema_version 1 and phase4")
+	if r.SchemaVersion != 1 || (r.Phase != "phase4" && r.Phase != "phase5") {
+		return fmt.Errorf("capability registry must use schema_version 1 and a supported phase")
 	}
-	if len(r.Capabilities) != len(releaseValues) {
-		return fmt.Errorf("capability registry has %d flags; expected %d", len(r.Capabilities), len(releaseValues))
+	expected := releaseValues
+	if r.Phase == "phase4" {
+		expected = phase4Values
 	}
-	for key, expected := range releaseValues {
+	if len(r.Capabilities) != len(expected) {
+		return fmt.Errorf("capability registry has %d flags; expected %d", len(r.Capabilities), len(expected))
+	}
+	for key, expectedValue := range expected {
 		actual, ok := r.Capabilities[key]
 		if !ok {
 			return fmt.Errorf("capability registry is missing %q", key)
 		}
-		if actual != expected {
-			return fmt.Errorf("capability %q must be %t in the Phase 4 release", key, expected)
+		if key != "user_model_overrides" && actual != expectedValue {
+			return fmt.Errorf("capability %q must be %t in the %s release", key, expectedValue, r.Phase)
 		}
 	}
 	return nil

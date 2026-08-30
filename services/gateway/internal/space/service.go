@@ -48,6 +48,7 @@ type CreateInput struct {
 	Description      string `json:"description,omitempty"`
 	EmbeddingModelID string `json:"embedding_model_id"`
 	SummaryModelID   string `json:"summary_model_id,omitempty"`
+	RerankModelID    string `json:"-"`
 	StorageProvider  string `json:"storage_provider,omitempty"`
 }
 
@@ -96,7 +97,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput, idempotencyKey 
 	if err != nil {
 		return CreateResult{}, err
 	}
-	definition, err := preset.Build(productMode, normalized.EmbeddingModelID, normalized.SummaryModelID)
+	definition, err := preset.BuildWithRerank(productMode, normalized.EmbeddingModelID, normalized.SummaryModelID, normalized.RerankModelID)
 	if err != nil || definition.Config.ProfileID != indexProfile || definition.AccessPolicy != accessPolicy {
 		return CreateResult{}, &Error{Code: "space.preset_invalid", Message: "Approved knowledge-space preset is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
 	}
@@ -210,6 +211,7 @@ func normalizeCreateInput(input CreateInput) (CreateInput, profile.ProductMode, 
 	input.Description = strings.TrimSpace(input.Description)
 	input.EmbeddingModelID = strings.TrimSpace(input.EmbeddingModelID)
 	input.SummaryModelID = strings.TrimSpace(input.SummaryModelID)
+	input.RerankModelID = strings.TrimSpace(input.RerankModelID)
 	input.StorageProvider = strings.ToLower(strings.TrimSpace(input.StorageProvider))
 	if input.StorageProvider == "" {
 		input.StorageProvider = "local"

@@ -1,5 +1,6 @@
 .PHONY: help images-pull images-build images-list images-save images-pull-amd64 images-build-amd64 images-list-amd64 images-save-amd64 phase3-images-pull phase3-images-build phase3-images-list phase3-images-save phase3-images-pull-amd64 phase3-images-build-amd64 phase3-images-list-amd64 phase3-images-save-amd64 phase3-upgrade-compose-config phase3-upgrade-up phase3-upgrade-ps phase3-upgrade-down phase0-check phase0-compose-config phase0-up phase0-ps phase0-runtime-check phase0-probe phase0-down phase1-route-policy-check phase1-gateway-test phase1-check phase1-compose-config phase1-build phase1-gateway-build-offline phase1-up phase1-ps phase1-probe phase1-runtime-check phase1-migration-probe phase1-gate-b-probe phase1-gate-b phase1-gate-c-probe phase1-gate-c phase1-gate-d-probe phase1-gate-d phase1-down phase2-sharing-model-check phase2-route-actions-check phase2-gate-a-static-check phase2-gate-b-static-check phase2-gate-c-static-check phase2-gate-d-static-check phase2-upstream-contract-check phase2-clean-copy-check phase2-check phase2-gate-a phase2-gate-b-probe phase2-gate-b phase2-gate-c phase2-gate-d phase3-gate-a-static-check phase3-gate-b-static-check phase3-gate-c-static-check phase3-gate-d-static-check phase3-upstream-contract-check phase3-clean-copy-check phase3-check phase3-gate-a phase3-gate-b-probe phase3-gate-b phase3-gate-c phase3-gate-d stage1-check stage1-compose-config stage1-ui-build stage1-up stage1-ps stage1-runtime-check stage1-down upstream-status upstream-test upstream-test-go upstream-test-frontend upstream-test-mcp
 .PHONY: phase4-images-pull phase4-images-build phase4-images-list phase4-images-save phase4-images-pull-amd64 phase4-images-build-amd64 phase4-images-list-amd64 phase4-images-save-amd64 phase4-compose-config phase4-build phase4-up phase4-ps phase4-down phase4-upgrade-compose-config phase4-upgrade-up phase4-upgrade-ps phase4-upgrade-down phase4-gate-a-static-check phase4-gate-b-static-check phase4-gate-c-static-check phase4-gate-d-static-check phase4-upstream-contract-check phase4-clean-copy-check phase4-check phase4-gate-a phase4-gate-b-probe phase4-gate-b phase4-gate-c-probe phase4-gate-c phase4-gate-d
+.PHONY: phase5-models-render phase5-compose-config phase5-build phase5-build-offline phase5-up phase5-ps phase5-down phase5-runtime-check phase5-gate-a-static-check phase5-gate-a-probe phase5-gate-a
 
 help:
 	@echo "MindCreek repository commands"
@@ -68,6 +69,11 @@ help:
 	@echo "  make phase4-gate-b          Run Web agent, revocation, and retrieval baseline acceptance"
 	@echo "  make phase4-gate-c          Run hosted MCP protocol and security acceptance"
 	@echo "  make phase4-gate-d          Run the Phase 4 release and clean-copy contract"
+	@echo "  make phase5-models-render   Validate and render secret-free managed model declarations"
+	@echo "  make phase5-up              Start Phase 5 with managed model defaults"
+	@echo "  make phase5-build-offline   Build Phase 5 product images from local dependencies"
+	@echo "  make phase5-runtime-check   Verify the private managed-model runtime"
+	@echo "  make phase5-gate-a          Run zero-key model onboarding acceptance"
 	@echo "  make stage1-check          Verify the MindCreek overlay and upstream boundary"
 	@echo "  make stage1-compose-config Validate the Stage 1 Compose distribution"
 	@echo "  make stage1-ui-build       Build the branded MindCreek UI image"
@@ -391,6 +397,43 @@ phase4-gate-c: phase4-gate-c-static-check
 	python3 ./scripts/phase4-gate-c-probe.py
 
 phase4-gate-d: phase4-check phase4-clean-copy-check
+
+phase5-models-render:
+	python3 ./scripts/render-phase5-models.py --env-file .local/mindcreek.env --output .local/phase5/builtin_models.yaml
+
+phase5-compose-config:
+	./scripts/phase5-compose.sh config --quiet
+
+phase5-build:
+	./scripts/phase5-compose.sh build frontend gateway
+
+phase5-build-offline:
+	MINDCREEK_GATEWAY_TAG=phase5 MINDCREEK_VERSION=0.6.0-phase5 ./scripts/build-gateway-image-offline.sh
+	./scripts/build-phase5-ui-offline.sh
+
+phase5-up:
+	./scripts/phase5-compose.sh up -d
+
+phase5-ps:
+	./scripts/phase5-compose.sh ps
+
+phase5-down:
+	./scripts/phase5-compose.sh down
+
+phase5-runtime-check:
+	./scripts/phase5-runtime-check.sh
+
+phase5-gate-a-static-check:
+	./scripts/check-phase5-gate-a.sh
+
+phase5-gate-a-probe:
+	python3 ./scripts/phase5-gate-a-probe.py
+
+phase5-gate-a: phase5-gate-a-static-check
+	mkdir -p .local/gateway-go-build
+	cd services/gateway && GOCACHE=$(CURDIR)/.local/gateway-go-build go test ./...
+	./scripts/phase5-runtime-check.sh
+	python3 ./scripts/phase5-gate-a-probe.py
 
 stage1-check: phase0-check
 	./tools/frontend-overlay/check.sh

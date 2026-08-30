@@ -79,22 +79,31 @@
             <span>{{ text.description }}</span>
             <t-textarea v-model="draft.description" :maxlength="1000" :autosize="{ minRows: 3, maxRows: 6 }" />
           </label>
-          <label class="mc-field">
-            <span>{{ text.embedding }} *</span>
-            <t-select v-model="draft.embeddingModelId" :placeholder="text.selectModel">
-              <t-option v-for="model in models.embedding" :key="model.id" :value="model.id!" :label="model.display_name || model.name" />
-            </t-select>
-          </label>
-          <label class="mc-field">
-            <span>{{ text.summary }}</span>
-            <t-select v-model="draft.summaryModelId" clearable :placeholder="text.optional">
-              <t-option v-for="model in models.summary" :key="model.id" :value="model.id!" :label="model.display_name || model.name" />
-            </t-select>
-          </label>
         </div>
-        <div v-if="models.embedding.length === 0" class="mc-inline-warning">
-          <t-icon name="info-circle" /> {{ text.noEmbedding }}
-          <t-button variant="text" @click="router.push('/platform/settings?section=models')">{{ text.openSettings }}</t-button>
+        <div v-if="models.ready" class="mc-managed-models">
+          <t-icon name="check-circle" />
+          <span><strong>{{ text.managedReady }}</strong><small>{{ text.managedHint }}</small></span>
+        </div>
+        <div v-else class="mc-inline-warning">
+          <t-icon name="info-circle" /> {{ text.managedUnavailable }}
+        </div>
+        <div v-if="models.overridesEnabled" class="mc-advanced">
+          <button type="button" @click="advancedOpen = !advancedOpen"><t-icon name="setting" /> {{ text.advanced }} <t-icon :name="advancedOpen ? 'chevron-up' : 'chevron-down'" /></button>
+          <div v-if="advancedOpen" class="mc-advanced-fields">
+            <label class="mc-field">
+              <span>{{ text.embedding }}</span>
+              <t-select v-model="draft.embeddingModelId">
+                <t-option v-for="model in models.embedding" :key="model.id" :value="model.id" :label="model.display_name" />
+              </t-select>
+            </label>
+            <label class="mc-field">
+              <span>{{ text.summary }}</span>
+              <t-select v-model="draft.summaryModelId">
+                <t-option v-for="model in models.summary" :key="model.id" :value="model.id" :label="model.display_name" />
+              </t-select>
+            </label>
+            <t-button variant="text" @click="router.push('/platform/mindcreek/settings/models')">{{ text.manageOverrides }}</t-button>
+          </div>
         </div>
       </section>
 
@@ -106,6 +115,7 @@
           <div><dt>{{ text.indexProfile }}</dt><dd><code>{{ draft.mode === 'personal_notes' ? 'notes_plain' : 'plain' }}</code></dd></div>
           <div><dt>{{ text.access }}</dt><dd>{{ draft.mode === 'personal_notes' ? text.ownerOnly : text.workspacePolicy }}</dd></div>
           <div><dt>{{ text.storage }}</dt><dd>{{ text.localStorage }}</dd></div>
+          <div><dt>{{ text.models }}</dt><dd>{{ selectedModelSummary }}</dd></div>
         </dl>
         <p v-if="submitError" class="mc-submit-error" role="alert"><t-icon name="error-circle" /> {{ submitError }}</p>
       </section>
@@ -129,7 +139,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import { createKnowledgeSpace, getCreationModels, getKnowledgeModeCapabilities } from './api'
+import { createKnowledgeSpace, getCreationModels, getKnowledgeModeCapabilities, type ManagedModelDescriptor } from './api'
 import { buildKnowledgeSpaceRequest, isSelectionEnabled, type CapabilityDocument } from './contracts'
 
 const router = useRouter()
@@ -139,8 +149,11 @@ const loading = ref(true)
 const submitting = ref(false)
 const loadError = ref('')
 const submitError = ref('')
+const advancedOpen = ref(false)
 const capabilities = ref<CapabilityDocument | null>(null)
-const models = reactive<{ embedding: any[]; summary: any[] }>({ embedding: [], summary: [] })
+const models = reactive<{ ready: boolean; overridesEnabled: boolean; embedding: ManagedModelDescriptor[]; summary: ManagedModelDescriptor[] }>({
+  ready: false, overridesEnabled: false, embedding: [], summary: [],
+})
 const draft = reactive({
   mode: 'personal_notes' as 'personal_notes' | 'rag',
   name: '',
@@ -158,8 +171,9 @@ const copy = {
     chooseMode: 'What do you want to build?', chooseModeHint: 'Each space has one purpose and a controlled indexing profile.',
     notes: 'Personal Notes', notesHint: 'Private Markdown and text notes for your daily work.', rag: 'Document RAG', ragHint: 'Multi-format documents with approved hybrid retrieval.',
     available: 'Available', coming: 'Coming later', futureProfiles: 'Future profiles', configure: 'Configure your space', name: 'Name', description: 'Description',
-    namePlaceholder: 'For example: Research notes', embedding: 'Embedding model', summary: 'Summary model', selectModel: 'Select a model', optional: 'Optional',
-    noEmbedding: 'An embedding model is required before a space can be created.', openSettings: 'Configure models', review: 'Review and create',
+    namePlaceholder: 'For example: Research notes', embedding: 'Embedding model', summary: 'Chat and summary model',
+    managedReady: 'Managed AI is ready', managedHint: 'MindCreek will use organization defaults. No API key or model setup is required.', managedUnavailable: 'Managed models are not ready. Contact your administrator.',
+    advanced: 'Advanced model selection', manageOverrides: 'Manage workspace model overrides', review: 'Review and create', models: 'Models',
     reviewHint: 'MindCreek will apply the approved server-side profile.', mode: 'Mode', indexProfile: 'Index profile', access: 'Access', storage: 'Storage',
     ownerOnly: 'Owner only', workspacePolicy: 'Workspace policy', localStorage: 'Managed local storage', previous: 'Previous', continue: 'Continue', create: 'Create space',
   },
@@ -169,8 +183,9 @@ const copy = {
     chooseMode: '你想创建什么？', chooseModeHint: '每个空间只承担一种用途，并使用受控的索引配置。',
     notes: '个人笔记', notesHint: '记录日常工作的私人 Markdown 与文本笔记。', rag: '文档 RAG', ragHint: '使用已批准混合检索的多格式文档知识库。',
     available: '可使用', coming: '后续开放', futureProfiles: '未来能力', configure: '配置知识空间', name: '名称', description: '描述',
-    namePlaceholder: '例如：研究笔记', embedding: '向量模型', summary: '摘要模型', selectModel: '请选择模型', optional: '可选',
-    noEmbedding: '创建空间前必须配置一个向量模型。', openSettings: '配置模型', review: '确认并创建', reviewHint: 'MindCreek 将在服务端应用已批准的配置。',
+    namePlaceholder: '例如：研究笔记', embedding: '向量模型', summary: '对话与摘要模型',
+    managedReady: '托管 AI 已就绪', managedHint: 'MindCreek 将自动使用组织默认模型，无需填写 API 密钥或配置模型。', managedUnavailable: '托管模型尚未就绪，请联系管理员。',
+    advanced: '高级模型选择', manageOverrides: '管理工作空间模型覆盖', review: '确认并创建', reviewHint: 'MindCreek 将在服务端应用已批准的配置。', models: '模型',
     mode: '模式', indexProfile: '索引配置', access: '访问策略', storage: '存储', ownerOnly: '仅创建者', workspacePolicy: '工作空间策略',
     localStorage: '受管本地存储', previous: '上一步', continue: '继续', create: '创建空间',
   },
@@ -183,6 +198,11 @@ const canContinue = computed(() => step.value === 1
   : draft.name.trim().length > 0 && draft.embeddingModelId.length > 0)
 const selectedModeName = computed(() => draft.mode === 'personal_notes' ? text.value.notes : text.value.rag)
 const selectedModeHint = computed(() => draft.mode === 'personal_notes' ? text.value.notesHint : text.value.ragHint)
+const selectedModelSummary = computed(() => {
+  const embedding = models.embedding.find(model => model.id === draft.embeddingModelId)?.display_name || '—'
+  const chat = models.summary.find(model => model.id === draft.summaryModelId)?.display_name || '—'
+  return `${embedding} · ${chat}`
+})
 const futureModes = computed(() => [
   { name: 'GraphRAG', detail: locale.value.startsWith('zh') ? '图谱增强检索' : 'Graph-enhanced retrieval', icon: 'relation' },
   { name: 'PixelRAG', detail: locale.value.startsWith('zh') ? '视觉页面检索' : 'Visual page retrieval', icon: 'image-search' },
@@ -203,10 +223,12 @@ async function load() {
       getCreationModels(),
     ])
     capabilities.value = document
+    models.ready = availableModels.ready
+    models.overridesEnabled = availableModels.overridesEnabled
     models.embedding = availableModels.embedding
     models.summary = availableModels.summary
-    draft.embeddingModelId = availableModels.embedding.find(model => model.is_default)?.id || availableModels.embedding[0]?.id || ''
-    draft.summaryModelId = availableModels.summary.find(model => model.is_default)?.id || ''
+    draft.embeddingModelId = availableModels.embedding.find(model => model.default)?.id || availableModels.embedding[0]?.id || ''
+    draft.summaryModelId = availableModels.summary.find(model => model.default)?.id || availableModels.summary[0]?.id || ''
     if (!notesEnabled.value && ragEnabled.value) draft.mode = 'rag'
   } catch (error) {
     loadError.value = messageOf(error)
@@ -263,6 +285,7 @@ onMounted(load)
 .mc-mode-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; font-size: 22px; }.mc-mode-icon.notes { color: #7a6434; background: #fff1c9; }.mc-mode-icon.rag { color: #226e5b; background: #d9f2e9; }
 .mc-future-title { margin: 28px 0 12px; color: #6e837c; font-size: 12px; letter-spacing: .8px; text-transform: uppercase; }.mc-future-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }.mc-future-card { padding: 13px; display: grid; grid-template-columns: 24px 1fr 18px; gap: 8px; align-items: center; border-radius: 10px; background: #f5f8f7; color: #789088; }.mc-future-card strong, .mc-future-card small { display: block; }.mc-future-card small { margin-top: 2px; font-size: 11px; }
 .mc-pill { padding: 6px 12px; border-radius: 99px; color: #176b54; background: #def3ea; font-size: 12px; white-space: nowrap; }.mc-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }.mc-field { display: flex; flex-direction: column; gap: 8px; color: #436159; font-size: 13px; font-weight: 600; }.mc-field-wide { grid-column: 1 / -1; }.mc-inline-warning { margin-top: 20px; padding: 12px 14px; display: flex; gap: 8px; align-items: center; border-radius: 10px; background: #fff7e1; color: #7e6522; }
+.mc-managed-models { margin-top: 20px; padding: 14px; display: flex; gap: 10px; align-items: center; border-radius: 11px; color: #176b54; background: #edf9f4; }.mc-managed-models strong, .mc-managed-models small { display: block; }.mc-managed-models small { margin-top: 3px; color: #678078; }.mc-advanced { margin-top: 14px; border-top: 1px solid #e3ece8; padding-top: 12px; }.mc-advanced > button { display: flex; align-items: center; gap: 7px; padding: 5px 0; color: #58736b; border: 0; background: transparent; cursor: pointer; }.mc-advanced-fields { margin-top: 12px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; border-radius: 10px; background: #f5f8f7; }.mc-advanced-fields .t-button { grid-column: 1 / -1; justify-self: start; }
 .mc-review { margin: 0; border: 1px solid #e0e9e5; border-radius: 12px; overflow: hidden; }.mc-review div { padding: 14px 18px; display: grid; grid-template-columns: 160px 1fr; border-bottom: 1px solid #e8efec; }.mc-review div:last-child { border: 0; }.mc-review dt { color: #71857e; }.mc-review dd { margin: 0; font-weight: 600; }.mc-review code { color: #1e755c; }.mc-submit-error { display: flex; gap: 7px; color: #b23b3b; }
 .mc-actions { max-width: 900px; margin: 18px auto 0; display: grid; grid-template-columns: 150px 1fr 180px; }
 @media (max-width: 760px) { .mc-create-page { padding: 24px 16px 48px; }.mc-create-header { grid-template-columns: 1fr; text-align: left; }.mc-create-header .mc-back { margin-bottom: 16px; }.mc-mode-grid, .mc-future-grid, .mc-form-grid { grid-template-columns: 1fr; }.mc-field-wide { grid-column: auto; }.mc-panel { padding: 22px; }.mc-review div { grid-template-columns: 1fr; gap: 4px; }.mc-actions { grid-template-columns: auto 1fr auto; }.mc-steps li { font-size: 0; } }

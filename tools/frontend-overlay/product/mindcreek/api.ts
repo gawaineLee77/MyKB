@@ -1,5 +1,4 @@
-import { del, get, patch, post, postUpload } from '@/utils/request'
-import { listModels, type ModelConfig } from '@/api/model'
+import { del, get, patch, post, postUpload, put } from '@/utils/request'
 
 import type { CapabilityDocument, KnowledgeRole, KnowledgeSpaceRequest } from './contracts'
 
@@ -152,6 +151,42 @@ export interface KnowledgeSpaceResult {
   reconciled: boolean
 }
 
+export type ManagedModelType = 'KnowledgeQA' | 'Embedding' | 'Rerank'
+
+// This deliberately mirrors the redacted MindCreek facade. Provider URLs,
+// credentials, and provider-specific parameters must never be added here.
+export interface ManagedModelDescriptor {
+  id: string
+  display_name: string
+  type: ManagedModelType
+  managed: boolean
+  default: boolean
+  available: boolean
+  scope: 'organization' | 'workspace'
+}
+
+export interface ManagedModelSnapshot {
+  ready: boolean
+  defaults: ManagedModelDescriptor[]
+  overrides: ManagedModelDescriptor[]
+  overrides_enabled: boolean
+}
+
+export interface ModelOverrideInput {
+  name: string
+  display_name: string
+  type: ManagedModelType
+  provider: string
+  base_url: string
+  api_key?: string
+  dimension?: number
+}
+
+export interface ModelTestResult {
+  available: boolean
+  dimension?: number
+}
+
 export interface ProductProfile {
   upstream_kb_id: string
   product_mode: 'personal_notes' | 'rag'
@@ -222,23 +257,63 @@ export async function getKnowledgeModeCapabilities(): Promise<CapabilityDocument
   return get<CapabilityDocument>('/api/v1/capabilities/knowledge-modes')
 }
 
+export async function getManagedModels(): Promise<ManagedModelSnapshot> {
+  const response = await get<{ success: boolean; data: ManagedModelSnapshot }>('/api/v1/mindcreek/models')
+  return response.data
+}
+
 export async function getCreationModels(): Promise<{
-  embedding: ModelConfig[]
-  summary: ModelConfig[]
+  ready: boolean
+  overridesEnabled: boolean
+  embedding: ManagedModelDescriptor[]
+  summary: ManagedModelDescriptor[]
+  rerank: ManagedModelDescriptor[]
 }> {
-  const models = await listModels()
+  const snapshot = await getManagedModels()
+  const models = [...snapshot.defaults, ...snapshot.overrides].filter(model => model.available)
   return {
+    ready: snapshot.ready,
+    overridesEnabled: snapshot.overrides_enabled,
     embedding: models.filter(model => model.type === 'Embedding'),
     summary: models.filter(model => model.type === 'KnowledgeQA'),
+    rerank: models.filter(model => model.type === 'Rerank'),
   }
 }
 
 export async function getSmartReasoningModelId(): Promise<string> {
-  const response = await get<{ success: boolean; data: { config?: { model_id?: string; rerank_model_id?: string } } }>(
-    '/api/v1/agents/builtin-smart-reasoning',
+  const snapshot = await getManagedModels()
+  const chat = snapshot.defaults.find(model => model.type === 'KnowledgeQA' && model.available)
+  const rerank = snapshot.defaults.find(model => model.type === 'Rerank' && model.available)
+  return snapshot.ready && chat && rerank ? chat.id : ''
+}
+
+export async function createModelOverride(input: ModelOverrideInput): Promise<ManagedModelDescriptor> {
+  const response = await post<{ success: boolean; data: ManagedModelDescriptor }>(
+    '/api/v1/mindcreek/models/overrides',
+    input,
   )
-  const config = response.data.config
-  return config?.model_id && config.rerank_model_id ? config.model_id : ''
+  return response.data
+}
+
+export async function updateModelOverride(id: string, input: ModelOverrideInput): Promise<ManagedModelDescriptor> {
+  const response = await put<{ success: boolean; data: ManagedModelDescriptor }>(
+    `/api/v1/mindcreek/models/overrides/${encodeURIComponent(id)}`,
+    input,
+  )
+  return response.data
+}
+
+export async function deleteModelOverride(id: string): Promise<void> {
+  await del(`/api/v1/mindcreek/models/overrides/${encodeURIComponent(id)}`)
+}
+
+export async function testModelOverride(input: ModelOverrideInput, id = ''): Promise<ModelTestResult> {
+  const query = id ? `?model_id=${encodeURIComponent(id)}` : ''
+  const response = await post<{ success: boolean; data: ModelTestResult }>(
+    `/api/v1/mindcreek/models/overrides/test${query}`,
+    input,
+  )
+  return response.data
 }
 
 export async function createKnowledgeSpace(

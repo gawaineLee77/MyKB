@@ -331,6 +331,76 @@ func TestPhase4SearchExcerptAndAgentContracts(t *testing.T) {
 	}
 }
 
+func TestManagedModelAdapterUsesNarrowContractAndWriteOnlyCredentialEndpoint(t *testing.T) {
+	const secret = "adapter-secret-never-return"
+	var credentialPayload map[string]string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/models":
+			_, _ = w.Write([]byte(`{"success":true,"data":[{"id":"builtin-mindcreek-chat","name":"chat","display_name":"Chat","type":"KnowledgeQA","source":"remote","is_default":true,"is_builtin":true,"status":"active","parameters":{"base_url":"https://secret.example/v1","api_key":"` + secret + `"},"credentials":{"api_key":"set"}}]}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/models":
+			var input ModelWriteRequest
+			if err := json.NewDecoder(r.Body).Decode(&input); err != nil || input.Parameters.APIKey != secret {
+				http.Error(w, "invalid create", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"success":true,"data":{"id":"override-1","name":"chat","display_name":"Private","type":"KnowledgeQA","status":"active"}}`))
+		case r.Method == http.MethodPut && r.URL.Path == "/api/v1/models/override-1":
+			_, _ = w.Write([]byte(`{"success":true,"data":{"id":"override-1","name":"chat","display_name":"Private 2","type":"KnowledgeQA","status":"active"}}`))
+		case r.Method == http.MethodPut && r.URL.Path == "/api/v1/models/override-1/credentials":
+			if err := json.NewDecoder(r.Body).Decode(&credentialPayload); err != nil {
+				http.Error(w, "invalid credential", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"success":true}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/initialization/remote/check":
+			var input map[string]any
+			_ = json.NewDecoder(r.Body).Decode(&input)
+			if input["apiKey"] != secret || input["modelName"] != "chat" {
+				http.Error(w, "invalid model test", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"success":true,"data":{"available":true}}`))
+		case r.Method == http.MethodDelete && r.URL.Path == "/api/v1/models/override-1":
+			_, _ = w.Write([]byte(`{"success":true}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer upstream.Close()
+
+	client := newTestClient(t, upstream.URL, 2*time.Second)
+	headers := http.Header{"Authorization": {"Bearer model-admin"}}
+	models, err := client.ListModels(context.Background(), headers)
+	if err != nil || len(models) != 1 || models[0].ID != "builtin-mindcreek-chat" {
+		t.Fatalf("ListModels() = %+v, %v", models, err)
+	}
+	encoded, _ := json.Marshal(models)
+	if strings.Contains(string(encoded), secret) || strings.Contains(string(encoded), "base_url") || strings.Contains(string(encoded), "credentials") {
+		t.Fatalf("narrow model contract leaked provider data: %s", encoded)
+	}
+
+	request := ModelWriteRequest{Name: "chat", DisplayName: "Private", Type: "KnowledgeQA", Source: "remote", Parameters: ModelWriteParameters{BaseURL: "https://models.example/v1", APIKey: secret, Provider: "generic"}}
+	created, err := client.CreateModel(context.Background(), request, headers)
+	if err != nil || created.ID != "override-1" {
+		t.Fatalf("CreateModel() = %+v, %v", created, err)
+	}
+	request.DisplayName = "Private 2"
+	if _, err := client.UpdateModel(context.Background(), created.ID, request, headers); err != nil {
+		t.Fatal(err)
+	}
+	if err := client.ReplaceModelCredential(context.Background(), created.ID, secret, headers); err != nil || credentialPayload["api_key"] != secret {
+		t.Fatalf("ReplaceModelCredential() payload=%v err=%v", credentialPayload, err)
+	}
+	testResult, err := client.TestModel(context.Background(), ModelTestRequest{Type: "KnowledgeQA", ModelName: "chat", APIKey: secret}, headers)
+	if err != nil || !testResult.Available {
+		t.Fatalf("TestModel() = %+v, %v", testResult, err)
+	}
+	if err := client.DeleteModel(context.Background(), created.ID, headers); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func newTestClient(t *testing.T, rawURL string, timeout time.Duration) *Client {
 	t.Helper()
 	base, err := url.Parse(rawURL)

@@ -23,6 +23,7 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ingestion"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/managedmodel"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/mcp"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/note"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ownership"
@@ -184,6 +185,22 @@ func main() {
 	if err != nil {
 		log.Fatalf("capability registry error: %v", err)
 	}
+	overridesEnabled := capabilities.Document(cfg.ProductVersion, cfg.UpstreamVersion).Capabilities["user_model_overrides"]
+	if overridesEnabled != cfg.ModelOverridesEnabled {
+		log.Fatalf("model override capability and MINDCREEK_USER_MODEL_OVERRIDES must agree")
+	}
+	var modelService *managedmodel.Service
+	if capabilities.Document(cfg.ProductVersion, cfg.UpstreamVersion).Capabilities["managed_models"] {
+		modelService, err = managedmodel.NewService(adapter, agentAuditRepository, managedmodel.Policy{
+			OverridesEnabled: overridesEnabled,
+			AllowedProviders: cfg.ModelOverrideProviders,
+			AllowedHosts:     cfg.ModelOverrideHosts,
+			AllowHTTP:        cfg.ModelOverrideAllowHTTP,
+		})
+		if err != nil {
+			log.Fatalf("managed model service error: %v", err)
+		}
+	}
 	routePolicy, err := policy.Load(cfg.RoutePolicyFile, cfg.UpstreamVersion)
 	if err != nil {
 		log.Fatalf("route policy error: %v", err)
@@ -198,7 +215,7 @@ func main() {
 		Principals: adapter, Access: accessGate, Spaces: spaceService, Notes: noteService,
 		Ingestions: ingestionService, Library: libraryService, Grants: grantService, Directory: adapter,
 		Decisions: authorizationService, Publications: publicationService, Catalog: catalogService,
-		Subscriptions: subscriptionService, AgentScopes: agentScopeResolver, MCP: hostedMCP,
+		Subscriptions: subscriptionService, AgentScopes: agentScopeResolver, Models: modelService, MCP: hostedMCP,
 	}
 	if err := http.ListenAndServe(cfg.ListenAddr, server.NewGateway(cfg, capabilities, routePolicy, dependencies)); err != nil {
 		log.Fatalf("gateway stopped: %v", err)

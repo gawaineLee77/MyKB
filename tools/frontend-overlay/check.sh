@@ -40,9 +40,14 @@ grep -q 'mindcreekCreateKnowledgeSpace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekNotesWorkspace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekRAGWorkspace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekAskWorkspace' "$TARGET/src/router/index.ts"
+grep -q 'mindcreekAdvancedModelSettings' "$TARGET/src/router/index.ts"
 grep -q 'mindcreek/KnowledgeLibrary.vue' "$TARGET/src/router/index.ts"
 grep -q 'export function patch' "$TARGET/src/utils/request.ts"
 grep -q 'Create a knowledge space' "$TARGET/src/mindcreek/CreateKnowledgeSpace.vue"
+grep -q 'Managed AI is ready' "$TARGET/src/mindcreek/CreateKnowledgeSpace.vue"
+grep -q 'Workspace model overrides' "$TARGET/src/mindcreek/AdvancedModelSettings.vue"
+grep -q '/api/v1/mindcreek/models' "$TARGET/src/mindcreek/api.ts"
+! grep -q "@/api/model" "$TARGET/src/mindcreek/api.ts"
 grep -q 'A quiet place for working notes' "$TARGET/src/mindcreek/NotesWorkspace.vue"
 grep -q 'Managed Plain RAG preset' "$TARGET/src/mindcreek/RAGWorkspace.vue"
 grep -q 'Shared with me' "$TARGET/src/mindcreek/KnowledgeLibrary.vue"
@@ -65,4 +70,4 @@ test -z "$DIRTY" || {
   exit 1
 }
 
-echo "MindCreek Phase 4 overlay verified; upstream remains unchanged"
+echo "MindCreek Phase 5 overlay verified; upstream remains unchanged"

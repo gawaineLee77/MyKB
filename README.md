@@ -19,7 +19,7 @@ WeKnora is pinned as an unmodified submodule under `upstream/weknora`. Product c
 
 ## Current status
 
-Phase 0 and Phase 1–3 Gates A–D are complete. Phase 4 adds one authorized scope for Web Ask and the hosted read-only MCP facade while preserving private-by-default RAG, Viewer/Editor grants, live publications/subscriptions, immediate revocation, and redacted audit. The product UI provides `My KBs`, `Shared with me`, `Subscribed`, `Discover`, and `Authorized Ask`; Personal Notes remain owner-only and unpublishable. Product pages are applied by the assertion-checked frontend overlay without modifying the WeKnora submodule:
+Phase 0 and Phase 1–4 Gates A–D are complete. Phase 5 Gate A adds zero-key managed chat, embedding, and rerank defaults plus a disabled-by-default Advanced Settings override flow. The product UI provides `My KBs`, `Shared with me`, `Subscribed`, `Discover`, `Authorized Ask`, and managed model status; Personal Notes remain owner-only and unpublishable. Product pages are applied by the assertion-checked frontend overlay without modifying the WeKnora submodule:
 
 ```sh
 make stage1-check
@@ -46,8 +46,12 @@ make phase4-gate-a
 make phase4-gate-b
 make phase4-gate-c
 make phase4-gate-d
+make phase5-compose-config
+make phase5-build-offline
+make phase5-up
+make phase5-gate-a
 ```
 
-The seven-service runtime publishes only the frontend; the gateway and WeKnora app remain private. Subscriptions are live references, not content copies. Unfollowed organization-public KBs are readable when explicitly selected but remain outside the default library/agent scope. Corporate OAuth 2.0 and closed registration remain Phase 5.
+The seven-service runtime publishes only the frontend; the gateway and WeKnora app remain private. Subscriptions are live references, not content copies. Unfollowed organization-public KBs are readable when explicitly selected but remain outside the default library/agent scope. Phase 5 Gate A is complete; corporate OAuth 2.0, closed registration, and production hardening remain in Gates B–D. See the [Phase 5 implementation plan](docs/PHASE5_IMPLEMENTATION_PLAN.md) and [Gate A evidence](docs/PHASE5_GATE_A.md).
 
 Docker build definitions, pinned image manifests, and offline-transfer commands live in [`images/`](images/README.md). Current delivery evidence is recorded in the [Phase 4 implementation plan](docs/PHASE4_IMPLEMENTATION_PLAN.md), [Gate D release record](docs/PHASE4_GATE_D.md), and [operations/upgrade guide](docs/PHASE4_OPERATIONS.md). See also the [Phase 2 sharing-model map](docs/PHASE2_SHARING_MODEL.md), [route-action inventory](docs/PHASE2_ROUTE_ACTIONS.md), [build and LAN deployment guide](docs/BUILD_AND_LAN_DEPLOYMENT.md), [overall design](docs/OVERALL_DESIGN.md), and [downstream patch ledger](docs/UPSTREAM_PATCHES.md).

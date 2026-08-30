@@ -132,7 +132,7 @@ replaceExact(
           component: () => import("@/mindcreek/KnowledgeLibrary.vue"),
           meta: { requiresInit: true, requiresAuth: true }
         },
-        // MindCreek Phase 4 product modules. Their source lives outside the upstream tree.
+        // MindCreek Phase 5 product modules. Their source lives outside the upstream tree.
         {
           path: "mindcreek/create",
           name: "mindcreekCreateKnowledgeSpace",
@@ -155,6 +155,12 @@ replaceExact(
           path: "mindcreek/ask",
           name: "mindcreekAskWorkspace",
           component: () => import("@/mindcreek/AskWorkspace.vue"),
+          meta: { requiresInit: true, requiresAuth: true }
+        },
+        {
+          path: "mindcreek/settings/models",
+          name: "mindcreekAdvancedModelSettings",
+          component: () => import("@/mindcreek/AdvancedModelSettings.vue"),
           meta: { requiresInit: true, requiresAuth: true }
         },`,
 )
@@ -231,4 +237,4 @@ copyFileSync(resolve(brandingRoot, 'assets/mindcreek-mark-ui.png'), pathFor('src
 copyFileSync(resolve(brandingRoot, 'assets/mindcreek-favicon.png'), pathFor('public/mindcreek-favicon.png'))
 appendFileSync(pathFor(themePath), `\n\n${readFileSync(resolve(brandingRoot, 'theme.css'), 'utf8')}\n`)
 
-console.log(`Applied ${brand.name} branding and Phase 4 product modules to ${frontendRoot}`)
+console.log(`Applied ${brand.name} branding and Phase 5 product modules to ${frontendRoot}`)

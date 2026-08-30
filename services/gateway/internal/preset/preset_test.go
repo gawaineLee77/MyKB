@@ -32,3 +32,13 @@ func TestPersonalNotesUsesSmallerApprovedBudget(t *testing.T) {
 		t.Fatalf("Build() = %+v, %v", definition, err)
 	}
 }
+
+func TestPhase5PresetRecordsManagedReranker(t *testing.T) {
+	definition, err := BuildWithRerank(profile.ModeRAG, "embedding-1", "chat-1", "rerank-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !definition.Config.Retrieval.RerankEnabled || definition.Config.Retrieval.RerankModelID != "rerank-1" || definition.Config.Models.RerankModelID != "rerank-1" {
+		t.Fatalf("Phase 5 model set = %+v", definition.Config)
+	}
+}

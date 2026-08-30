@@ -21,6 +21,7 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/managedmodel"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/note"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
@@ -48,7 +49,17 @@ type Dependencies struct {
 	Catalog       CatalogService
 	Subscriptions SubscriptionService
 	AgentScopes   AgentScopeService
+	Models        ManagedModelService
 	MCP           http.Handler
+}
+
+type ManagedModelService interface {
+	Snapshot(context.Context, weknora.Principal, http.Header) (managedmodel.Snapshot, error)
+	ResolveCreationModels(context.Context, string, string, weknora.Principal, http.Header) (string, string, error)
+	CreateOverride(context.Context, managedmodel.OverrideInput, weknora.Principal, http.Header) (managedmodel.Descriptor, error)
+	UpdateOverride(context.Context, string, managedmodel.OverrideInput, weknora.Principal, http.Header) (managedmodel.Descriptor, error)
+	DeleteOverride(context.Context, string, weknora.Principal, http.Header) error
+	TestOverride(context.Context, managedmodel.OverrideInput, string, weknora.Principal, http.Header) (managedmodel.TestResult, error)
 }
 
 type AgentScopeService interface {
@@ -184,6 +195,7 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 	registerSharingRoutes(mux, dependencies)
 	registerPublicationRoutes(mux, dependencies)
 	registerAgentRoutes(mux, dependencies)
+	registerManagedModelRoutes(mux, dependencies)
 	if dependencies.MCP != nil {
 		mux.Handle("/mcp", dependencies.MCP)
 	}
@@ -207,6 +219,18 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 		if err := decoder.Decode(&extra); err != io.EOF {
 			apierror.Write(w, http.StatusBadRequest, "request.invalid_json", "Request body must contain one JSON document", requestID(r))
 			return
+		}
+		if dependencies.Models != nil {
+			embeddingID, chatID, err := dependencies.Models.ResolveCreationModels(
+				r.Context(), input.EmbeddingModelID, input.SummaryModelID, principal, r.Header,
+			)
+			if err != nil {
+				writeManagedModelError(w, r, err)
+				return
+			}
+			input.EmbeddingModelID = embeddingID
+			input.SummaryModelID = chatID
+			input.RerankModelID = managedmodel.ManagedRerankID
 		}
 		identity := access.Identity{UserID: principal.User.ID, TenantID: principal.Tenant.ID}
 		result, err := dependencies.Spaces.Create(r.Context(), input, r.Header.Get("Idempotency-Key"), identity, r.Header)

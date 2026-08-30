@@ -1,0 +1,43 @@
+# Product-owned deployment override. Other upstream built-in agents continue
+# to use their pinned defaults; only Smart Reasoning needs managed model IDs.
+builtin_agents:
+  - id: "builtin-smart-reasoning"
+    avatar: ""
+    is_builtin: true
+    i18n:
+      default:
+        name: "Smart Reasoning"
+        description: "Authorized multi-step reasoning with managed MindCreek models"
+      zh-CN:
+        name: "智能推理"
+        description: "使用 MindCreek 托管模型进行受控的多步知识推理"
+    config:
+      agent_mode: "smart-reasoning"
+      agent_type: "rag-qa"
+      model_id: "builtin-mindcreek-chat"
+      rerank_model_id: "builtin-mindcreek-rerank"
+      system_prompt: ""
+      temperature: 0.7
+      max_completion_tokens: 2048
+      max_iterations: 50
+      kb_selection_mode: "all"
+      retrieve_kb_only_when_mentioned: false
+      allowed_tools:
+        - "knowledge_search"
+        - "grep_chunks"
+        - "list_knowledge_chunks"
+        - "query_knowledge_graph"
+        - "get_document_info"
+      web_search_enabled: false
+      web_search_max_results: 0
+      reflection_enabled: false
+      multi_turn_enabled: true
+      history_turns: 5
+      faq_priority_enabled: true
+      faq_direct_answer_threshold: 0.9
+      faq_score_boost: 1.2
+      embedding_top_k: 10
+      keyword_threshold: 0.3
+      vector_threshold: 0.5
+      rerank_top_k: 10
+      rerank_threshold: 0.3

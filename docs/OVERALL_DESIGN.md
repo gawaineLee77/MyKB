@@ -4,9 +4,9 @@
 
 | Field | Value |
 |---|---|
-| Status | Approved design; Phase 1 Gates A–D complete |
-| Document version | 0.6 |
-| Date | 2026-08-26 |
+| Status | Approved design; Phases 0–4 and Phase 5 Gate A complete |
+| Document version | 0.7 |
+| Date | 2026-08-30 |
 | Base project | Tencent WeKnora |
 | Current approved upstream baseline | WeKnora v0.7.2 |
 | Deployment model | Self-hosted service for internal users |
@@ -21,6 +21,8 @@ The product is a self-hosted knowledge base platform for internal users. Each us
 The system will be delivered as an upstream-first distribution around [Tencent WeKnora](https://github.com/Tencent/WeKnora), currently pinned to the approved [v0.7.2](https://github.com/Tencent/WeKnora/releases/tag/v0.7.2) release. WeKnora supplies the core document-processing, retrieval, Wiki, agent, workspace, and RBAC capabilities. Our publication, subscription, organization-public access, policy, and product UI behavior live in isolated extension modules. Features outside the product goal—such as the WeChat Mini Program, IM channels, and CLI—remain in upstream source but are not built, started, routed, or exposed in our distribution.
 
 Subscriptions are live references, not copies. For subscriber-access publications, subscribing activates read access; for organization-public publications, it follows updates and adds the KB to default agent scope. Documents, chunks, Wiki pages, and embeddings are never duplicated. Updates and revocation therefore take effect immediately.
+
+The production distribution provides an administrator-managed default chat model, embedding model, and rerank model, so ordinary users can create and query knowledge without supplying provider credentials. Those credentials remain server-side and redacted. Optional user-supplied model configuration is an explicitly enabled Advanced Settings capability, never the onboarding path.
 
 The central security rule is:
 
@@ -44,6 +46,7 @@ Create an internal knowledge network in which people retain ownership of their k
 - Provide grounded agent answers with source citations.
 - Apply the same authorization rules to UI, API, search, chat, Wiki, preview, and download operations.
 - Deploy entirely on infrastructure controlled by the organization.
+- Be usable immediately with approved managed chat, embedding, and rerank defaults without asking ordinary users for API keys.
 - Keep the product delta small enough to adopt approved upstream WeKnora releases quickly, including security and reliability improvements.
 
 ### 2.2 Non-goals for the first release
@@ -72,6 +75,7 @@ Create an internal knowledge network in which people retain ownership of their k
 8. **Upstream-first customization.** Prefer composition, APIs, adapters, companion tables, deployment exclusions, and feature gates; patch upstream source only when a required security or transaction boundary cannot otherwise be enforced.
 9. **Cost-aware enrichment.** Estimate and constrain LLM/VLM work before Wiki, graph, pixel, or ontology indexing begins.
 10. **Human-governed semantics.** LLMs may propose ontologies and graph facts, but accountable users approve schemas and disputed facts.
+11. **Managed models by default.** Deployment administrators own the default model endpoints and secrets; ordinary users see capabilities and health, never managed credentials.
 
 ## 3. Terminology
 
@@ -339,6 +343,19 @@ This mode follows “human in command”: an LLM accelerates bootstrapping, but 
 - Configure retention, upload limits, allowed URL hosts, and model providers.
 - Export operational metrics without exposing document contents.
 
+### 7.8 Managed model defaults and optional overrides
+
+**Implementation status (2026-08-30):** Phase 5 Gate A is complete with stable managed IDs, a secret-free deployment renderer, redacted facade, automatic defaults, and a disabled-by-default Advanced Settings override lifecycle. Production provider activation remains an operator secret-management action.
+
+- Every pilot or production deployment must configure one healthy default `KnowledgeQA`, `Embedding`, and `Rerank` model before it is marked ready for users.
+- Reuse WeKnora's declarative built-in model catalog with stable IDs. Product-owned YAML contains only `${ENV_VAR}` references; real base URLs and API keys come from a secret manager, container secrets, or a root-readable untracked environment file.
+- Ordinary workflows automatically select managed defaults. KB creation must not require model knowledge, and Quick Ask, Smart Reasoning, ingestion, embedding, and reranking must work without a user API key.
+- Browser and ordinary-user APIs expose only safe descriptors such as model ID, display name, type, availability, and `managed=true`. They never return a managed API key or sensitive endpoint details.
+- Managed model administration is deployment/system-admin only and is absent from routine settings. Stable managed IDs cannot be overwritten or deleted through ordinary user routes.
+- Optional user-supplied providers live behind a disabled-by-default `user_model_overrides` capability in Advanced Settings. An override is private to its owning user or workspace, encrypted at rest, auditable, quota-limited, and never promoted to the organization default implicitly.
+- Resolution order is an explicitly permitted override followed by the managed default. There is no silent fallback to a test model. Changing an embedding model on an existing KB requires an explicit rebuild; changing chat or rerank selection must not widen knowledge scope.
+- Readiness probes test all three managed models without exposing secrets. Rotation preserves stable model IDs, validates replacements in staging, and retains the existing `SYSTEM_AES_KEY` unless an explicit credential re-encryption procedure is performed.
+
 ## 8. Logical architecture
 
 ![Internal Knowledge Base Intelligent Agent Platform architecture](internal-kb-architecture-v0.4.png)
@@ -413,6 +430,7 @@ flowchart TB
 | Graph Index/Store | Per-KB entities, relations, claims, communities, and ontology-guided facts with source and policy metadata. |
 | Visual Tile Index | Page/tile visual embeddings and render metadata for PixelRAG; source images remain protected artifacts. |
 | Model Gateway | Approved LLM, embedding, rerank, VLM, and optional OCR/model endpoints. |
+| Managed Model Configuration | Reuses WeKnora built-in models and deployment secrets to publish safe default capabilities without exposing credentials to users. |
 
 ### 8.2 Trust boundaries
 
@@ -1049,6 +1067,8 @@ Only the reverse proxy publishes a host port. PostgreSQL, Redis, object storage,
 
 The final vector and keyword backend should be selected after measuring expected corpus size, language mix, document types, and server resources. The product UI should expose only the selected production option even if upstream adapters remain in code.
 
+Managed model declarations are mounted read-only into the private application container. Model names and stable IDs may be versioned in the repository, but endpoint URLs and credentials must not be committed. Development may use the deterministic mock sidecar; staging and production readiness must reject it as a default provider.
+
 ### 14.3 Environments
 
 Maintain at least:
@@ -1118,6 +1138,9 @@ All workers must be idempotent or safely retryable before horizontal scaling.
 
 - Document whether prompts, retrieved chunks, images, and files leave the internal network.
 - Allow only approved model endpoints and credentials.
+- Keep managed model credentials out of browser bundles, API responses, Compose manifests, logs, probes, screenshots, and Git history. Credential write endpoints accept replacements but never return stored values.
+- Preserve and back up `SYSTEM_AES_KEY` separately; losing or rotating it without re-encryption makes stored provider credentials unusable.
+- Treat user-supplied providers as untrusted egress destinations: validate scheme and host, apply SSRF controls, isolate ownership, and show a clear notice that retrieved content may be sent to that provider.
 - Do not let model output select unrestricted KB IDs or raw storage URLs.
 - Keep dangerous tools disabled unless separately authorized and audited.
 - Keep the initial MCP tool surface read-only; require explicit capability scopes and confirmation for future mutations.
@@ -1330,6 +1353,7 @@ Audit records contain actor, effective principal, action, target, timestamp, req
 
 **Outcome:** Production-ready internal pilot.
 
+- **Complete (Gate A):** provision administrator-managed default chat, embedding, and rerank models through server-side secrets; simplify ordinary onboarding and gate optional workspace providers behind Advanced Settings.
 - Integrate the organization's OAuth 2.0 identity provider and disable self-registration.
 - Complete network isolation, TLS, secrets, backup, restore, logging, metrics, and alerting.
 - Run security, load, migration, and recovery tests.
@@ -1380,6 +1404,8 @@ Audit records contain actor, effective principal, action, target, timestamp, req
 The MVP is complete when:
 
 - An administrator can deploy the system on an internal server from documented configuration.
+- The deployment supplies healthy managed chat, embedding, and rerank defaults; ordinary users can create and query a Plain RAG KB without viewing or entering model credentials.
+- Managed credentials never appear in browser/API responses, logs, probes, screenshots, repository files, or exported configuration; optional user overrides are private, encrypted, explicitly enabled, and auditable.
 - Public registration, Mini Program, CLI, and IM channels are absent or unreachable.
 - The creation wizard exposes Personal Notes and Document RAG with Plain RAG; GraphRAG, PixelRAG, and Ontology remain disabled or clearly experimental.
 - A user can create an owner-only Note Space, edit Markdown, import only `.md`/`.txt`, recover revisions, and receive clear quota errors before processing.
@@ -1410,6 +1436,8 @@ The MVP is complete when:
 | Subscription is implemented as data copying | Storage waste, stale data, unclear ownership. | Use live references for same-server subscriptions. Reserve copy/sync for future federation. |
 | Admin semantics conflict with “private” | User trust and governance ambiguity. | Publish the admin-override policy and audit every content override. |
 | External models receive sensitive content | Compliance or confidentiality breach. | Prefer internal models; approve and document providers; provide data classification controls. |
+| Shared default model credentials leak through UI or APIs | Provider compromise, unexpected cost, and cross-user exposure. | Use built-in managed models, server-side secrets, response redaction, route denial, log scanning, rotation drills, and negative tests. |
+| User model overrides become a shadow egress path | Private KB content may be sent to an unapproved endpoint. | Disable overrides by default; require explicit capability, ownership isolation, SSRF allow-lists, disclosure, quotas, and audit. |
 | Parser or URL import is exploited | Server compromise or network access. | Isolate parsers, restrict egress, apply SSRF defenses, limits, sanitization, and security updates. |
 | Excluded features remain reachable | Unwanted attack surface or unsupported workflows. | Keep upstream private, omit workers/artifacts, deny routes at the gateway and server capability layer, and test every excluded endpoint. |
 | Single server failure | Service outage or data loss. | Tested backups, monitoring, spare capacity, and a documented restore path; add HA when required. |
@@ -1501,6 +1529,12 @@ The MVP is complete when:
 
 **Reason:** This delivers a coherent product identity immediately, preserves a fast upstream upgrade path, and avoids coupling the eventual MindCreek experience to WeKnora's internal Vue component structure.
 
+### ADR-014: Provide managed model defaults and optional private overrides
+
+**Decision:** Reuse WeKnora's declarative built-in model mechanism for one deployment-managed default chat, embedding, and rerank model. Secrets are injected only at runtime. Ordinary users use these defaults automatically and see no credential or sensitive endpoint value. User-supplied providers are a disabled-by-default Advanced Settings capability with private ownership and separate policy controls.
+
+**Reason:** A knowledge product should work without requiring every user to understand model providers or possess organization credentials. Reusing upstream built-in models minimizes upgrade cost, while runtime secret injection, redaction, and tightly scoped overrides prevent convenience from becoming credential or data-egress exposure.
+
 ## 22. Open decisions before implementation
 
 The following choices do not block the overall design but must be resolved during Phase 0:
@@ -1513,7 +1547,8 @@ The following choices do not block the overall design but must be resolved durin
 | Editor source download | Enabled unless policy forbids it |
 | Publication audience | Organization and selected-workspace audiences |
 | Publication approval | Owner self-publishes for MVP; optional approval later |
-| Model deployment | Internal chat/embedding/rerank endpoints where feasible |
+| Model deployment | One managed default chat/embedding/rerank set, preferably internal; credentials injected server-side and never shown to ordinary users |
+| User model overrides | Disabled by default; optional private Advanced Settings capability with approved providers, encryption, quotas, and audit |
 | Vector/keyword backend | One supported production configuration selected after corpus sizing |
 | Object storage | Internal MinIO or approved S3-compatible storage |
 | Orchestration | Docker Compose initially |
@@ -1543,6 +1578,7 @@ The following choices do not block the overall design but must be resolved durin
 - [WeKnora product introduction: KB types and indexing strategies](https://github.com/Tencent/WeKnora/blob/main/website-docs/01-getting-started/01-introduction.md)
 - [WeKnora knowledge-base API](https://github.com/Tencent/WeKnora/blob/main/docs/api/knowledge-base.md)
 - [WeKnora chunking and online-entry limits](https://github.com/Tencent/WeKnora/blob/main/docs/CHUNKING.md)
+- [Pinned WeKnora built-in model configuration](../upstream/weknora/docs/BUILTIN_MODELS.md)
 - [WeKnora Wiki feature and editing model](https://github.com/Tencent/WeKnora/blob/main/website-docs/03-features/14-wiki.md)
 - [Microsoft GraphRAG overview](https://microsoft.github.io/graphrag/index/overview/)
 - [Microsoft GraphRAG query methods](https://github.com/microsoft/graphrag/blob/main/docs/query/overview.md)
@@ -1552,4 +1588,4 @@ The following choices do not block the overall design but must be resolved durin
 
 ## 24. Next implementation action
 
-Import or pin the unmodified WeKnora v0.7.2 source as a clearly owned upstream boundary. Phase 0 then verifies the stock build and deployment, inventories published APIs and extension seams, and creates small proof-of-concept mappings for Personal Notes, Plain RAG, and optional LLM Wiki. Before product development begins, enforce the [downstream patch ledger](UPSTREAM_PATCHES.md), a versioned adapter contract suite, and the automated upstream-boundary check.
+Begin [Phase 5 Gate A](PHASE5_IMPLEMENTATION_PLAN.md) with the managed-model contract and secret-free deployment template. Confirm provider protocols, model names, and embedding dimension before placing real values in a protected local secret source. Do not enable user model overrides until their ownership, egress, encryption, and audit matrix passes.

@@ -14,6 +14,7 @@ const Version = 1
 type Models struct {
 	EmbeddingModelID string `json:"embedding_model_id"`
 	SummaryModelID   string `json:"summary_model_id,omitempty"`
+	RerankModelID    string `json:"rerank_model_id,omitempty"`
 }
 
 type Retrieval struct {
@@ -48,6 +49,14 @@ type Definition struct {
 }
 
 func Build(mode profile.ProductMode, embeddingModelID, summaryModelID string) (Definition, error) {
+	return BuildWithRerank(mode, embeddingModelID, summaryModelID, "")
+}
+
+// BuildWithRerank records the complete server-selected Phase 5 model set in
+// the immutable product profile. WeKnora's retrieval pipeline auto-selects the
+// available default reranker; this field makes that product decision explicit
+// for diagnostics and future migrations.
+func BuildWithRerank(mode profile.ProductMode, embeddingModelID, summaryModelID, rerankModelID string) (Definition, error) {
 	if embeddingModelID == "" {
 		return Definition{}, fmt.Errorf("embedding model is required")
 	}
@@ -57,7 +66,7 @@ func Build(mode profile.ProductMode, embeddingModelID, summaryModelID string) (D
 			ProfileVersion: Version,
 			Storage:        weknora.StorageProviderConfig{Provider: "local"},
 			Indexing:       weknora.IndexingStrategy{VectorEnabled: true, KeywordEnabled: true},
-			Models:         Models{EmbeddingModelID: embeddingModelID, SummaryModelID: summaryModelID},
+			Models:         Models{EmbeddingModelID: embeddingModelID, SummaryModelID: summaryModelID, RerankModelID: rerankModelID},
 			Limits:         Limits{MaxFileBytes: 50 << 20, MaxFiles: 1000},
 		},
 	}
@@ -69,7 +78,7 @@ func Build(mode profile.ProductMode, embeddingModelID, summaryModelID string) (D
 		definition.Config.Chunking.ChunkSize = 800
 		definition.Config.Chunking.ChunkOverlap = 80
 		definition.Config.Chunking.Strategy = "heading"
-		definition.Config.Retrieval = Retrieval{Mode: "hybrid", VectorTopK: 12, KeywordTopK: 12, FinalTopK: 8}
+		definition.Config.Retrieval = Retrieval{Mode: "hybrid", VectorTopK: 12, KeywordTopK: 12, FinalTopK: 8, RerankEnabled: rerankModelID != "", RerankModelID: rerankModelID}
 		definition.Config.Limits = Limits{MaxFileBytes: 64 << 10, MaxFiles: 500}
 	case profile.ModeRAG:
 		definition.AccessPolicy = profile.PolicyUpstream
@@ -77,7 +86,7 @@ func Build(mode profile.ProductMode, embeddingModelID, summaryModelID string) (D
 		definition.Config.Chunking.ChunkSize = 1024
 		definition.Config.Chunking.ChunkOverlap = 128
 		definition.Config.Chunking.Strategy = "auto"
-		definition.Config.Retrieval = Retrieval{Mode: "hybrid", VectorTopK: 20, KeywordTopK: 20, FinalTopK: 10, RerankEnabled: false}
+		definition.Config.Retrieval = Retrieval{Mode: "hybrid", VectorTopK: 20, KeywordTopK: 20, FinalTopK: 10, RerankEnabled: rerankModelID != "", RerankModelID: rerankModelID}
 	default:
 		return Definition{}, fmt.Errorf("unsupported preset mode %q", mode)
 	}

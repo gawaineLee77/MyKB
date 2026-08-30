@@ -1,0 +1,10 @@
+FROM mindcreek-ui:phase4
+
+ARG MINDCREEK_UI_VERSION=0.6.0
+LABEL org.opencontainers.image.title="MindCreek UI" \
+      org.opencontainers.image.version="${MINDCREEK_UI_VERSION}" \
+      org.opencontainers.image.source="https://github.com/gawaineLee77/MyKB" \
+      org.opencontainers.image.licenses="MIT"
+
+COPY dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/templates/default.conf.template

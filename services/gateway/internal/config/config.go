@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,15 +21,19 @@ const (
 
 // Config contains only process and upstream-connection settings.
 type Config struct {
-	ListenAddr       string
-	ProductVersion   string
-	UpstreamURL      *url.URL
-	UpstreamVersion  string
-	UpstreamTimeout  time.Duration
-	RoutePolicyFile  string
-	RouteActionsFile string
-	CapabilitiesFile string
-	DatabaseURL      string
+	ListenAddr             string
+	ProductVersion         string
+	UpstreamURL            *url.URL
+	UpstreamVersion        string
+	UpstreamTimeout        time.Duration
+	RoutePolicyFile        string
+	RouteActionsFile       string
+	CapabilitiesFile       string
+	DatabaseURL            string
+	ModelOverrideProviders map[string]bool
+	ModelOverrideHosts     map[string]bool
+	ModelOverrideAllowHTTP bool
+	ModelOverridesEnabled  bool
 }
 
 // Load reads and validates gateway configuration from the environment.
@@ -61,10 +66,33 @@ func Load(buildVersion string) (Config, error) {
 	}
 	cfg.UpstreamTimeout = timeout
 
+	cfg.ModelOverrideProviders = csvSet(value("MINDCREEK_MODEL_OVERRIDE_PROVIDERS", "generic,openai"))
+	cfg.ModelOverrideHosts = csvSet(optionalValue("MINDCREEK_MODEL_OVERRIDE_HOSTS"))
+	allowHTTP, err := strconv.ParseBool(value("MINDCREEK_MODEL_OVERRIDE_ALLOW_HTTP", "false"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MINDCREEK_MODEL_OVERRIDE_ALLOW_HTTP must be true or false")
+	}
+	cfg.ModelOverrideAllowHTTP = allowHTTP
+	overridesEnabled, err := strconv.ParseBool(value("MINDCREEK_USER_MODEL_OVERRIDES", "false"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MINDCREEK_USER_MODEL_OVERRIDES must be true or false")
+	}
+	cfg.ModelOverridesEnabled = overridesEnabled
+
 	if strings.TrimSpace(cfg.ListenAddr) == "" || strings.TrimSpace(cfg.ProductVersion) == "" {
 		return Config{}, fmt.Errorf("listen address and product version must not be empty")
 	}
 	return cfg, nil
+}
+
+func csvSet(value string) map[string]bool {
+	result := make(map[string]bool)
+	for _, item := range strings.Split(value, ",") {
+		if normalized := strings.ToLower(strings.TrimSpace(item)); normalized != "" {
+			result[normalized] = true
+		}
+	}
+	return result
 }
 
 func optionalValue(name string) string {

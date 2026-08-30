@@ -1,0 +1,43 @@
+services:
+  frontend:
+    image: ${MINDCREEK_PHASE5_UI_IMAGE:-mindcreek-ui:phase5}
+    build:
+      args:
+        MINDCREEK_UI_VERSION: ${MINDCREEK_UI_VERSION:-0.6.0}
+        VITE_FRONTEND_COMMIT: weknora-${WEKNORA_VERSION:-v0.7.2}-mindcreek-${MINDCREEK_UI_VERSION:-0.6.0}
+
+  gateway:
+    image: ${MINDCREEK_PHASE5_GATEWAY_IMAGE:-mindcreek-gateway:phase5}
+    build:
+      args:
+        MINDCREEK_VERSION: ${MINDCREEK_VERSION:-0.6.0-phase5}
+    environment:
+      MINDCREEK_VERSION: ${MINDCREEK_VERSION:-0.6.0-phase5}
+      MINDCREEK_CAPABILITIES_FILE: /etc/mindcreek/phase5-capabilities.json
+      MINDCREEK_MODEL_OVERRIDE_PROVIDERS: ${MINDCREEK_MODEL_OVERRIDE_PROVIDERS:-generic,openai}
+      MINDCREEK_MODEL_OVERRIDE_HOSTS: ${MINDCREEK_MODEL_OVERRIDE_HOSTS:-}
+      MINDCREEK_MODEL_OVERRIDE_ALLOW_HTTP: ${MINDCREEK_MODEL_OVERRIDE_ALLOW_HTTP:-false}
+      MINDCREEK_USER_MODEL_OVERRIDES: ${MINDCREEK_USER_MODEL_OVERRIDES:-false}
+    volumes: !override
+      - ../../config/phase1-route-policy.json:/etc/mindcreek/phase1-route-policy.json:ro
+      - ../../config/phase2-route-actions.json:/etc/mindcreek/phase2-route-actions.json:ro
+      - ${MINDCREEK_PHASE5_CAPABILITIES_FILE:-../../config/phase5-capabilities.json}:/etc/mindcreek/phase5-capabilities.json:ro
+
+  app:
+    environment:
+      BUILTIN_MODELS_CONFIG: /app/config/builtin_models.yaml
+      MINDCREEK_MANAGED_LLM_NAME: ${MINDCREEK_MANAGED_LLM_NAME:-mindcreek-test-chat}
+      MINDCREEK_MANAGED_LLM_BASE_URL: ${MINDCREEK_MANAGED_LLM_BASE_URL:-http://mock-embedding:19090/v1}
+      MINDCREEK_MANAGED_LLM_API_KEY: ${MINDCREEK_MANAGED_LLM_API_KEY:-development-only}
+      MINDCREEK_MANAGED_LLM_PROVIDER: ${MINDCREEK_MANAGED_LLM_PROVIDER:-generic}
+      MINDCREEK_MANAGED_EMBEDDING_NAME: ${MINDCREEK_MANAGED_EMBEDDING_NAME:-mindcreek-test-embedding}
+      MINDCREEK_MANAGED_EMBEDDING_BASE_URL: ${MINDCREEK_MANAGED_EMBEDDING_BASE_URL:-http://mock-embedding:19090/v1}
+      MINDCREEK_MANAGED_EMBEDDING_API_KEY: ${MINDCREEK_MANAGED_EMBEDDING_API_KEY:-development-only}
+      MINDCREEK_MANAGED_EMBEDDING_PROVIDER: ${MINDCREEK_MANAGED_EMBEDDING_PROVIDER:-generic}
+      MINDCREEK_MANAGED_RERANK_NAME: ${MINDCREEK_MANAGED_RERANK_NAME:-mindcreek-test-rerank}
+      MINDCREEK_MANAGED_RERANK_BASE_URL: ${MINDCREEK_MANAGED_RERANK_BASE_URL:-http://mock-embedding:19090/v1}
+      MINDCREEK_MANAGED_RERANK_API_KEY: ${MINDCREEK_MANAGED_RERANK_API_KEY:-development-only}
+      MINDCREEK_MANAGED_RERANK_PROVIDER: ${MINDCREEK_MANAGED_RERANK_PROVIDER:-generic}
+    volumes:
+      - ../../.local/phase5/builtin_models.yaml:/app/config/builtin_models.yaml:ro
+      - ../../deploy/phase5/builtin_agents.yaml:/app/config/builtin_agents.yaml:ro
