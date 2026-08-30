@@ -2,9 +2,9 @@
 
 ## 1. Scope and current safety status
 
-The repository provides a verified **Phase 3 development runtime** based on unmodified WeKnora v0.7.2. Inherited gates cover the exclusive Product Gateway path, owner-only Personal Notes, Plain RAG, Viewer/Editor grants, publication, catalog discovery, subscriptions, organization-public read access, revision badges, and immediate inactivation. It is suitable for development and a controlled LAN pilot. Corporate OAuth 2.0, permanently closed registration, and unified Web/MCP agent scope remain later phases.
+The repository provides a verified **Phase 4 development runtime** based on unmodified WeKnora v0.7.2. Inherited gates cover the exclusive Product Gateway path, owner-only Personal Notes, Plain RAG, Viewer/Editor grants, publication, catalog discovery, subscriptions, organization-public read access, Authorized Ask, hosted read-only MCP, and immediate revocation. It is suitable for development and a controlled LAN pilot. Corporate OAuth 2.0 and permanently closed registration remain Phase 5.
 
-The MindCreek frontend applies Stage 1 branding and Stage 2 product modules—including Personal Notes, Plain RAG, sharing, Discover, and Subscribed—to a temporary copy of the pinned frontend. The product pages call the gateway; `upstream/weknora` remains unchanged.
+The MindCreek frontend applies branding and product modules—including Personal Notes, Plain RAG, sharing, Discover, Subscribed, and Authorized Ask—to a temporary copy of the pinned frontend. The product pages and `/mcp` call the gateway; `upstream/weknora` remains unchanged.
 
 The recommended first topology is one internal server running Docker Compose. Only the frontend Nginx port is reachable from the LAN; the app API, PostgreSQL, Redis, and docreader remain private or loopback-only.
 
@@ -28,7 +28,8 @@ make phase0-check
 make phase1-check
 make phase2-check
 make phase3-check
-make phase1-compose-config
+make phase4-check
+make phase4-compose-config
 ```
 
 For a complete source validation, install the language toolchains and run `make upstream-test`. This executes the Go, frontend, and MCP tests and may take considerable time. Normal deployment uses prebuilt images and does not require compilation.
@@ -36,102 +37,75 @@ For a complete source validation, install the language toolchains and run `make 
 To verify the overlay and build the current MindCreek frontend:
 
 ```sh
-make stage1-check
-make stage1-compose-config
-make stage1-ui-build
+make phase4-gate-b-static-check
+make phase4-images-build
 ```
 
-The build runs the upstream frontend tests and type-check before creating `mindcreek-ui:stage1`. The assertion-checked overlay intentionally fails when an upstream release changes one of its expected integration anchors; review and update the product-owned adapter instead of editing the submodule.
-
-To build the three application images from the pinned source instead:
-
-```sh
-cd upstream/weknora
-./scripts/build_frontend_dist.sh
-cd ../..
-./scripts/phase0-compose.sh build app docreader frontend
-```
+The build runs the frontend tests and type-check before creating `mindcreek-ui:phase4`. The assertion-checked overlay intentionally fails when an upstream release changes one of its expected integration anchors; review and update the product-owned adapter instead of editing the submodule.
 
 ## 4. Docker images to download
 
-The verified Phase 3 runtime uses these images:
+The verified Phase 4 runtime uses these images:
 
 | Image | Purpose | Required for the pilot |
 | --- | --- | --- |
-| `mindcreek-ui:stage1` | Branded UI plus Stage 2 product modules | Yes; built locally |
-| `mindcreek-gateway:phase3` | Product API, private sharing, publication, catalog, subscriptions, policy, notes, and ingestion guard | Yes; built locally |
+| `mindcreek-ui:phase4` | Branded UI plus Phase 4 product modules and `/mcp` proxy | Yes; built locally |
+| `mindcreek-gateway:phase4` | Product API, authorization, sharing, publication, subscriptions, Web Ask, and hosted MCP | Yes; built locally |
 | `wechatopenai/weknora-app:v0.7.2` | WeKnora Go application | Yes |
 | `wechatopenai/weknora-docreader:v0.7.2` | PDF/Office/image parsing | Yes |
 | `paradedb/paradedb:v0.22.2-pg17` | PostgreSQL, vector, and keyword retrieval | Yes |
 | `redis:7.0-alpine` | task queue and stream state | Yes |
-| `python:3.12-alpine` | deterministic local embedding/chat probe sidecar | Test runtime only |
+| `python:3.12-alpine` | deterministic local embedding/chat/rerank probe sidecar | Test runtime only |
 
-Building the UI also pulls `node:24-alpine` for the build stage and the digest-pinned `nginx:1.30.3-alpine` runtime base. Build the gateway with `make phase1-gateway-build-offline` when Go 1.26 is installed, or use `make phase1-build` for the normal image build.
+Building the UI also pulls `node:24-alpine` for the build stage and the digest-pinned `nginx:1.30.3-alpine` runtime base. The Phase 4 image command builds the gateway with Go 1.26 and creates compatibility aliases for older local environment files.
 
 Download them with the repository's resolved configuration:
 
 ```sh
-make images-pull
-make images-build
-make images-list
+make phase4-images-pull
+make phase4-images-build
+make phase4-images-list
 ```
 
-These Stage 1 archive commands use the pinned manifests and Dockerfiles under `images/` and include the Phase 3 gateway. Use
+These Phase 4 commands use the pinned manifests and Dockerfiles under `images/`. Use
 `./images/manage.sh pull phase0` when you specifically need the original
 upstream Phase 0 UI rather than the branded MindCreek UI.
 
-The mock embedding/chat service verifies the pipeline but is not a useful production model. Configure approved embedding and chat models in the administration UI for actual use. Sandbox, MCP, Neo4j, MinIO, Qdrant, Milvus, SearXNG, and Langfuse images are not needed for Gates A–D.
+The mock embedding/chat/rerank service verifies the pipeline but is not a production model. Configure approved models in the administration UI; Smart Reasoning requires both KnowledgeQA and Rerank assignments on the built-in reasoning agent. The upstream MCP-server, sandbox, Neo4j, MinIO, Qdrant, Milvus, SearXNG, and Langfuse images are not needed for Phase 4.
 
 For an offline server, prepare the images on a machine with the same CPU
-architecture and run `make images-save`. Transfer the generated archive and its
+architecture and run `make phase4-images-save`. Transfer the generated archive and its
 checksum from `images/archives/`, then import it with
 `./images/manage.sh load <archive.tar>`. Generated archives are ignored by Git.
 To create an AMD64 bundle from an ARM64 development Mac, run
-`make images-pull-amd64`, `make images-build-amd64`, and
-`make images-save-amd64`; Docker Desktop performs the cross-platform build.
+`make phase4-images-pull-amd64`, `make phase4-images-build-amd64`, and
+`make phase4-images-save-amd64`; Docker Desktop performs the cross-platform build.
 
 ## 5. Configure secrets and start locally
 
-The first Phase 1 Compose command creates `.local/mindcreek.env` from the tracked example. Edit that ignored file before sharing the service:
+The first Phase 4 Compose command creates `.local/mindcreek.env` from the tracked example. Edit that ignored file before sharing the service:
 
 ```sh
-make phase1-compose-config
+make phase4-compose-config
 openssl rand -hex 24       # use separate values for DB_PASSWORD and REDIS_PASSWORD
 openssl rand -base64 48    # use for JWT_SECRET
 openssl rand -hex 16       # exactly 32 characters; use for SYSTEM_AES_KEY
 ```
 
-Replace all sample credentials in `.local/mindcreek.env`. Keep `GIN_MODE=release`, `LLM_DEBUG_LOG=false`, cross-tenant access disabled, and RBAC enabled. Phase 1 preserves upstream registration; corporate OAuth 2.0 and permanently closed registration are scheduled for Phase 5.
+Replace all sample credentials in `.local/mindcreek.env`. Keep `GIN_MODE=release`, `LLM_DEBUG_LOG=false`, cross-tenant access disabled, and RBAC enabled. Phase 4 preserves upstream registration; corporate OAuth 2.0 and permanently closed registration are scheduled for Phase 5.
 
-Build, start, and verify the loopback-only Phase 3 deployment:
+Build, start, and verify the loopback-only Phase 4 deployment:
 
 ```sh
-make stage1-ui-build
-make phase1-gateway-build-offline
-make phase1-up
+make phase4-images-build
+make phase4-up
 make phase1-runtime-check
-make phase1-gate-c
-make phase1-gate-d
-make phase3-gate-b
-make phase3-gate-c
-make phase1-ps
+make phase4-gate-b
+make phase4-gate-c
+make phase4-ps
 ```
 
 Visit `http://127.0.0.1:18080` on the server first.
-
-### 5.1 Run only the branded UI baseline
-
-The first Stage 1 command creates `.local/mindcreek.env`. Replace its placeholder secrets before sharing the service, then start the branded distribution:
-
-```sh
-make stage1-compose-config
-$EDITOR .local/mindcreek.env
-make stage1-up
-make stage1-runtime-check
-make stage1-ps
-```
-
-Visit `http://127.0.0.1:18080`. Stop it with `make stage1-down`; named volumes are preserved. The Stage 1 wrapper uses the verified Phase 0 service selection and replaces only the frontend build plus product-facing container names.
 
 ## 6. Publish only the web frontend to the LAN
 
@@ -144,11 +118,11 @@ services:
       - "0.0.0.0:18080:80"
 ```
 
-Stop the loopback profile and start Phase 1 with the extra LAN override:
+Stop the loopback profile and start Phase 4 with the extra LAN override:
 
 ```sh
-make phase1-down
-./scripts/phase1-compose.sh -f .local/lan.override.yml up -d
+make phase4-down
+./scripts/phase4-compose.sh -f .local/lan.override.yml up -d
 ```
 
 Allow inbound TCP port `18080` only from the local subnet in the server firewall. Do not expose the gateway, WeKnora app, database, Redis, or docreader ports. Also ensure the Wi-Fi/router setting commonly called **AP isolation** or **client isolation** is disabled. From another computer, test:
@@ -180,4 +154,4 @@ Users can then open `http://mindcreek.home.arpa:18080`. For a permanent company 
 
 ## 8. Operations
 
-Inspect services with `make phase1-ps` and logs with `./scripts/phase1-compose.sh logs -f gateway app frontend`. Stop containers with `make phase1-down`; named volumes are preserved. Never use `docker compose down -v` unless permanent data deletion is intended. Back up the PostgreSQL and `data-files` volumes before upgrades, and promote a newly pinned WeKnora release only after the compatibility suite passes.
+Inspect services with `make phase4-ps` and logs with `./scripts/phase4-compose.sh logs -f gateway app frontend`. Stop containers with `make phase4-down`; named volumes are preserved. Never use `docker compose down -v` unless permanent data deletion is intended. Back up PostgreSQL and `data-files` before upgrades, follow [PHASE4_OPERATIONS.md](PHASE4_OPERATIONS.md), and promote a newly pinned WeKnora release only after the compatibility suite passes.

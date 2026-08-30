@@ -75,6 +75,27 @@ replaceExact(
 replaceExact('index.html', './public/favicon.ico', '/mindcreek-favicon.png', 2)
 replaceExact('embed.html', '<title>WeKnora Embed</title>', `<title>${brand.name} Embed</title>`)
 replaceExact('embed.html', './public/favicon.ico', '/mindcreek-favicon.png')
+replaceExact(
+  'nginx.conf',
+  '    # API请求代理到后端服务',
+  `    # MindCreek Phase 4 hosted MCP facade. Keep the endpoint on the same
+    # public origin as the Web UI while the gateway container stays private.
+    location = /mcp {
+        proxy_pass \${APP_SCHEME}://\${APP_HOST}:\${APP_PORT}/mcp;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
+    # API请求代理到后端服务`,
+)
 
 replaceExact(
   'src/views/auth/Login.vue',
@@ -111,7 +132,7 @@ replaceExact(
           component: () => import("@/mindcreek/KnowledgeLibrary.vue"),
           meta: { requiresInit: true, requiresAuth: true }
         },
-        // MindCreek Stage 3 product module. The source lives outside the upstream tree.
+        // MindCreek Phase 4 product modules. Their source lives outside the upstream tree.
         {
           path: "mindcreek/create",
           name: "mindcreekCreateKnowledgeSpace",
@@ -128,6 +149,12 @@ replaceExact(
           path: "mindcreek/rag/:kbId",
           name: "mindcreekRAGWorkspace",
           component: () => import("@/mindcreek/RAGWorkspace.vue"),
+          meta: { requiresInit: true, requiresAuth: true }
+        },
+        {
+          path: "mindcreek/ask",
+          name: "mindcreekAskWorkspace",
+          component: () => import("@/mindcreek/AskWorkspace.vue"),
           meta: { requiresInit: true, requiresAuth: true }
         },`,
 )
@@ -204,4 +231,4 @@ copyFileSync(resolve(brandingRoot, 'assets/mindcreek-mark-ui.png'), pathFor('src
 copyFileSync(resolve(brandingRoot, 'assets/mindcreek-favicon.png'), pathFor('public/mindcreek-favicon.png'))
 appendFileSync(pathFor(themePath), `\n\n${readFileSync(resolve(brandingRoot, 'theme.css'), 'utf8')}\n`)
 
-console.log(`Applied ${brand.name} branding and Stage 3 product modules to ${frontendRoot}`)
+console.log(`Applied ${brand.name} branding and Phase 4 product modules to ${frontendRoot}`)

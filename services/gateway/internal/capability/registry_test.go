@@ -24,6 +24,9 @@ func TestLoadAndDocumentAgreeOnEveryFlag(t *testing.T) {
 	if !document.KnowledgeModes[1].Enabled || !document.KnowledgeModes[1].Profiles[0].Enabled {
 		t.Fatal("Plain RAG is not advertised")
 	}
+	if !document.Capabilities["mcp"] {
+		t.Fatal("authenticated MCP is not advertised in Phase 4")
+	}
 }
 
 func TestLoadFailsClosedOnCapabilityDrift(t *testing.T) {
@@ -57,7 +60,7 @@ func loadTestRegistry(t *testing.T, values map[string]bool) *Registry {
 func writeRegistry(t *testing.T, values map[string]bool) string {
 	t.Helper()
 	filename := filepath.Join(t.TempDir(), "capabilities.json")
-	payload, err := json.Marshal(Registry{SchemaVersion: 1, Phase: "phase3", Capabilities: values})
+	payload, err := json.Marshal(Registry{SchemaVersion: 1, Phase: "phase4", Capabilities: values})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -2,6 +2,7 @@
 package weknora
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -42,6 +43,7 @@ func (e *Error) Unwrap() error { return e.Err }
 type Client struct {
 	baseURL         *url.URL
 	httpClient      *http.Client
+	chatClient      *http.Client
 	expectedVersion string
 }
 
@@ -64,6 +66,7 @@ func New(baseURL *url.URL, expectedVersion string, timeout time.Duration) (*Clie
 	return &Client{
 		baseURL:         &copyURL,
 		httpClient:      &http.Client{Timeout: timeout},
+		chatClient:      &http.Client{Timeout: 5 * time.Minute},
 		expectedVersion: expectedVersion,
 	}, nil
 }
@@ -173,6 +176,43 @@ func (c *Client) ValidateSession(ctx context.Context, sessionID string, inbound 
 type AgentScope struct {
 	SelectionMode    string
 	KnowledgeBaseIDs []string
+}
+
+type SearchRequest struct {
+	Query            string   `json:"query"`
+	KnowledgeBaseIDs []string `json:"knowledge_base_ids"`
+	KnowledgeIDs     []string `json:"knowledge_ids,omitempty"`
+}
+
+type SearchResult struct {
+	ID                string  `json:"id"`
+	Content           string  `json:"content"`
+	KnowledgeBaseID   string  `json:"knowledge_base_id"`
+	KnowledgeID       string  `json:"knowledge_id"`
+	KnowledgeTitle    string  `json:"knowledge_title"`
+	KnowledgeFilename string  `json:"knowledge_filename"`
+	ChunkIndex        int     `json:"chunk_index"`
+	Score             float64 `json:"score"`
+	ChunkType         string  `json:"chunk_type"`
+}
+
+type ChunkExcerpt struct {
+	ID              string `json:"id"`
+	KnowledgeBaseID string `json:"knowledge_base_id"`
+	KnowledgeID     string `json:"knowledge_id"`
+	Content         string `json:"content"`
+	ChunkIndex      int    `json:"chunk_index"`
+	ChunkType       string `json:"chunk_type"`
+}
+
+type ChatSession struct {
+	ID string `json:"id"`
+}
+
+type AgentAnswer struct {
+	SessionID  string         `json:"session_id"`
+	Answer     string         `json:"answer"`
+	References []SearchResult `json:"references"`
 }
 
 type KnowledgeBase struct {
@@ -580,7 +620,11 @@ func (c *Client) AgentKnowledgeBases(ctx context.Context, agentID string, inboun
 		SelectionMode:    response.Data.Config.KBSelectionMode,
 		KnowledgeBaseIDs: response.Data.Config.KnowledgeBases,
 	}
-	if scope.SelectionMode != "all" {
+	// Built-in agents are tenant-local execution strategies, not shared custom
+	// agents. Their "all" selection is resolved by MindCreek's authorization
+	// layer, so querying WeKnora's shared-agent endpoint would both duplicate
+	// policy and incorrectly reject ordinary tenant users.
+	if scope.SelectionMode != "all" || strings.HasPrefix(agentID, "builtin-") {
 		return scope, nil
 	}
 
@@ -606,6 +650,145 @@ func (c *Client) AgentKnowledgeBases(ctx context.Context, agentID string, inboun
 		}
 	}
 	return scope, nil
+}
+
+func (c *Client) SearchKnowledge(ctx context.Context, input SearchRequest, inbound http.Header) ([]SearchResult, error) {
+	if strings.TrimSpace(input.Query) == "" || len(input.KnowledgeBaseIDs) == 0 {
+		return nil, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest}
+	}
+	var response struct {
+		Success bool           `json:"success"`
+		Data    []SearchResult `json:"data"`
+	}
+	if err := c.sendJSON(ctx, http.MethodPost, "/api/v1/knowledge-search", nil, inbound, input, &response); err != nil {
+		return nil, err
+	}
+	if !response.Success {
+		return nil, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	allowed := make(map[string]bool, len(input.KnowledgeBaseIDs))
+	for _, id := range input.KnowledgeBaseIDs {
+		allowed[id] = true
+	}
+	for _, item := range response.Data {
+		if item.ID == "" || item.KnowledgeID == "" || item.KnowledgeBaseID == "" || !allowed[item.KnowledgeBaseID] {
+			return nil, &Error{Code: "upstream.scope_violation", StatusCode: http.StatusBadGateway}
+		}
+	}
+	return response.Data, nil
+}
+
+func (c *Client) GetChunkExcerpt(ctx context.Context, chunkID string, inbound http.Header) (ChunkExcerpt, error) {
+	if strings.TrimSpace(chunkID) == "" {
+		return ChunkExcerpt{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest}
+	}
+	var response struct {
+		Success bool         `json:"success"`
+		Data    ChunkExcerpt `json:"data"`
+	}
+	if err := c.getJSON(ctx, "/api/v1/chunks/by-id/"+url.PathEscape(chunkID), inbound, &response); err != nil {
+		return ChunkExcerpt{}, err
+	}
+	if !response.Success || response.Data.ID != chunkID || response.Data.KnowledgeBaseID == "" || response.Data.KnowledgeID == "" {
+		return ChunkExcerpt{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	return response.Data, nil
+}
+
+func (c *Client) CreateChatSession(ctx context.Context, title string, inbound http.Header) (ChatSession, error) {
+	var response struct {
+		Success bool        `json:"success"`
+		Data    ChatSession `json:"data"`
+	}
+	payload := map[string]string{"title": strings.TrimSpace(title), "description": "MindCreek MCP knowledge agent"}
+	if err := c.sendJSON(ctx, http.MethodPost, "/api/v1/sessions", nil, inbound, payload, &response); err != nil {
+		return ChatSession{}, err
+	}
+	if !response.Success || response.Data.ID == "" {
+		return ChatSession{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	return response.Data, nil
+}
+
+func (c *Client) AskKnowledge(ctx context.Context, sessionID, query, agentID string, kbIDs []string, inbound http.Header) (AgentAnswer, error) {
+	if strings.TrimSpace(sessionID) == "" || strings.TrimSpace(query) == "" || len(kbIDs) == 0 {
+		return AgentAnswer{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest}
+	}
+	path := "/api/v1/knowledge-chat/" + url.PathEscape(sessionID)
+	agentEnabled := false
+	if strings.TrimSpace(agentID) != "" {
+		path = "/api/v1/agent-chat/" + url.PathEscape(sessionID)
+		agentEnabled = true
+	}
+	payload := map[string]any{
+		"query": query, "knowledge_base_ids": kbIDs, "agent_enabled": agentEnabled,
+		"web_search_enabled": false, "mcp_service_ids": []string{}, "disable_title": true, "channel": "mcp",
+	}
+	if agentEnabled {
+		payload["agent_id"] = agentID
+	}
+	encoded, err := json.Marshal(payload)
+	if err != nil {
+		return AgentAnswer{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest, Err: err}
+	}
+	target := c.baseURL.ResolveReference(&url.URL{Path: path})
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, target.String(), bytes.NewReader(encoded))
+	if err != nil {
+		return AgentAnswer{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest, Err: err}
+	}
+	copyIdentityHeaders(request.Header, inbound)
+	request.Header.Set("Accept", "text/event-stream")
+	request.Header.Set("Content-Type", "application/json")
+	response, err := c.chatClient.Do(request)
+	if err != nil {
+		return AgentAnswer{}, &Error{Code: "upstream.unavailable", StatusCode: http.StatusBadGateway, Err: err}
+	}
+	defer response.Body.Close()
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, maxResponseBytes))
+		return AgentAnswer{}, translateStatus(response.StatusCode)
+	}
+	answer := AgentAnswer{SessionID: sessionID}
+	scanner := bufio.NewScanner(io.LimitReader(response.Body, 8<<20))
+	scanner.Buffer(make([]byte, 64<<10), 2<<20)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if !strings.HasPrefix(line, "data:") {
+			continue
+		}
+		var event struct {
+			ResponseType        string         `json:"response_type"`
+			Content             string         `json:"content"`
+			KnowledgeReferences []SearchResult `json:"knowledge_references"`
+		}
+		if err := json.Unmarshal([]byte(strings.TrimSpace(strings.TrimPrefix(line, "data:"))), &event); err != nil {
+			return AgentAnswer{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway, Err: err}
+		}
+		switch event.ResponseType {
+		case "answer":
+			answer.Answer += event.Content
+			if len(answer.Answer) > 2<<20 {
+				return AgentAnswer{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+			}
+		case "references":
+			answer.References = append(answer.References, event.KnowledgeReferences...)
+		case "error":
+			return AgentAnswer{}, &Error{Code: "upstream.rejected", StatusCode: http.StatusBadGateway}
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return AgentAnswer{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway, Err: err}
+	}
+	allowed := make(map[string]bool, len(kbIDs))
+	for _, id := range kbIDs {
+		allowed[id] = true
+	}
+	for _, reference := range answer.References {
+		if reference.KnowledgeBaseID == "" || !allowed[reference.KnowledgeBaseID] {
+			return AgentAnswer{}, &Error{Code: "upstream.scope_violation", StatusCode: http.StatusBadGateway}
+		}
+	}
+	return answer, nil
 }
 
 func (c *Client) getJSON(ctx context.Context, path string, inbound http.Header, destination any) error {

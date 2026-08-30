@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/agentscope"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/apierror"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
@@ -46,6 +47,12 @@ type Dependencies struct {
 	Publications  PublicationService
 	Catalog       CatalogService
 	Subscriptions SubscriptionService
+	AgentScopes   AgentScopeService
+	MCP           http.Handler
+}
+
+type AgentScopeService interface {
+	Resolve(context.Context, agentscope.Request, authorization.Principal, http.Header) (agentscope.Result, error)
 }
 
 type PublicationService interface {
@@ -176,6 +183,10 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 	registerIngestionRoutes(mux, dependencies)
 	registerSharingRoutes(mux, dependencies)
 	registerPublicationRoutes(mux, dependencies)
+	registerAgentRoutes(mux, dependencies)
+	if dependencies.MCP != nil {
+		mux.Handle("/mcp", dependencies.MCP)
+	}
 	mux.HandleFunc("POST /api/v1/knowledge-spaces", func(w http.ResponseWriter, r *http.Request) {
 		principal, ok := resolvePrincipal(w, r, dependencies.Principals)
 		if !ok {

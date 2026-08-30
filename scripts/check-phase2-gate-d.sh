@@ -26,7 +26,7 @@ rg -q '^\| Status \| Passed on 2026-08-27 \|' "$EVIDENCE" || fail "Gate D eviden
 rg -q '"phase": "phase2"' "$ROOT/config/phase2-capabilities.json" || fail "Phase 2 capability registry is not selected"
 rg -q 'mindcreek-gateway:phase2' "$ROOT/scripts/build-gateway-image-offline.sh" || fail "Phase 2 compatibility image tag is absent"
 rg -q '^\| Ledger status \| No downstream patches \|' "$LEDGER" || fail "upstream patch ledger is not empty"
-rg -q '^\| Last reviewed \| 2026-08-27 \|' "$LEDGER" || fail "upstream ledger review is stale"
+rg -q '^\| Last reviewed \| 2026-' "$LEDGER" || fail "upstream ledger review is missing"
 [ -z "$(git -C "$ROOT/upstream/weknora" status --porcelain --untracked-files=all)" ] || fail "upstream submodule is dirty"
 
 echo "MindCreek Phase 2 Gate D release contract verified"

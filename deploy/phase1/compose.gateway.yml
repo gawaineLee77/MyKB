@@ -9,27 +9,27 @@ services:
         condition: service_healthy
 
   gateway:
-    image: ${MINDCREEK_GATEWAY_IMAGE:-mindcreek-gateway:phase3}
+    image: ${MINDCREEK_GATEWAY_IMAGE:-mindcreek-gateway:phase4}
     build:
       context: ../..
       dockerfile: images/mindcreek-gateway/Dockerfile
       args:
-        MINDCREEK_VERSION: ${MINDCREEK_VERSION:-0.4.0-phase3}
+        MINDCREEK_VERSION: ${MINDCREEK_VERSION:-0.5.0-phase4}
     container_name: MindCreek-gateway
     environment:
       MINDCREEK_LISTEN_ADDR: ":8080"
-      MINDCREEK_VERSION: ${MINDCREEK_VERSION:-0.4.0-phase3}
+      MINDCREEK_VERSION: ${MINDCREEK_VERSION:-0.5.0-phase4}
       MINDCREEK_UPSTREAM_URL: http://app:8080
       MINDCREEK_UPSTREAM_VERSION: ${WEKNORA_VERSION:-v0.7.2}
       MINDCREEK_UPSTREAM_TIMEOUT: ${MINDCREEK_UPSTREAM_TIMEOUT:-5s}
       MINDCREEK_ROUTE_POLICY_FILE: /etc/mindcreek/phase1-route-policy.json
       MINDCREEK_ROUTE_ACTIONS_FILE: /etc/mindcreek/phase2-route-actions.json
-      MINDCREEK_CAPABILITIES_FILE: /etc/mindcreek/phase3-capabilities.json
+      MINDCREEK_CAPABILITIES_FILE: /etc/mindcreek/phase4-capabilities.json
       MINDCREEK_DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT:-5432}/${DB_NAME}?sslmode=disable
     volumes:
       - ../../config/phase1-route-policy.json:/etc/mindcreek/phase1-route-policy.json:ro
       - ../../config/phase2-route-actions.json:/etc/mindcreek/phase2-route-actions.json:ro
-      - ../../config/phase3-capabilities.json:/etc/mindcreek/phase3-capabilities.json:ro
+      - ../../config/phase4-capabilities.json:/etc/mindcreek/phase4-capabilities.json:ro
     expose:
       - "8080"
     depends_on:

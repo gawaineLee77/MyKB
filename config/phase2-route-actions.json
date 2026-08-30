@@ -110,7 +110,7 @@
       "id": "read-agents-and-sessions",
       "action": "read",
       "method_regex": "^GET$",
-      "path_regex": "^/api/v1/(?:agents/(?:placeholders$|type-presets$|:id$|:id/suggested-questions$)|messages(?:/|$)|sessions(?:/|$))"
+      "path_regex": "^/api/v1/(?:agents/[^/]+(?:$|/suggested-questions$)|messages(?:/|$)|sessions(?:/|$))"
     },
     {
       "id": "read-async-progress",

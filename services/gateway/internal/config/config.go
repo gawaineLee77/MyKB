@@ -15,7 +15,7 @@ const (
 	defaultUpstreamTimeout  = 5 * time.Second
 	defaultRoutePolicyFile  = "config/phase1-route-policy.json"
 	defaultRouteActionsFile = "config/phase2-route-actions.json"
-	defaultCapabilitiesFile = "config/phase3-capabilities.json"
+	defaultCapabilitiesFile = "config/phase4-capabilities.json"
 )
 
 // Config contains only process and upstream-connection settings.

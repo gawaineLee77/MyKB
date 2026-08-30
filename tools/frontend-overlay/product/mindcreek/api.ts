@@ -11,11 +11,11 @@ export interface KnowledgeLibraryItem {
   creator_id: string
   role: KnowledgeRole
   product_mode?: 'personal_notes' | 'rag' | 'ontology'
-	access_source: 'owner' | 'user_grant' | 'subscription' | 'organization_public'
-	publication_id?: string
-	current_revision?: number
-	last_seen_revision?: number
-	updated?: boolean
+  access_source: 'owner' | 'user_grant' | 'subscription' | 'organization_public'
+  publication_id?: string
+  current_revision?: number
+  last_seen_revision?: number
+  updated?: boolean
 }
 
 export interface KnowledgeLibraryPage {
@@ -23,6 +23,19 @@ export interface KnowledgeLibraryPage {
   total: number
   page: number
   page_size: number
+}
+
+export interface AgentScopeEntry {
+  knowledge_base_id: string
+  role: KnowledgeRole
+  access_source: 'owner' | 'user_grant' | 'subscription' | 'organization_public'
+  product_mode?: string
+}
+
+export interface AgentScopeResult {
+  selection: 'default' | 'explicit'
+  knowledge_base_ids: string[]
+  entries: AgentScopeEntry[]
 }
 
 export interface KnowledgeAccess {
@@ -34,10 +47,10 @@ export interface KnowledgeAccess {
   can_edit_metadata: boolean
   can_manage_grants: boolean
   can_delete: boolean
-	can_publish: boolean
-	can_download: boolean
-	access_source: 'owner' | 'user_grant' | 'subscription' | 'organization_public'
-	publication_id?: string
+  can_publish: boolean
+  can_download: boolean
+  access_source: 'owner' | 'user_grant' | 'subscription' | 'organization_public'
+  publication_id?: string
 }
 
 export type PublicationAccessMode = 'subscriber' | 'organization_public'
@@ -220,6 +233,14 @@ export async function getCreationModels(): Promise<{
   }
 }
 
+export async function getSmartReasoningModelId(): Promise<string> {
+  const response = await get<{ success: boolean; data: { config?: { model_id?: string; rerank_model_id?: string } } }>(
+    '/api/v1/agents/builtin-smart-reasoning',
+  )
+  const config = response.data.config
+  return config?.model_id && config.rerank_model_id ? config.model_id : ''
+}
+
 export async function createKnowledgeSpace(
   request: KnowledgeSpaceRequest,
   idempotencyKey: string,
@@ -237,9 +258,9 @@ export async function getProductProfile(kbId: string): Promise<ProductProfile> {
   return response.data
 }
 
-export async function listKnowledgeLibrary(view: 'owned' | 'shared' | 'subscribed' | 'all', page = 1): Promise<KnowledgeLibraryPage> {
+export async function listKnowledgeLibrary(view: 'owned' | 'shared' | 'subscribed' | 'all', page = 1, pageSize = 24): Promise<KnowledgeLibraryPage> {
   const response = await get<{ success: boolean; data: KnowledgeLibraryPage }>(
-    `/api/v1/mindcreek/knowledge-bases?view=${view}&page=${page}&page_size=24`,
+    `/api/v1/mindcreek/knowledge-bases?view=${view}&page=${page}&page_size=${pageSize}`,
   )
   return response.data
 }
@@ -270,12 +291,24 @@ export async function unpublishKnowledgeBase(kbId: string, publication: Publicat
   return response.data
 }
 
-export async function listCatalog(filters: { query?: string; tag?: string; accessMode?: PublicationAccessMode | ''; page?: number } = {}): Promise<CatalogPage> {
-  const query = new URLSearchParams({ page: String(filters.page || 1), page_size: '24' })
+export async function listCatalog(filters: { query?: string; tag?: string; accessMode?: PublicationAccessMode | ''; page?: number; pageSize?: number } = {}): Promise<CatalogPage> {
+  const query = new URLSearchParams({ page: String(filters.page || 1), page_size: String(filters.pageSize || 24) })
   if (filters.query) query.set('q', filters.query)
   if (filters.tag) query.set('tag', filters.tag)
   if (filters.accessMode) query.set('access_mode', filters.accessMode)
   const response = await get<{ success: boolean; data: CatalogPage }>(`/api/v1/mindcreek/catalog?${query}`)
+  return response.data
+}
+
+export async function getDefaultAgentScope(): Promise<AgentScopeResult> {
+  const response = await get<{ success: boolean; data: AgentScopeResult }>('/api/v1/mindcreek/agent/scope')
+  return response.data
+}
+
+export async function resolveAgentScope(knowledgeBaseIds: string[]): Promise<AgentScopeResult> {
+  const response = await post<{ success: boolean; data: AgentScopeResult }>('/api/v1/mindcreek/agent/scope/resolve', {
+    selection: 'explicit', knowledge_base_ids: knowledgeBaseIds,
+  })
   return response.data
 }
 

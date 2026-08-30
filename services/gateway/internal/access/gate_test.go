@@ -2,12 +2,15 @@ package access
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/agentaudit"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/agentscope"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/audit"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
@@ -94,6 +97,27 @@ type sessionScopeStub struct {
 
 type auditRecorderStub struct {
 	events []audit.Event
+}
+
+type agentAuditRecorderStub struct {
+	events []agentaudit.Event
+	err    error
+}
+
+func (s *agentAuditRecorderStub) Record(_ context.Context, event agentaudit.Event) error {
+	s.events = append(s.events, event)
+	return s.err
+}
+
+type agentScopeResolverStub struct {
+	requests []agentscope.Request
+	result   agentscope.Result
+	err      error
+}
+
+func (s *agentScopeResolverStub) Resolve(_ context.Context, request agentscope.Request, _ authorization.Principal, _ http.Header) (agentscope.Result, error) {
+	s.requests = append(s.requests, request)
+	return s.result, s.err
 }
 
 func (s *auditRecorderStub) Record(_ context.Context, event audit.Event) error {
@@ -244,6 +268,124 @@ func TestPhase3SuccessfulContentMutationRecordsRevision(t *testing.T) {
 	}
 	if len(revisions.calls) != 1 || revisions.calls[0] != "kb-1:kb.content_updated" {
 		t.Fatalf("revision calls = %v", revisions.calls)
+	}
+}
+
+func TestPhase4RetrievalScopeIsResolvedRewrittenAndAudited(t *testing.T) {
+	scopeResolver := &agentScopeResolverStub{result: agentscope.Result{
+		Selection: agentscope.SelectionExplicit, KnowledgeBaseIDs: []string{"public-kb"},
+		Entries: []agentscope.Entry{{KnowledgeBaseID: "public-kb", Role: authorization.RoleViewer, AccessSource: authorization.SourceOrganizationPublic}},
+	}}
+	agentAudit := &agentAuditRecorderStub{}
+	sessions := &sessionScopeStub{items: map[string][]string{}}
+	gate, err := NewPhase4Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}},
+		&fakeResolver{sessions: map[string]bool{"session-1": true}},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true }),
+		&decisionStub{roles: map[string]authorization.Role{"public-kb": authorization.RoleViewer}, sources: map[string]authorization.Source{"public-kb": authorization.SourceOrganizationPublic}, errs: map[string]error{}},
+		sessions, &auditRecorderStub{}, &revisionRecorderStub{}, &publicationLifecycleStub{}, scopeResolver, agentAudit,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodPost, "http://gateway/api/v1/agent-chat/session-1", `{"query":"not audited","knowledge_base_ids":["public-kb"],"web_search_enabled":true,"mcp_service_ids":["external"]}`)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Request-ID", "request-phase4")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "alice", TenantID: 42}); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(request.Body)
+	text := string(body)
+	for _, required := range []string{`"knowledge_base_ids":["public-kb"]`, `"web_search_enabled":false`, `"mcp_service_ids":[]`} {
+		if !strings.Contains(text, required) {
+			t.Fatalf("rewritten body %s is missing %s", text, required)
+		}
+	}
+	if len(scopeResolver.requests) != 1 || scopeResolver.requests[0].Selection != agentscope.SelectionExplicit {
+		t.Fatalf("scope requests = %+v", scopeResolver.requests)
+	}
+	if len(sessions.items["session-1"]) != 1 || sessions.items["session-1"][0] != "public-kb" {
+		t.Fatalf("session scopes = %+v", sessions.items)
+	}
+	if len(agentAudit.events) != 1 || agentAudit.events[0].Operation != "agent.scope.resolve" || agentAudit.events[0].Outcome != agentaudit.OutcomeSuccess {
+		t.Fatalf("agent audit = %+v", agentAudit.events)
+	}
+}
+
+func TestPhase4FixedAgentCannotExpandConfiguredScope(t *testing.T) {
+	scopeResolver := &agentScopeResolverStub{}
+	agentAudit := &agentAuditRecorderStub{}
+	gate, err := NewPhase4Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}},
+		&fakeResolver{agents: map[string]weknora.AgentScope{"agent-1": {SelectionMode: "selected", KnowledgeBaseIDs: []string{"kb-a"}}}, sessions: map[string]bool{"session-1": true}},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true }),
+		&decisionStub{roles: map[string]authorization.Role{}, errs: map[string]error{}}, nil,
+		&auditRecorderStub{}, &revisionRecorderStub{}, &publicationLifecycleStub{}, scopeResolver, agentAudit,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodPost, "http://gateway/api/v1/agent-chat/session-1", `{"query":"x","agent_id":"agent-1","knowledge_base_ids":["kb-b"]}`)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Request-ID", "request-denied")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "alice", TenantID: 42}); errorCode(err) != "resource.not_found" {
+		t.Fatalf("expanded agent scope error = %v", err)
+	}
+	if len(scopeResolver.requests) != 0 || len(agentAudit.events) != 1 || agentAudit.events[0].Outcome != agentaudit.OutcomeDenied {
+		t.Fatalf("resolver requests = %+v, audit = %+v", scopeResolver.requests, agentAudit.events)
+	}
+}
+
+func TestPhase4ScopeAuditFailureStopsRetrieval(t *testing.T) {
+	scopeResolver := &agentScopeResolverStub{result: agentscope.Result{Selection: agentscope.SelectionDefault, KnowledgeBaseIDs: []string{"kb-a"}}}
+	gate, err := NewPhase4Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}}, &fakeResolver{sessions: map[string]bool{"session-1": true}},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true }),
+		&decisionStub{roles: map[string]authorization.Role{"kb-a": authorization.RoleOwner}, errs: map[string]error{}}, nil,
+		&auditRecorderStub{}, &revisionRecorderStub{}, &publicationLifecycleStub{}, scopeResolver, &agentAuditRecorderStub{err: errors.New("database unavailable")},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodPost, "http://gateway/api/v1/knowledge-chat/session-1", `{"query":"x"}`)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Request-ID", "request-audit-failure")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "alice", TenantID: 42}); errorCode(err) != "audit.unavailable" {
+		t.Fatalf("audit failure error = %v", err)
+	}
+}
+
+func TestPhase4SearchResponseCannotEscapeResolvedScope(t *testing.T) {
+	newResponse := func(resultKBID string) (*Gate, *http.Response) {
+		scopeResolver := &agentScopeResolverStub{result: agentscope.Result{
+			Selection: agentscope.SelectionExplicit, KnowledgeBaseIDs: []string{"kb-a"},
+		}}
+		gate, err := NewPhase4Gate(
+			&fakeProfiles{items: map[string]profile.Profile{}}, &fakeResolver{},
+			actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true }),
+			&decisionStub{roles: map[string]authorization.Role{"kb-a": authorization.RoleViewer}, errs: map[string]error{}}, nil,
+			&auditRecorderStub{}, &revisionRecorderStub{}, &publicationLifecycleStub{}, scopeResolver, &agentAuditRecorderStub{},
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		request := mustRequest(http.MethodPost, "http://gateway/api/v1/knowledge-search", `{"query":"river","knowledge_base_ids":["kb-a"]}`)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("X-Request-ID", "search-scope")
+		if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "alice", TenantID: 42}); err != nil {
+			t.Fatal(err)
+		}
+		body := `{"success":true,"data":[{"knowledge_base_id":"` + resultKBID + `"}]}`
+		return gate, &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Request: request, Body: io.NopCloser(strings.NewReader(body))}
+	}
+
+	gate, response := newResponse("kb-a")
+	if err := gate.FilterResponse(response); err != nil {
+		t.Fatalf("authorized result rejected: %v", err)
+	}
+	gate, response = newResponse("kb-b")
+	if err := gate.FilterResponse(response); errorCode(err) != "upstream.scope_violation" {
+		t.Fatalf("out-of-scope result error = %v", err)
 	}
 }
 

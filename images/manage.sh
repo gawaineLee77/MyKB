@@ -8,10 +8,10 @@ ARCHIVE_DIR="$ROOT/images/archives"
 usage() {
   cat >&2 <<'EOF'
 usage:
-  ./images/manage.sh pull [phase3|stage1|phase0] [linux/amd64|linux/arm64]
-  ./images/manage.sh build [phase3|stage1] [linux/amd64|linux/arm64]
-  ./images/manage.sh list [phase3|stage1|phase0] [linux/amd64|linux/arm64]
-  ./images/manage.sh save [phase3|stage1|phase0] [linux/amd64|linux/arm64]
+  ./images/manage.sh pull [phase4|phase3|stage1|phase0] [linux/amd64|linux/arm64]
+  ./images/manage.sh build [phase4|phase3|stage1] [linux/amd64|linux/arm64]
+  ./images/manage.sh list [phase4|phase3|stage1|phase0] [linux/amd64|linux/arm64]
+  ./images/manage.sh save [phase4|phase3|stage1|phase0] [linux/amd64|linux/arm64]
   ./images/manage.sh load <archive.tar> [linux/amd64|linux/arm64]
 EOF
   exit 2
@@ -22,8 +22,9 @@ profile_manifest() {
   profile=$2
 
   case "$operation:$profile" in
-    pull:phase3|pull:stage1) printf '%s\n' "$MANIFEST_DIR/stage1-external.txt" ;;
+    pull:phase4|pull:phase3|pull:stage1) printf '%s\n' "$MANIFEST_DIR/stage1-external.txt" ;;
     pull:phase0) printf '%s\n' "$MANIFEST_DIR/phase0-runtime.txt" ;;
+    list:phase4|save:phase4) printf '%s\n' "$MANIFEST_DIR/phase4-runtime.txt" ;;
     list:phase3|save:phase3|list:stage1|save:stage1) printf '%s\n' "$MANIFEST_DIR/stage1-runtime.txt" ;;
     list:phase0|save:phase0) printf '%s\n' "$MANIFEST_DIR/phase0-runtime.txt" ;;
     *) usage ;;
@@ -84,18 +85,19 @@ case "$operation" in
   build)
     require_docker
     profile=${2:-stage1}
-    [ "$profile" = "phase3" ] || [ "$profile" = "stage1" ] || usage
+    [ "$profile" = "phase4" ] || [ "$profile" = "phase3" ] || [ "$profile" = "stage1" ] || usage
     platform=$(normalize_platform "${3:-}")
-    ui_version=${MINDCREEK_UI_VERSION:-0.1.0}
+    ui_version=${MINDCREEK_UI_VERSION:-0.5.0}
     upstream_version=${WEKNORA_VERSION:-v0.7.2}
     docker buildx build \
       --platform "$platform" \
       --load \
-      --tag mindcreek-ui:stage1 \
+      --tag mindcreek-ui:phase4 \
       --build-arg "MINDCREEK_UI_VERSION=$ui_version" \
       --build-arg "VITE_FRONTEND_COMMIT=weknora-$upstream_version-mindcreek-$ui_version" \
       --file "$ROOT/images/mindcreek-ui/Dockerfile" \
       "$ROOT"
+    docker tag mindcreek-ui:phase4 mindcreek-ui:stage1
     "$ROOT/scripts/build-gateway-image-offline.sh" "${platform#linux/}"
     ;;
   list)

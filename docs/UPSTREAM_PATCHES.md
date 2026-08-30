@@ -9,7 +9,7 @@ This ledger records every product change made inside the WeKnora upstream bounda
 | Approved WeKnora release | v0.7.2 |
 | Release commit | `3d5d8bf` |
 | Ledger status | No downstream patches |
-| Last reviewed | 2026-08-27 |
+| Last reviewed | 2026-08-30 |
 
 ## Admission Rules
 

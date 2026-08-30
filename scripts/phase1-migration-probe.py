@@ -129,14 +129,14 @@ def main() -> int:
         first_count = psql_scalar(
             user, temporary_database, "SELECT count(*) FROM mindcreek.schema_migrations"
         )
-        if first_count != "8":
-            fail(f"empty install applied {first_count} migrations, expected 8")
+        if first_count != "9":
+            fail(f"empty install applied {first_count} migrations, expected 9")
 
         migrate(database_url, "up")
         repeat_count = psql_scalar(
             user, temporary_database, "SELECT count(*) FROM mindcreek.schema_migrations"
         )
-        if repeat_count != "8":
+        if repeat_count != "9":
             fail("repeat migration was not idempotent")
 
         status = migrate(database_url, "status")
@@ -151,11 +151,12 @@ def main() -> int:
                 "000006 kb_access_grants",
                 "000007 phase2_security_records",
                 "000008 phase3_publications",
+                "000009 phase4_agent_operations",
             )
         ):
             fail("migration status did not report every product migration")
 
-        migrate(database_url, "down", "8")
+        migrate(database_url, "down", "9")
         rolled_back = psql_scalar(
             user,
             temporary_database,
@@ -171,16 +172,17 @@ def main() -> int:
             "to_regclass('mindcreek.kb_subscriptions'), '|', "
             "to_regclass('mindcreek.kb_content_revisions'), '|', "
             "to_regclass('mindcreek.kb_activity_events'), '|', "
+            "to_regclass('mindcreek.agent_operation_audit_events'), '|', "
             "(SELECT count(*) FROM mindcreek.schema_migrations))",
         )
-        if rolled_back != "||||||||||||0":
+        if rolled_back != "|||||||||||||0":
             fail(f"rollback left unexpected product state: {rolled_back!r}")
 
         migrate(database_url, "up")
         forward_count = psql_scalar(
             user, temporary_database, "SELECT count(*) FROM mindcreek.schema_migrations"
         )
-        if forward_count != "8":
+        if forward_count != "9":
             fail("forward migration after rollback did not restore every version")
 
         temporary_public_tables_after = psql_scalar(
@@ -206,7 +208,7 @@ def main() -> int:
             "upstream_public_table_count_unchanged": True,
             "temporary_public_schema_unchanged": True,
             "live_public_schema_unchanged": True,
-            "applied_migrations": 8,
+            "applied_migrations": 9,
         }
         report_path = ROOT / ".local/phase1-migration-probe-report.json"
         report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

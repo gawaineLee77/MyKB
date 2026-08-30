@@ -1,0 +1,12 @@
+# Reuse a stopped MyKB Phase 0 deployment's persistent volumes in Phase 4.
+# Never start Phase 0 and Phase 4 simultaneously against these volumes.
+volumes:
+  postgres-data:
+    external: true
+    name: ${MINDCREEK_PHASE0_POSTGRES_VOLUME:-mykb-phase0_postgres-data}
+  data-files:
+    external: true
+    name: ${MINDCREEK_PHASE0_FILES_VOLUME:-mykb-phase0_data-files}
+  docreader-tmp:
+    external: true
+    name: ${MINDCREEK_PHASE0_DOCREADER_VOLUME:-mykb-phase0_docreader-tmp}

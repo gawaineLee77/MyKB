@@ -1,4 +1,5 @@
 .PHONY: help images-pull images-build images-list images-save images-pull-amd64 images-build-amd64 images-list-amd64 images-save-amd64 phase3-images-pull phase3-images-build phase3-images-list phase3-images-save phase3-images-pull-amd64 phase3-images-build-amd64 phase3-images-list-amd64 phase3-images-save-amd64 phase3-upgrade-compose-config phase3-upgrade-up phase3-upgrade-ps phase3-upgrade-down phase0-check phase0-compose-config phase0-up phase0-ps phase0-runtime-check phase0-probe phase0-down phase1-route-policy-check phase1-gateway-test phase1-check phase1-compose-config phase1-build phase1-gateway-build-offline phase1-up phase1-ps phase1-probe phase1-runtime-check phase1-migration-probe phase1-gate-b-probe phase1-gate-b phase1-gate-c-probe phase1-gate-c phase1-gate-d-probe phase1-gate-d phase1-down phase2-sharing-model-check phase2-route-actions-check phase2-gate-a-static-check phase2-gate-b-static-check phase2-gate-c-static-check phase2-gate-d-static-check phase2-upstream-contract-check phase2-clean-copy-check phase2-check phase2-gate-a phase2-gate-b-probe phase2-gate-b phase2-gate-c phase2-gate-d phase3-gate-a-static-check phase3-gate-b-static-check phase3-gate-c-static-check phase3-gate-d-static-check phase3-upstream-contract-check phase3-clean-copy-check phase3-check phase3-gate-a phase3-gate-b-probe phase3-gate-b phase3-gate-c phase3-gate-d stage1-check stage1-compose-config stage1-ui-build stage1-up stage1-ps stage1-runtime-check stage1-down upstream-status upstream-test upstream-test-go upstream-test-frontend upstream-test-mcp
+.PHONY: phase4-images-pull phase4-images-build phase4-images-list phase4-images-save phase4-images-pull-amd64 phase4-images-build-amd64 phase4-images-list-amd64 phase4-images-save-amd64 phase4-compose-config phase4-build phase4-up phase4-ps phase4-down phase4-upgrade-compose-config phase4-upgrade-up phase4-upgrade-ps phase4-upgrade-down phase4-gate-a-static-check phase4-gate-b-static-check phase4-gate-c-static-check phase4-gate-d-static-check phase4-upstream-contract-check phase4-clean-copy-check phase4-check phase4-gate-a phase4-gate-b-probe phase4-gate-b phase4-gate-c-probe phase4-gate-c phase4-gate-d
 
 help:
 	@echo "MindCreek repository commands"
@@ -18,6 +19,12 @@ help:
 	@echo "  make phase3-upgrade-up       Start Phase 3 against stopped Phase 0 volumes"
 	@echo "  make phase3-upgrade-ps       Show the upgraded Phase 3 services"
 	@echo "  make phase3-upgrade-down     Stop Phase 3 and preserve reused volumes"
+	@echo "  make phase4-images-build     Build current native Phase 4 product images"
+	@echo "  make phase4-images-save      Export the native Phase 4 offline bundle"
+	@echo "  make phase4-images-build-amd64 Cross-build Phase 4 product images for AMD64"
+	@echo "  make phase4-images-save-amd64 Export the AMD64 Phase 4 offline bundle"
+	@echo "  make phase4-up               Start the fresh Phase 4 runtime"
+	@echo "  make phase4-upgrade-up       Start Phase 4 against stopped Phase 0 volumes"
 	@echo "  make phase0-check          Verify design and immutable upstream boundary"
 	@echo "  make phase0-compose-config Validate the isolated Phase 0 Compose profile"
 	@echo "  make phase0-up             Start the isolated Phase 0 runtime"
@@ -56,6 +63,11 @@ help:
 	@echo "  make phase3-upstream-contract-check Verify Phase 3 against pinned/candidate WeKnora"
 	@echo "  make phase3-clean-copy-check Reconstruct and validate a clean Phase 3 checkout"
 	@echo "  make phase3-gate-d          Run the Phase 3 release and clean-copy contract"
+	@echo "  make phase4-check           Run inherited and all Phase 4 static/unit contracts"
+	@echo "  make phase4-gate-a          Run scope, audit, and nine-migration acceptance"
+	@echo "  make phase4-gate-b          Run Web agent, revocation, and retrieval baseline acceptance"
+	@echo "  make phase4-gate-c          Run hosted MCP protocol and security acceptance"
+	@echo "  make phase4-gate-d          Run the Phase 4 release and clean-copy contract"
 	@echo "  make stage1-check          Verify the MindCreek overlay and upstream boundary"
 	@echo "  make stage1-compose-config Validate the Stage 1 Compose distribution"
 	@echo "  make stage1-ui-build       Build the branded MindCreek UI image"
@@ -117,6 +129,30 @@ phase3-images-list-amd64:
 phase3-images-save-amd64:
 	./images/manage.sh save phase3 linux/amd64
 
+phase4-images-pull:
+	./images/manage.sh pull phase4
+
+phase4-images-build:
+	./images/manage.sh build phase4
+
+phase4-images-list:
+	./images/manage.sh list phase4
+
+phase4-images-save:
+	./images/manage.sh save phase4
+
+phase4-images-pull-amd64:
+	./images/manage.sh pull phase4 linux/amd64
+
+phase4-images-build-amd64:
+	./images/manage.sh build phase4 linux/amd64
+
+phase4-images-list-amd64:
+	./images/manage.sh list phase4 linux/amd64
+
+phase4-images-save-amd64:
+	./images/manage.sh save phase4 linux/amd64
+
 phase3-upgrade-compose-config:
 	./scripts/phase3-compose-from-phase0.sh config --quiet
 
@@ -128,6 +164,33 @@ phase3-upgrade-ps:
 
 phase3-upgrade-down:
 	./scripts/phase3-compose-from-phase0.sh down
+
+phase4-compose-config:
+	./scripts/phase4-compose.sh config --quiet
+
+phase4-build:
+	./scripts/phase4-compose.sh build frontend gateway
+
+phase4-up:
+	./scripts/phase4-compose.sh up -d
+
+phase4-ps:
+	./scripts/phase4-compose.sh ps
+
+phase4-down:
+	./scripts/phase4-compose.sh down
+
+phase4-upgrade-compose-config:
+	./scripts/phase4-compose-from-phase0.sh config --quiet
+
+phase4-upgrade-up:
+	./scripts/phase4-compose-from-phase0.sh up -d
+
+phase4-upgrade-ps:
+	./scripts/phase4-compose-from-phase0.sh ps
+
+phase4-upgrade-down:
+	./scripts/phase4-compose-from-phase0.sh down
 
 phase0-check:
 	./scripts/verify-upstream.sh
@@ -287,6 +350,47 @@ phase3-gate-c: phase3-gate-c-static-check
 	./scripts/mindcreek-compose.sh build frontend
 
 phase3-gate-d: phase3-check phase3-clean-copy-check
+
+phase4-gate-a-static-check:
+	./scripts/check-phase4-gate-a.sh
+
+phase4-gate-b-static-check:
+	./scripts/check-phase4-gate-b.sh
+
+phase4-gate-c-static-check:
+	./scripts/check-phase4-gate-c.sh
+
+phase4-gate-d-static-check:
+	./scripts/check-phase4-gate-d.sh
+
+phase4-upstream-contract-check:
+	./scripts/check-phase4-upstream-contract.sh
+
+phase4-clean-copy-check:
+	./scripts/phase4-clean-copy-check.sh
+
+phase4-check: phase2-check phase3-gate-a-static-check phase3-gate-b-static-check phase3-gate-c-static-check phase4-gate-a-static-check phase4-gate-b-static-check phase4-gate-c-static-check phase4-gate-d-static-check phase4-upstream-contract-check
+
+phase4-gate-a: phase4-gate-a-static-check
+	mkdir -p .local/gateway-go-build
+	cd services/gateway && GOCACHE=$(CURDIR)/.local/gateway-go-build go test ./internal/access ./internal/agentscope ./internal/agentaudit ./internal/database
+	python3 ./scripts/phase1-migration-probe.py
+
+phase4-gate-b-probe:
+	python3 ./scripts/phase4-gate-b-probe.py
+
+phase4-gate-b: phase4-gate-b-static-check
+	python3 ./scripts/phase4-gate-b-probe.py
+
+phase4-gate-c-probe:
+	python3 ./scripts/phase4-gate-c-probe.py
+
+phase4-gate-c: phase4-gate-c-static-check
+	mkdir -p .local/gateway-go-build
+	cd services/gateway && GOCACHE=$(CURDIR)/.local/gateway-go-build go test ./internal/mcp
+	python3 ./scripts/phase4-gate-c-probe.py
+
+phase4-gate-d: phase4-check phase4-clean-copy-check
 
 stage1-check: phase0-check
 	./tools/frontend-overlay/check.sh

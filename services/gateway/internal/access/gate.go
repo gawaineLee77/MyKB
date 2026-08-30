@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/agentaudit"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/agentscope"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/audit"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/notespolicy"
@@ -70,6 +72,8 @@ type Gate struct {
 	auditor      audit.Recorder
 	revisions    RevisionRecorder
 	publications PublicationLifecycle
+	scopes       AuthorizedScopeResolver
+	agentAuditor agentaudit.Recorder
 }
 
 type ActionMatcher interface {
@@ -92,6 +96,10 @@ type RevisionRecorder interface {
 
 type PublicationLifecycle interface {
 	UnpublishForDeletion(context.Context, string, publication.Actor, string, http.Header) error
+}
+
+type AuthorizedScopeResolver interface {
+	Resolve(context.Context, agentscope.Request, authorization.Principal, http.Header) (agentscope.Result, error)
 }
 
 type Error struct {
@@ -145,6 +153,21 @@ func NewPhase3Gate(profiles ProfileStore, resolver ResourceResolver, actions Act
 	return gate, nil
 }
 
+func NewPhase4Gate(profiles ProfileStore, resolver ResourceResolver, actions ActionMatcher, decisions DecisionService,
+	sessions SessionScopeStore, auditor audit.Recorder, revisions RevisionRecorder, publications PublicationLifecycle,
+	scopes AuthorizedScopeResolver, agentAuditor agentaudit.Recorder) (*Gate, error) {
+	if scopes == nil || agentAuditor == nil {
+		return nil, fmt.Errorf("Phase 4 scope resolver and agent auditor are required")
+	}
+	gate, err := NewPhase3Gate(profiles, resolver, actions, decisions, sessions, auditor, revisions, publications)
+	if err != nil {
+		return nil, err
+	}
+	gate.scopes = scopes
+	gate.agentAuditor = agentAuditor
+	return gate, nil
+}
+
 // AuthorizeRequest protects direct KB and indirect source/chunk routes.
 func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, identity Identity) error {
 	if isUnscopedDerivedTaskPath(request.URL.Path) {
@@ -166,7 +189,13 @@ func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, iden
 	if err != nil {
 		return err
 	}
-	scope, err := g.resolveRequestScope(ctx, request)
+	var scope requestScope
+	phase4Retrieval := g.scopes != nil && isUnifiedRetrievalPath(request.URL.Path, request.Method)
+	if phase4Retrieval {
+		scope, err = g.resolveAuthorizedRetrievalScope(ctx, request, identity)
+	} else {
+		scope, err = g.resolveRequestScope(ctx, request)
+	}
 	if err != nil {
 		return err
 	}
@@ -238,6 +267,132 @@ func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, iden
 		}))
 	}
 	return nil
+}
+
+func (g *Gate) resolveAuthorizedRetrievalScope(ctx context.Context, request *http.Request, identity Identity) (requestScope, error) {
+	started := time.Now()
+	raw, document, err := readJSONObject(request)
+	if err != nil {
+		return requestScope{}, err
+	}
+	var discovered requestScope
+	collectScope(document, &discovered, false, false)
+
+	requested := append([]string(nil), discovered.kbIDs...)
+	for _, knowledgeID := range unique(discovered.knowledgeIDs) {
+		kbID, resolveErr := g.resolver.KnowledgeBaseForKnowledge(ctx, knowledgeID, request.Header)
+		if resolveErr != nil {
+			return requestScope{}, translateResolverError(resolveErr)
+		}
+		requested = append(requested, kbID)
+	}
+	requested = unique(requested)
+
+	agentIDs := unique(discovered.agentIDs)
+	if len(agentIDs) > 1 {
+		return requestScope{}, &Error{Code: "agent.scope_invalid", Message: "Agent scope is invalid", StatusCode: http.StatusBadRequest}
+	}
+	selection := agentscope.SelectionExplicit
+	if len(agentIDs) == 1 {
+		agentScope, resolveErr := g.resolver.AgentKnowledgeBases(ctx, agentIDs[0], request.Header)
+		if resolveErr != nil {
+			return requestScope{}, translateResolverError(resolveErr)
+		}
+		if len(requested) == 0 {
+			if agentScope.SelectionMode == "all" {
+				selection = agentscope.SelectionDefault
+			} else {
+				requested = unique(agentScope.KnowledgeBaseIDs)
+			}
+		} else if agentScope.SelectionMode != "all" && !isSubset(requested, agentScope.KnowledgeBaseIDs) {
+			g.recordAgentScope(ctx, request, identity, requested, agentaudit.OutcomeDenied, "agent.scope_denied", time.Since(started))
+			return requestScope{}, &Error{Code: "resource.not_found", Message: "Resource not found", StatusCode: http.StatusNotFound, Err: agentscope.ErrDenied}
+		}
+	} else if len(requested) == 0 {
+		selection = agentscope.SelectionDefault
+	}
+
+	resolved, resolveErr := g.scopes.Resolve(ctx, agentscope.Request{Selection: selection, KnowledgeBaseIDs: requested},
+		authorization.Principal{UserID: identity.UserID, TenantID: identity.TenantID}, request.Header)
+	if resolveErr != nil {
+		outcome, code, translated := translateScopeError(resolveErr)
+		g.recordAgentScope(ctx, request, identity, requested, outcome, code, time.Since(started))
+		return requestScope{}, translated
+	}
+	if len(resolved.KnowledgeBaseIDs) == 0 {
+		g.recordAgentScope(ctx, request, identity, nil, agentaudit.OutcomeDenied, "agent.scope_empty", time.Since(started))
+		return requestScope{}, &Error{Code: "agent.scope_empty", Message: "Select at least one readable knowledge base", StatusCode: http.StatusUnprocessableEntity}
+	}
+	document["knowledge_base_ids"] = resolved.KnowledgeBaseIDs
+	delete(document, "knowledge_base_id")
+	document["web_search_enabled"] = false
+	document["mcp_service_ids"] = []string{}
+	encoded, err := json.Marshal(document)
+	if err != nil {
+		return requestScope{}, &Error{Code: "request.invalid_json", Message: "Request body is not valid JSON", StatusCode: http.StatusBadRequest, Err: err}
+	}
+	request.Body = io.NopCloser(bytes.NewReader(encoded))
+	request.ContentLength = int64(len(encoded))
+	request.Header.Set("Content-Length", strconv.Itoa(len(encoded)))
+	if err := g.recordAgentScope(ctx, request, identity, resolved.KnowledgeBaseIDs, agentaudit.OutcomeSuccess, "", time.Since(started)); err != nil {
+		request.Body = io.NopCloser(bytes.NewReader(raw))
+		return requestScope{}, &Error{Code: "audit.unavailable", Message: "Agent audit is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+	}
+	return requestScope{kbIDs: resolved.KnowledgeBaseIDs, sessionIDs: discovered.sessionIDs}, nil
+}
+
+func readJSONObject(request *http.Request) ([]byte, map[string]any, error) {
+	if request.Body == nil || !strings.HasPrefix(strings.ToLower(request.Header.Get("Content-Type")), "application/json") {
+		return nil, nil, &Error{Code: "request.invalid_json", Message: "A JSON request body is required", StatusCode: http.StatusBadRequest}
+	}
+	body, err := io.ReadAll(io.LimitReader(request.Body, maxAuthorizationBodyBytes+1))
+	request.Body.Close()
+	request.Body = io.NopCloser(bytes.NewReader(body))
+	if err != nil || len(body) > maxAuthorizationBodyBytes {
+		return body, nil, &Error{Code: "request.body_too_large", Message: "Request body is too large for authorization", StatusCode: http.StatusRequestEntityTooLarge, Err: err}
+	}
+	var document map[string]any
+	if len(bytes.TrimSpace(body)) == 0 || json.Unmarshal(body, &document) != nil || document == nil {
+		return body, nil, &Error{Code: "request.invalid_json", Message: "Request body is not valid JSON", StatusCode: http.StatusBadRequest}
+	}
+	return body, document, nil
+}
+
+func translateScopeError(err error) (agentaudit.Outcome, string, error) {
+	switch {
+	case errors.Is(err, agentscope.ErrDenied):
+		return agentaudit.OutcomeDenied, "agent.scope_denied", &Error{Code: "resource.not_found", Message: "Resource not found", StatusCode: http.StatusNotFound, Err: err}
+	case errors.Is(err, agentscope.ErrInvalid):
+		return agentaudit.OutcomeDenied, "agent.scope_invalid", &Error{Code: "agent.scope_invalid", Message: "Agent scope is invalid", StatusCode: http.StatusBadRequest, Err: err}
+	case errors.Is(err, agentscope.ErrTooLarge):
+		return agentaudit.OutcomeDenied, "agent.scope_too_large", &Error{Code: "agent.scope_too_large", Message: "Select fewer knowledge bases", StatusCode: http.StatusUnprocessableEntity, Err: err}
+	default:
+		return agentaudit.OutcomeFailure, "agent.scope_unavailable", &Error{Code: "agent.scope_unavailable", Message: "Agent scope is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+	}
+}
+
+func (g *Gate) recordAgentScope(ctx context.Context, request *http.Request, identity Identity, ids []string, outcome agentaudit.Outcome, code string, duration time.Duration) error {
+	if g.agentAuditor == nil {
+		return nil
+	}
+	return g.agentAuditor.Record(ctx, agentaudit.Event{
+		TenantID: identity.TenantID, ActorUserID: identity.UserID, ClientKind: agentaudit.ClientWeb,
+		Operation: "agent.scope.resolve", KnowledgeBaseIDs: unique(ids), Outcome: outcome, ErrorCode: code,
+		CorrelationID: strings.TrimSpace(request.Header.Get("X-Request-ID")), Duration: duration, CreatedAt: time.Now().UTC(),
+	})
+}
+
+func isSubset(requested, allowed []string) bool {
+	set := make(map[string]bool, len(allowed))
+	for _, id := range allowed {
+		set[id] = true
+	}
+	for _, id := range requested {
+		if !set[id] {
+			return false
+		}
+	}
+	return true
 }
 
 type requestScope struct {
@@ -526,6 +681,13 @@ func (g *Gate) FilterResponse(response *http.Response) error {
 			}
 		}
 	}
+	if g.scopes != nil && response.Request.Method == http.MethodPost &&
+		strings.TrimSuffix(response.Request.URL.Path, "/") == "/api/v1/knowledge-search" &&
+		response.StatusCode == http.StatusOK {
+		if err := validateScopedSearchResponse(response); err != nil {
+			return err
+		}
+	}
 	if response.Request.Method != http.MethodGet || !isFilterableListPath(response.Request.URL.Path) || response.StatusCode != http.StatusOK {
 		return nil
 	}
@@ -574,6 +736,40 @@ func (g *Gate) FilterResponse(response *http.Response) error {
 	response.Body = io.NopCloser(bytes.NewReader(encoded))
 	response.ContentLength = int64(len(encoded))
 	response.Header.Set("Content-Length", strconv.Itoa(len(encoded)))
+	return nil
+}
+
+func validateScopedSearchResponse(response *http.Response) error {
+	metadata, ok := response.Request.Context().Value(phase3RequestKey{}).(phase3Request)
+	if !ok || len(metadata.KBIDs) == 0 {
+		return &Error{Code: "upstream.scope_unverifiable", Message: "Upstream search scope cannot be verified", StatusCode: http.StatusBadGateway}
+	}
+	body, err := io.ReadAll(io.LimitReader(response.Body, maxFilteredResponseBytes+1))
+	response.Body.Close()
+	if err != nil || len(body) > maxFilteredResponseBytes {
+		return &Error{Code: "upstream.invalid_response", Message: "Upstream search response cannot be verified", StatusCode: http.StatusBadGateway, Err: err}
+	}
+	var envelope struct {
+		Success bool `json:"success"`
+		Data    []struct {
+			KnowledgeBaseID string `json:"knowledge_base_id"`
+		} `json:"data"`
+	}
+	if json.Unmarshal(body, &envelope) != nil || !envelope.Success {
+		return &Error{Code: "upstream.invalid_response", Message: "Upstream search response cannot be verified", StatusCode: http.StatusBadGateway}
+	}
+	allowed := make(map[string]bool, len(metadata.KBIDs))
+	for _, kbID := range metadata.KBIDs {
+		allowed[kbID] = true
+	}
+	for _, item := range envelope.Data {
+		if item.KnowledgeBaseID == "" || !allowed[item.KnowledgeBaseID] {
+			return &Error{Code: "upstream.scope_violation", Message: "Upstream search response exceeded the authorized scope", StatusCode: http.StatusBadGateway}
+		}
+	}
+	response.Body = io.NopCloser(bytes.NewReader(body))
+	response.ContentLength = int64(len(body))
+	response.Header.Set("Content-Length", strconv.Itoa(len(body)))
 	return nil
 }
 
@@ -696,6 +892,16 @@ func isKnowledgeBatchPath(requestPath string) bool {
 
 func isSessionBatchPath(requestPath string) bool {
 	return strings.HasPrefix(requestPath, "/api/v1/sessions/batch")
+}
+
+func isUnifiedRetrievalPath(requestPath, method string) bool {
+	if method != http.MethodPost {
+		return false
+	}
+	trimmed := strings.TrimSuffix(requestPath, "/")
+	return trimmed == "/api/v1/knowledge-search" ||
+		strings.HasPrefix(trimmed, "/api/v1/knowledge-chat/") ||
+		strings.HasPrefix(trimmed, "/api/v1/agent-chat/")
 }
 
 func isAgentCollectionPath(segment string) bool {

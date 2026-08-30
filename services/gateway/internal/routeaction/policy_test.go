@@ -29,6 +29,8 @@ func TestVerifiedPolicyClassifiesBehaviorNotMethod(t *testing.T) {
 		{method: "PUT", path: "/api/v1/knowledge-bases/kb-1", want: authorization.ActionConfigure},
 		{method: "GET", path: "/api/v1/knowledge-bases/kb-1/shares", want: authorization.ActionManageGrants},
 		{method: "DELETE", path: "/api/v1/knowledge-bases/kb-1", want: authorization.ActionDelete},
+		{method: "GET", path: "/api/v1/agents/builtin-smart-reasoning", want: authorization.ActionRead},
+		{method: "PUT", path: "/api/v1/agents/builtin-smart-reasoning", want: authorization.ActionConfigure},
 	}
 	for _, test := range tests {
 		got, matched := policy.Match(test.method, test.path)

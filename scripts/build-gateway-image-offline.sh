@@ -6,7 +6,7 @@ TARGET_ARCH=${1:-$(go env GOARCH)}
 BUILD_DIR="$ROOT/.local/gateway-build"
 GO_CACHE="$ROOT/.local/gateway-go-build"
 OUTPUT="$BUILD_DIR/mindcreek-gateway-linux-$TARGET_ARCH"
-VERSION=${MINDCREEK_VERSION:-0.4.0-phase3}
+VERSION=${MINDCREEK_VERSION:-0.5.0-phase4}
 
 case "$TARGET_ARCH" in
   amd64|arm64) ;;
@@ -26,11 +26,12 @@ docker build \
   --build-arg "TARGETARCH=$TARGET_ARCH" \
   --build-arg "MINDCREEK_VERSION=$VERSION" \
   --file "$ROOT/images/mindcreek-gateway/Dockerfile.offline" \
-  --tag "mindcreek-gateway:phase3" \
+  --tag "mindcreek-gateway:phase4" \
   "$ROOT"
 
-# Keep the earlier local tags as compatibility aliases for existing ignored
-# .local environment files; new deployments use the Phase 3 tag.
-docker tag mindcreek-gateway:phase3 mindcreek-gateway:phase2
-docker tag mindcreek-gateway:phase3 mindcreek-gateway:phase1
-echo "Built mindcreek-gateway:phase3 for linux/$TARGET_ARCH without a runtime base image"
+# Keep earlier tags as compatibility aliases for existing ignored .local
+# environment files; new deployments and offline bundles use the Phase 4 tag.
+docker tag mindcreek-gateway:phase4 mindcreek-gateway:phase3
+docker tag mindcreek-gateway:phase4 mindcreek-gateway:phase2
+docker tag mindcreek-gateway:phase4 mindcreek-gateway:phase1
+echo "Built mindcreek-gateway:phase4 for linux/$TARGET_ARCH without a runtime base image"

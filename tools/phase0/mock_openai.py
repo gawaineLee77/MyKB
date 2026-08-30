@@ -78,6 +78,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.path.rstrip("/").endswith("/chat/completions"):
                 self._chat(payload)
                 return
+            if self.path.rstrip("/").endswith("/rerank"):
+                self._rerank(payload)
+                return
             if not self.path.rstrip("/").endswith("/embeddings"):
                 self._json(404, {"error": {"message": "not found"}})
                 return
@@ -99,6 +102,21 @@ class Handler(BaseHTTPRequestHandler):
             )
         except (ValueError, TypeError, json.JSONDecodeError) as exc:
             self._json(400, {"error": {"message": str(exc)}})
+
+    def _rerank(self, payload: dict[str, Any]) -> None:
+        documents = list(payload.get("documents", []))
+        self._json(
+            200,
+            {
+                "id": "rerank-mindcreek",
+                "model": payload.get("model", "mindcreek-test-rerank"),
+                "usage": {"total_tokens": sum(len(_features(str(value))) for value in documents)},
+                "results": [
+                    {"index": index, "relevance_score": max(0.01, 1.0 - index * 0.01)}
+                    for index, _ in enumerate(documents)
+                ],
+            },
+        )
 
     def _chat(self, payload: dict[str, Any]) -> None:
         serialized = json.dumps(payload.get("messages", []), ensure_ascii=False)

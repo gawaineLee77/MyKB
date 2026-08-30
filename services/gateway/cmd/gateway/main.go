@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/agentaudit"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/agentscope"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/audit"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
@@ -21,6 +23,7 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ingestion"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/mcp"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/note"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ownership"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
@@ -81,6 +84,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("access audit repository error: %v", err)
 	}
+	agentAuditRepository, err := agentaudit.NewRepository(db)
+	if err != nil {
+		log.Fatalf("agent operation audit repository error: %v", err)
+	}
 	sessionScopes, err := sessionscope.NewRepository(db)
 	if err != nil {
 		log.Fatalf("session-scope repository error: %v", err)
@@ -128,11 +135,28 @@ func main() {
 	if err != nil {
 		log.Fatalf("authorized library error: %v", err)
 	}
+	agentScopeResolver, err := agentscope.NewResolver(libraryService, authorizationService)
+	if err != nil {
+		log.Fatalf("authorized agent scope error: %v", err)
+	}
+	mcpService, err := mcp.NewService(agentScopeResolver, libraryService, catalogService, subscriptionService, adapter, agentAuditRepository)
+	if err != nil {
+		log.Fatalf("MCP service error: %v", err)
+	}
+	mcpLimiter, err := mcp.NewFixedWindowLimiter(60, time.Minute)
+	if err != nil {
+		log.Fatalf("MCP rate limiter error: %v", err)
+	}
+	mcpHandler, err := mcp.NewHandler(adapter, mcpService, mcpLimiter, cfg.ProductVersion)
+	if err != nil {
+		log.Fatalf("MCP transport error: %v", err)
+	}
 	routeActions, err := routeaction.Load(cfg.RouteActionsFile, cfg.UpstreamVersion)
 	if err != nil {
 		log.Fatalf("route-action policy error: %v", err)
 	}
-	accessGate, err := access.NewPhase3Gate(profiles, adapter, routeActions, authorizationService, sessionScopes, auditRepository, revisionRepository, publicationService)
+	accessGate, err := access.NewPhase4Gate(profiles, adapter, routeActions, authorizationService, sessionScopes, auditRepository,
+		revisionRepository, publicationService, agentScopeResolver, agentAuditRepository)
 	if err != nil {
 		log.Fatalf("access gate error: %v", err)
 	}
@@ -164,13 +188,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("route policy error: %v", err)
 	}
+	var hostedMCP http.Handler
+	if capabilities.Document(cfg.ProductVersion, cfg.UpstreamVersion).Capabilities["mcp"] {
+		hostedMCP = mcpHandler
+	}
 
 	log.Printf("mindcreek-gateway version=%s listen=%s", cfg.ProductVersion, cfg.ListenAddr)
 	dependencies := server.Dependencies{
 		Principals: adapter, Access: accessGate, Spaces: spaceService, Notes: noteService,
 		Ingestions: ingestionService, Library: libraryService, Grants: grantService, Directory: adapter,
 		Decisions: authorizationService, Publications: publicationService, Catalog: catalogService,
-		Subscriptions: subscriptionService,
+		Subscriptions: subscriptionService, AgentScopes: agentScopeResolver, MCP: hostedMCP,
 	}
 	if err := http.ListenAndServe(cfg.ListenAddr, server.NewGateway(cfg, capabilities, routePolicy, dependencies)); err != nil {
 		log.Fatalf("gateway stopped: %v", err)

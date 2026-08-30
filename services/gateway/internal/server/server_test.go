@@ -108,7 +108,7 @@ func TestGatewayProxiesUpstream(t *testing.T) {
 
 func TestCapabilityEndpointUsesRegistry(t *testing.T) {
 	filename := filepath.Join(t.TempDir(), "capabilities.json")
-	payload := `{"schema_version":1,"phase":"phase3","capabilities":{"im":false,"miniprogram":false,"cli":false,"embed":false,"browser_extension":false,"web_search":false,"mcp":false,"asr":false,"data_analysis":false,"external_connectors":false,"kb_personal_notes":true,"rag_plain":true,"rag_graph":false,"rag_pixel":false,"ontology":false}}`
+	payload := `{"schema_version":1,"phase":"phase4","capabilities":{"im":false,"miniprogram":false,"cli":false,"embed":false,"browser_extension":false,"web_search":false,"mcp":true,"asr":false,"data_analysis":false,"external_connectors":false,"kb_personal_notes":true,"rag_plain":true,"rag_graph":false,"rag_pixel":false,"ontology":false}}`
 	if err := os.WriteFile(filename, []byte(payload), 0o600); err != nil {
 		t.Fatal(err)
 	}

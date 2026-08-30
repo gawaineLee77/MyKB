@@ -236,6 +236,23 @@ func TestUnsupportedConfiguredVersionFailsClosed(t *testing.T) {
 	assertAdapterError(t, err, "upstream.version_unsupported", http.StatusServiceUnavailable)
 }
 
+func TestBuiltinAgentAllScopeDoesNotUseSharedAgentLookup(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v1/agents/builtin-smart-reasoning" {
+			t.Fatalf("unexpected shared-agent lookup: %s", r.URL.RequestURI())
+		}
+		_, _ = w.Write([]byte(`{"success":true,"data":{"id":"builtin-smart-reasoning","tenant_id":42,"config":{"kb_selection_mode":"all","knowledge_bases":[]}}}`))
+	}))
+	defer upstream.Close()
+
+	scope, err := newTestClient(t, upstream.URL, time.Second).AgentKnowledgeBases(
+		context.Background(), "builtin-smart-reasoning", nil,
+	)
+	if err != nil || scope.SelectionMode != "all" || len(scope.KnowledgeBaseIDs) != 0 {
+		t.Fatalf("AgentKnowledgeBases() = %+v, %v", scope, err)
+	}
+}
+
 func TestLiveVersionMismatchFailsClosed(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte(`{"code":0,"data":{"version":"v0.8.0"}}`))
@@ -264,6 +281,54 @@ func TestStatusAndTimeoutTranslation(t *testing.T) {
 		err := newTestClient(t, upstream.URL, 10*time.Millisecond).Health(context.Background())
 		assertAdapterError(t, err, "upstream.timeout", http.StatusBadGateway)
 	})
+}
+
+func TestPhase4SearchExcerptAndAgentContracts(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer phase4" {
+			http.Error(w, "missing credential", http.StatusUnauthorized)
+			return
+		}
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/knowledge-search":
+			var input SearchRequest
+			if json.NewDecoder(r.Body).Decode(&input) != nil || input.Query != "river" || len(input.KnowledgeBaseIDs) != 1 || input.KnowledgeBaseIDs[0] != "kb-a" {
+				http.Error(w, "invalid search scope", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"success":true,"data":[{"id":"chunk-1","content":"grounded","knowledge_base_id":"kb-a","knowledge_id":"doc-1","knowledge_title":"Guide"}]}`))
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/chunks/by-id/chunk-1":
+			_, _ = w.Write([]byte(`{"success":true,"data":{"id":"chunk-1","content":"grounded excerpt","knowledge_base_id":"kb-a","knowledge_id":"doc-1","chunk_index":1,"chunk_type":"text"}}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/sessions":
+			_, _ = w.Write([]byte(`{"success":true,"data":{"id":"session-1"}}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/knowledge-chat/session-1":
+			w.Header().Set("Content-Type", "text/event-stream")
+			_, _ = w.Write([]byte("data: {\"response_type\":\"references\",\"knowledge_references\":[{\"id\":\"chunk-1\",\"content\":\"grounded\",\"knowledge_base_id\":\"kb-a\",\"knowledge_id\":\"doc-1\"}]}\n\n"))
+			_, _ = w.Write([]byte("data: {\"response_type\":\"answer\",\"content\":\"The answer\"}\n\n"))
+			_, _ = w.Write([]byte("data: {\"response_type\":\"complete\"}\n\n"))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer upstream.Close()
+	client := newTestClient(t, upstream.URL, 2*time.Second)
+	headers := http.Header{"Authorization": {"Bearer phase4"}}
+	results, err := client.SearchKnowledge(context.Background(), SearchRequest{Query: "river", KnowledgeBaseIDs: []string{"kb-a"}}, headers)
+	if err != nil || len(results) != 1 || results[0].KnowledgeBaseID != "kb-a" {
+		t.Fatalf("SearchKnowledge() = %+v, %v", results, err)
+	}
+	excerpt, err := client.GetChunkExcerpt(context.Background(), "chunk-1", headers)
+	if err != nil || excerpt.Content != "grounded excerpt" {
+		t.Fatalf("GetChunkExcerpt() = %+v, %v", excerpt, err)
+	}
+	session, err := client.CreateChatSession(context.Background(), "MCP", headers)
+	if err != nil || session.ID != "session-1" {
+		t.Fatalf("CreateChatSession() = %+v, %v", session, err)
+	}
+	answer, err := client.AskKnowledge(context.Background(), session.ID, "river?", "", []string{"kb-a"}, headers)
+	if err != nil || answer.Answer != "The answer" || len(answer.References) != 1 {
+		t.Fatalf("AskKnowledge() = %+v, %v", answer, err)
+	}
 }
 
 func newTestClient(t *testing.T, rawURL string, timeout time.Duration) *Client {

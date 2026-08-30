@@ -33,7 +33,7 @@ LABEL org.opencontainers.image.title="MindCreek UI" \
       org.opencontainers.image.licenses="MIT"
 
 COPY --from=builder /build/frontend/dist /usr/share/nginx/html
-COPY upstream/weknora/frontend/nginx.conf /etc/nginx/templates/default.conf.template
+COPY --from=builder /build/frontend/nginx.conf /etc/nginx/templates/default.conf.template
 COPY upstream/weknora/frontend/docker-entrypoint.sh /docker-entrypoint.sh
 COPY upstream/weknora/LICENSE /usr/share/licenses/MindCreek/WeKnora-LICENSE
 RUN chmod +x /docker-entrypoint.sh

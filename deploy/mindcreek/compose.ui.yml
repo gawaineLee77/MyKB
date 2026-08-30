@@ -1,12 +1,12 @@
 services:
   frontend:
-    image: ${MINDCREEK_UI_IMAGE:-mindcreek-ui:stage1}
+    image: ${MINDCREEK_UI_IMAGE:-mindcreek-ui:phase4}
     build:
       context: ../..
       dockerfile: images/mindcreek-ui/Dockerfile
       args:
-        MINDCREEK_UI_VERSION: ${MINDCREEK_UI_VERSION:-0.1.0}
-        VITE_FRONTEND_COMMIT: weknora-${WEKNORA_VERSION:-v0.7.2}-mindcreek-${MINDCREEK_UI_VERSION:-0.1.0}
+        MINDCREEK_UI_VERSION: ${MINDCREEK_UI_VERSION:-0.5.0}
+        VITE_FRONTEND_COMMIT: weknora-${WEKNORA_VERSION:-v0.7.2}-mindcreek-${MINDCREEK_UI_VERSION:-0.5.0}
     container_name: MindCreek-frontend
 
   app:

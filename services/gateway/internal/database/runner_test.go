@@ -32,15 +32,15 @@ func TestLoadMigrationsRequiresDownFile(t *testing.T) {
 	}
 }
 
-func TestEmbeddedMigrationsIncludeKBAccessGrants(t *testing.T) {
+func TestEmbeddedMigrationsIncludeCurrentProductSchema(t *testing.T) {
 	migrations, err := loadMigrations(migrationFiles)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(migrations) != 8 {
-		t.Fatalf("embedded migration count = %d, want 8", len(migrations))
+	if len(migrations) != 9 {
+		t.Fatalf("embedded migration count = %d, want 9", len(migrations))
 	}
-	grantMigration := migrations[len(migrations)-3]
+	grantMigration := migrations[5]
 	if grantMigration.Version != 6 || grantMigration.Name != "kb_access_grants" {
 		t.Fatalf("last migration = %+v", grantMigration)
 	}
@@ -54,13 +54,13 @@ func TestEmbeddedMigrationsIncludeKBAccessGrants(t *testing.T) {
 			t.Errorf("grant migration is missing %q", required)
 		}
 	}
-	securityMigration := migrations[len(migrations)-2]
+	securityMigration := migrations[6]
 	if securityMigration.Version != 7 || securityMigration.Name != "phase2_security_records" ||
 		!strings.Contains(securityMigration.UpSQL, "session_kb_scopes") ||
 		!strings.Contains(securityMigration.UpSQL, "kb_access_audit_events") {
 		t.Fatalf("Phase 2 security migration = %+v", securityMigration)
 	}
-	phase3Migration := migrations[len(migrations)-1]
+	phase3Migration := migrations[7]
 	if phase3Migration.Version != 8 || phase3Migration.Name != "phase3_publications" {
 		t.Fatalf("Phase 3 publication migration = %+v", phase3Migration)
 	}
@@ -70,6 +70,15 @@ func TestEmbeddedMigrationsIncludeKBAccessGrants(t *testing.T) {
 	} {
 		if !strings.Contains(phase3Migration.UpSQL, required) {
 			t.Errorf("Phase 3 publication migration is missing %q", required)
+		}
+	}
+	phase4Migration := migrations[8]
+	if phase4Migration.Version != 9 || phase4Migration.Name != "phase4_agent_operations" {
+		t.Fatalf("Phase 4 agent-operation migration = %+v", phase4Migration)
+	}
+	for _, required := range []string{"agent_operation_audit_events", "knowledge_base_ids", "duration_ms", "client_kind IN ('web', 'mcp')"} {
+		if !strings.Contains(phase4Migration.UpSQL, required) {
+			t.Errorf("Phase 4 agent-operation migration is missing %q", required)
 		}
 	}
 }

@@ -16,7 +16,7 @@ var releaseValues = map[string]bool{
 	"embed":               false,
 	"browser_extension":   false,
 	"web_search":          false,
-	"mcp":                 false,
+	"mcp":                 true,
 	"asr":                 false,
 	"data_analysis":       false,
 	"external_connectors": false,
@@ -55,7 +55,7 @@ type IndexProfile struct {
 	Enabled bool   `json:"enabled"`
 }
 
-// Load reads a capability registry and enforces the current Phase 3 release gates.
+// Load reads a capability registry and enforces the current Phase 4 release gates.
 func Load(filename string) (*Registry, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -79,8 +79,8 @@ func Load(filename string) (*Registry, error) {
 }
 
 func (r *Registry) validate() error {
-	if r.SchemaVersion != 1 || r.Phase != "phase3" {
-		return fmt.Errorf("capability registry must use schema_version 1 and phase3")
+	if r.SchemaVersion != 1 || r.Phase != "phase4" {
+		return fmt.Errorf("capability registry must use schema_version 1 and phase4")
 	}
 	if len(r.Capabilities) != len(releaseValues) {
 		return fmt.Errorf("capability registry has %d flags; expected %d", len(r.Capabilities), len(releaseValues))
@@ -91,7 +91,7 @@ func (r *Registry) validate() error {
 			return fmt.Errorf("capability registry is missing %q", key)
 		}
 		if actual != expected {
-			return fmt.Errorf("capability %q must be %t in the Phase 3 release", key, expected)
+			return fmt.Errorf("capability %q must be %t in the Phase 4 release", key, expected)
 		}
 	}
 	return nil
