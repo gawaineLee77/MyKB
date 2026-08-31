@@ -36,5 +36,7 @@ if [ "$IMAGE_TAG" = "phase4" ]; then
   docker tag mindcreek-gateway:phase4 mindcreek-gateway:phase3
   docker tag mindcreek-gateway:phase4 mindcreek-gateway:phase2
   docker tag mindcreek-gateway:phase4 mindcreek-gateway:phase1
+elif [ "$IMAGE_TAG" = "phase5" ]; then
+  docker tag mindcreek-gateway:phase5 mindcreek-gateway:0.6.0-phase5
 fi
 echo "Built mindcreek-gateway:$IMAGE_TAG for linux/$TARGET_ARCH without a runtime base image"

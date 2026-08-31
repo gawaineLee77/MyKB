@@ -1,0 +1,7 @@
+# Apply only during an approved identity-provider outage. This bypasses the
+# MindCreek gateway but remains bound to host loopback; remove it immediately
+# after the emergency operation.
+services:
+  app:
+    ports:
+      - "127.0.0.1:${MINDCREEK_BREAK_GLASS_PORT:-18081}:8080"

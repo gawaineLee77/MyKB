@@ -1060,6 +1060,7 @@ type User struct {
 	Email               string `json:"email"`
 	TenantID            uint64 `json:"tenant_id"`
 	CanAccessAllTenants bool   `json:"can_access_all_tenants,omitempty"`
+	IsSystemAdmin       bool   `json:"is_system_admin,omitempty"`
 }
 
 type Tenant struct {

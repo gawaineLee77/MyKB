@@ -21,11 +21,13 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
 	productdb "github.com/gawaineLee77/MyKB/services/gateway/internal/database"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/identity"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ingestion"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/managedmodel"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/mcp"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/note"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/observability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ownership"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
@@ -209,13 +211,43 @@ func main() {
 	if capabilities.Document(cfg.ProductVersion, cfg.UpstreamVersion).Capabilities["mcp"] {
 		hostedMCP = mcpHandler
 	}
+	var identityBroker http.Handler
+	var identityGate server.CorporateIdentityGate
+	var identityAdmin server.IdentityAdminService
+	if cfg.Identity.Enabled {
+		identityRepository, err := identity.NewRepository(db)
+		if err != nil {
+			log.Fatalf("corporate identity repository error: %v", err)
+		}
+		corporateProvider, err := identity.NewCorporateProvider(cfg.Identity, nil)
+		if err != nil {
+			log.Fatalf("corporate identity provider error: %v", err)
+		}
+		identityGate, err = identity.NewGate(identityRepository, cfg.Identity.BreakGlassUserIDs)
+		if err != nil {
+			log.Fatalf("corporate identity gate error: %v", err)
+		}
+		identityAdmin, err = identity.NewAdminService(identityRepository)
+		if err != nil {
+			log.Fatalf("corporate identity administration error: %v", err)
+		}
+		broker, err := identity.NewBroker(cfg.Identity, corporateProvider, identityRepository)
+		if err != nil {
+			log.Fatalf("corporate identity broker error: %v", err)
+		}
+		identityBroker = broker
+		log.Printf("corporate identity enabled provider=%q registration=closed", cfg.Identity.ProviderName)
+	}
 
 	log.Printf("mindcreek-gateway version=%s listen=%s", cfg.ProductVersion, cfg.ListenAddr)
+	telemetry := observability.NewRecorder(log.New(os.Stdout, "", 0))
 	dependencies := server.Dependencies{
 		Principals: adapter, Access: accessGate, Spaces: spaceService, Notes: noteService,
 		Ingestions: ingestionService, Library: libraryService, Grants: grantService, Directory: adapter,
 		Decisions: authorizationService, Publications: publicationService, Catalog: catalogService,
 		Subscriptions: subscriptionService, AgentScopes: agentScopeResolver, Models: modelService, MCP: hostedMCP,
+		IdentityBroker: identityBroker, IdentityGate: identityGate, IdentityAdmin: identityAdmin,
+		Observability: telemetry,
 	}
 	if err := http.ListenAndServe(cfg.ListenAddr, server.NewGateway(cfg, capabilities, routePolicy, dependencies)); err != nil {
 		log.Fatalf("gateway stopped: %v", err)

@@ -84,6 +84,18 @@ func TestSkeletonStructuredNotFound(t *testing.T) {
 	}
 }
 
+func TestGatewayReplacesUnsafeRequestID(t *testing.T) {
+	handler := NewSkeleton(testConfig(t))
+	request := httptest.NewRequest(http.MethodGet, "/health", nil)
+	request.Header.Set("X-Request-ID", "private prompt text")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	value := response.Header().Get("X-Request-ID")
+	if value == "private prompt text" || !validRequestID(value) {
+		t.Fatalf("unsafe request ID was not replaced: %q", value)
+	}
+}
+
 func TestGatewayProxiesUpstream(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/v1/auth/config" {
@@ -180,6 +192,46 @@ type principalResolverFunc func(context.Context, http.Header) (weknora.Principal
 
 func (function principalResolverFunc) CurrentPrincipal(ctx context.Context, headers http.Header) (weknora.Principal, error) {
 	return function(ctx, headers)
+}
+
+type corporateIdentityGateFunc func(context.Context, weknora.Principal) error
+
+func (function corporateIdentityGateFunc) Check(ctx context.Context, principal weknora.Principal) error {
+	return function(ctx, principal)
+}
+
+func TestCorporateIdentityClosesLocalEntryPoints(t *testing.T) {
+	handler := NewGateway(testConfig(t), nil, nil, Dependencies{
+		IdentityGate: corporateIdentityGateFunc(func(context.Context, weknora.Principal) error { return nil }),
+	})
+	for _, target := range []string{
+		"/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/register-by-invite",
+		"/api/v1/auth/auto-setup", "/api/v1/auth/change-password",
+		"/api/v1/tenants/42/invitations", "/api/v1/tenants/42/invite-links",
+	} {
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, target, nil))
+		assertErrorCode(t, recorder, http.StatusNotFound, "identity.closed_registration")
+	}
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", nil))
+	assertErrorCode(t, recorder, http.StatusUnauthorized, "identity.reauthentication_required")
+}
+
+func TestCorporateIdentityRejectsUnlinkedBearer(t *testing.T) {
+	handler := NewGateway(testConfig(t), nil, nil, Dependencies{
+		Principals: principalResolverFunc(func(context.Context, http.Header) (weknora.Principal, error) {
+			return testPrincipal("legacy-user", 42), nil
+		}),
+		IdentityGate: corporateIdentityGateFunc(func(context.Context, weknora.Principal) error {
+			return errors.New("unlinked")
+		}),
+	})
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/auth/me", nil)
+	request.Header.Set("Authorization", "Bearer legacy-session")
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	assertErrorCode(t, recorder, http.StatusForbidden, "identity.unlinked")
 }
 
 func TestKBControlledRoutesRequireTrustedPrincipal(t *testing.T) {

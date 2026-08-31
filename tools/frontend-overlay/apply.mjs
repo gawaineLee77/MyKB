@@ -165,6 +165,29 @@ replaceExact(
         },`,
 )
 replaceExact(
+  'src/router/index.ts',
+  'component: () => import("../views/auth/Login.vue")',
+  'component: () => import("@/mindcreek/AuthEntry.vue")',
+  2,
+)
+replaceExact(
+  'src/components/UserMenu.vue',
+  `  // 跳转到登录页
+  router.push('/login')`,
+  `  // Gate B closes both the local and corporate sessions.
+  window.location.assign('/api/v1/mindcreek/oidc/logout')`,
+)
+replaceExact(
+  'src/components/menu.vue',
+  `        MessagePlugin.success(t('menu.logoutSuccess'));
+        router.push('/login');
+        return;`,
+  `        MessagePlugin.success(t('menu.logoutSuccess'));
+        window.location.assign('/api/v1/mindcreek/oidc/logout');
+        return;`,
+)
+
+replaceExact(
   'src/utils/request.ts',
   `export function put<T = any>(url: string, data = {}, config?: any): Promise<T> {
   return instance.put<T>(url, data, config) as unknown as Promise<T>;

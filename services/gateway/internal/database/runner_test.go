@@ -37,8 +37,8 @@ func TestEmbeddedMigrationsIncludeCurrentProductSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(migrations) != 9 {
-		t.Fatalf("embedded migration count = %d, want 9", len(migrations))
+	if len(migrations) != 10 {
+		t.Fatalf("embedded migration count = %d, want 10", len(migrations))
 	}
 	grantMigration := migrations[5]
 	if grantMigration.Version != 6 || grantMigration.Name != "kb_access_grants" {
@@ -79,6 +79,15 @@ func TestEmbeddedMigrationsIncludeCurrentProductSchema(t *testing.T) {
 	for _, required := range []string{"agent_operation_audit_events", "knowledge_base_ids", "duration_ms", "client_kind IN ('web', 'mcp')"} {
 		if !strings.Contains(phase4Migration.UpSQL, required) {
 			t.Errorf("Phase 4 agent-operation migration is missing %q", required)
+		}
+	}
+	identityMigration := migrations[9]
+	if identityMigration.Version != 10 || identityMigration.Name != "phase5_corporate_identity" {
+		t.Fatalf("Phase 5 identity migration = %+v", identityMigration)
+	}
+	for _, required := range []string{"corporate_identities", "broker_subject", "upstream_email", "identity_audit_events", "status IN ('active', 'suspended')"} {
+		if !strings.Contains(identityMigration.UpSQL, required) {
+			t.Errorf("Phase 5 identity migration is missing %q", required)
 		}
 	}
 }

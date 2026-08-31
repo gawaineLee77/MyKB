@@ -2,7 +2,7 @@
 
 ## 1. Scope and current safety status
 
-The repository provides a verified **Phase 5 Gate A development runtime** based on unmodified WeKnora v0.7.2. Inherited gates cover the exclusive Product Gateway path, Personal Notes, Plain RAG, sharing/subscriptions, Authorized Ask, hosted read-only MCP, and immediate revocation. Gate A adds server-managed chat, embedding, and rerank defaults so ordinary users enter no model key. Corporate OAuth 2.0, permanently closed registration, production provider activation, and operational hardening remain Phase 5 Gates B–D.
+The repository provides a verified **Phase 5 Gate B development runtime** based on unmodified WeKnora v0.7.2. Inherited gates cover the exclusive Product Gateway path, Personal Notes, Plain RAG, sharing/subscriptions, Authorized Ask, hosted read-only MCP, and immediate revocation. Gate A adds server-managed chat, embedding, and rerank defaults; Gate B adds corporate OAuth/OIDC, first-login provisioning, closed registration, and suspension enforcement. Production provider activation and operational hardening remain Phase 5 Gates C–D work.
 
 The MindCreek frontend applies branding and product modules—including Personal Notes, Plain RAG, sharing, Discover, Subscribed, and Authorized Ask—to a temporary copy of the pinned frontend. The product pages and `/mcp` call the gateway; `upstream/weknora` remains unchanged.
 
@@ -31,6 +31,7 @@ make phase3-check
 make phase4-check
 make phase4-compose-config
 make phase5-gate-a-static-check
+make phase5-gate-b-static-check
 make phase5-compose-config
 ```
 
@@ -47,7 +48,7 @@ The build runs the frontend tests and type-check before creating `mindcreek-ui:p
 
 ## 4. Docker images to download
 
-The verified Phase 5 Gate A runtime uses these images:
+The verified Phase 5 Gate B runtime uses these images:
 
 | Image | Purpose | Required for the pilot |
 | --- | --- | --- |
@@ -94,7 +95,7 @@ openssl rand -base64 48    # use for JWT_SECRET
 openssl rand -hex 16       # exactly 32 characters; use for SYSTEM_AES_KEY
 ```
 
-Replace all sample credentials and set every `MINDCREEK_MANAGED_*` model value in `.local/mindcreek.env`. The embedding dimension must match the provider. Staging/production rendering rejects absent, mock, non-HTTPS, and obvious placeholder values. Keep `MINDCREEK_USER_MODEL_OVERRIDES=false` unless the opt-in capability file, a new 32-byte `SYSTEM_AES_KEY`, exact host/provider allow-lists, and organization egress approval are all in place. Corporate OAuth 2.0 and closed registration are scheduled for Gate B.
+Replace all sample credentials and set every `MINDCREEK_MANAGED_*` model value in `.local/mindcreek.env`. The embedding dimension must match the provider. Staging/production rendering rejects absent, mock, non-HTTPS, and obvious placeholder values. Keep `MINDCREEK_USER_MODEL_OVERRIDES=false` unless the opt-in capability file, a new 32-byte `SYSTEM_AES_KEY`, exact host/provider allow-lists, and organization egress approval are all in place. Configure the corporate issuer, exact HTTPS origin, client credentials, callback, and optional group policy using [PHASE5_IDENTITY_PROVIDER.md](PHASE5_IDENTITY_PROVIDER.md).
 
 Build, start, and verify the loopback-only Phase 5 deployment:
 
@@ -103,6 +104,9 @@ make phase5-build-offline
 make phase5-up
 make phase5-runtime-check
 make phase5-gate-a
+make phase5-gate-b
+# After real corporate provider activation:
+make phase5-gate-b-probe
 make phase5-ps
 ```
 
@@ -156,3 +160,5 @@ Users can then open `http://mindcreek.home.arpa:18080`. For a permanent company 
 ## 8. Operations
 
 Inspect services with `make phase5-ps` and logs with `./scripts/phase5-compose.sh logs -f gateway app frontend`. Stop containers with `make phase5-down`; named volumes are preserved. Never use `docker compose down -v` unless permanent data deletion is intended. Back up PostgreSQL and `data-files` before upgrades, follow [PHASE4_OPERATIONS.md](PHASE4_OPERATIONS.md) for inherited procedures, and promote a newly pinned WeKnora release only after the compatibility suite passes. Gate A evidence is in [PHASE5_GATE_A.md](PHASE5_GATE_A.md).
+
+When replacing a disposable server deployment with a deliberately empty Phase 5 installation, use [PHASE5_FRESH_SERVER_INSTALL.md](PHASE5_FRESH_SERVER_INSTALL.md). Its reset helper requires an explicit destructive confirmation and does not affect Docker images or release archives.

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "file": "pilot-handbook-en.md",
+      "content": "# Project Lighthouse\n\nMarker MC_P5_EN_001. New team members request repository access from the platform owner and complete security training before receiving write permission.\n\nMarker MC_P5_EN_002. Production knowledge is backed up daily with a 24-hour recovery point objective."
+    },
+    {
+      "file": "pilot-handbook-zh.md",
+      "content": "# 溪流项目手册\n\n标记 MC_P5_ZH_001。新成员必须先完成安全培训，再由平台负责人开通代码库写入权限。\n\n标记 MC_P5_ZH_002。知识库每天备份一次，恢复点目标为二十四小时。"
+    }
+  ],
+  "queries": [
+    {"language": "en", "query": "MC_P5_EN_001 How does a new team member receive write access?", "expected": "MC_P5_EN_001"},
+    {"language": "en", "query": "MC_P5_EN_002 What is the backup recovery point objective?", "expected": "MC_P5_EN_002"},
+    {"language": "zh", "query": "MC_P5_ZH_001 新成员如何获得代码库写入权限？", "expected": "MC_P5_ZH_001"},
+    {"language": "zh", "query": "MC_P5_ZH_002 知识库多久备份一次？", "expected": "MC_P5_ZH_002"}
+  ]
+}

@@ -4,9 +4,9 @@
 
 | Field | Value |
 |---|---|
-| Status | Approved design; Phases 0–4 and Phase 5 Gate A complete |
+| Status | Approved design; Phases 0–5 engineering implementation complete |
 | Document version | 0.7 |
-| Date | 2026-08-30 |
+| Date | 2026-08-31 |
 | Base project | Tencent WeKnora |
 | Current approved upstream baseline | WeKnora v0.7.2 |
 | Deployment model | Self-hosted service for internal users |
@@ -345,7 +345,7 @@ This mode follows “human in command”: an LLM accelerates bootstrapping, but 
 
 ### 7.8 Managed model defaults and optional overrides
 
-**Implementation status (2026-08-30):** Phase 5 Gate A is complete with stable managed IDs, a secret-free deployment renderer, redacted facade, automatic defaults, and a disabled-by-default Advanced Settings override lifecycle. Production provider activation remains an operator secret-management action.
+**Implementation status (2026-08-31):** Phase 5 Gates A–D are implemented with stable managed IDs, corporate OIDC, a secret-free deployment renderer, TLS/network hardening, recovery and redacted observability, and controlled-pilot evidence. Production provider activation and selected-team sign-off remain operator actions.
 
 - Every pilot or production deployment must configure one healthy default `KnowledgeQA`, `Embedding`, and `Rerank` model before it is marked ready for users.
 - Reuse WeKnora's declarative built-in model catalog with stable IDs. Product-owned YAML contains only `${ENV_VAR}` references; real base URLs and API keys come from a secret manager, container secrets, or a root-readable untracked environment file.
@@ -1104,10 +1104,11 @@ All workers must be idempotent or safely retryable before horizontal scaling.
 
 ### 15.1 Identity and session security
 
-- Use OAuth 2.0 Authorization Code flow with PKCE; obtain the stable organization user identifier from the provider's validated token or user-information endpoint.
+- Use OAuth 2.0 Authorization Code flow with PKCE and OIDC. A product-owned identity broker validates the corporate RS256 ID token, exact issuer/audience, nonce, expiry, stable subject, and UserInfo subject before exposing a pairwise identity to WeKnora.
+- Persist the corporate `issuer + subject` mapping outside the upstream schema. Use a stable internal login alias so an email change cannot create or capture another account; retain current corporate profile attributes only in the product identity record.
 - Disable public registration and invite links not limited to the organization.
 - Require secure, HTTP-only, same-site cookies or equally protected bearer-token handling.
-- Revoke sessions after password reset, user suspension, or major role change.
+- Bind every human bearer session to an active corporate identity and reject it immediately after MindCreek suspension. Re-evaluate provider groups on login and retain an audited system-administrator suspension path for provider outages or delayed directory events.
 - Require stronger authentication for administrators according to corporate policy.
 - Scope API keys to capabilities and KBs; disable API keys entirely if no integration requires them.
 - For MCP, prefer OAuth/OIDC for user-delegated agents and revocable scoped API keys for service agents; never accept an unauthenticated MCP session.
@@ -1354,11 +1355,11 @@ Audit records contain actor, effective principal, action, target, timestamp, req
 **Outcome:** Production-ready internal pilot.
 
 - **Complete (Gate A):** provision administrator-managed default chat, embedding, and rerank models through server-side secrets; simplify ordinary onboarding and gate optional workspace providers behind Advanced Settings.
-- Integrate the organization's OAuth 2.0 identity provider and disable self-registration.
-- Complete network isolation, TLS, secrets, backup, restore, logging, metrics, and alerting.
-- Run security, load, migration, and recovery tests.
-- Pilot with a small set of teams and collect usability/retrieval feedback.
-- Review the downstream patch inventory and remove any patch superseded by upstream; do not delete excluded upstream modules.
+- **Complete (Gate B):** integrate the organization's OAuth/OIDC identity provider through the MindCreek broker, provide first-login account/workspace provisioning, close local registration/password entry points, and enforce suspension and audited break-glass behavior.
+- **Complete (Gate C):** provide network isolation, TLS, secret lifecycle, consistent backup/restore, redacted logging/metrics, alert thresholds, and security/load/migration/recovery acceptance.
+- **Complete (Gate D engineering):** provide bilingual pilot measurement, current/candidate upstream and clean-copy verification, versioned images, and release/incident runbooks.
+- **Operator activation:** run the corporate IdP browser exercise, target-server recovery drill, provider cost review, and selected-team scorecard before expanding beyond the controlled pilot.
+- Keep the downstream patch inventory empty and remove any future patch superseded by upstream; do not delete excluded upstream modules.
 
 ### Phase 6 — GraphRAG experimental profile
 
@@ -1588,4 +1589,4 @@ The following choices do not block the overall design but must be resolved durin
 
 ## 24. Next implementation action
 
-Begin [Phase 5 Gate A](PHASE5_IMPLEMENTATION_PLAN.md) with the managed-model contract and secret-free deployment template. Confirm provider protocols, model names, and embedding dimension before placing real values in a protected local secret source. Do not enable user model overrides until their ownership, egress, encryption, and audit matrix passes.
+Activate the [Phase 5 controlled pilot](PHASE5_PILOT.md) with protected production provider/identity settings, then collect the required operator and selected-team sign-offs. Keep Phase 6 GraphRAG experimental work isolated from the stable Plain RAG path and begin only with an approved benchmark contract.

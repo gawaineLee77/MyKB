@@ -11,6 +11,7 @@ PHASE0_OVERRIDE="$ROOT/deploy/phase0/compose.override.yml"
 MINDCREEK_OVERRIDE="$ROOT/deploy/mindcreek/compose.ui.yml"
 GATEWAY_OVERRIDE="$ROOT/deploy/phase1/compose.gateway.yml"
 PHASE5_OVERRIDE="$ROOT/deploy/phase5/compose.managed-models.yml"
+IDENTITY_OVERRIDE="$ROOT/deploy/phase5/compose.identity.yml"
 
 if [ ! -f "$RUNTIME_ENV" ]; then
   mkdir -p "$RUNTIME_DIR"
@@ -34,4 +35,5 @@ exec docker compose \
   -f "$MINDCREEK_OVERRIDE" \
   -f "$GATEWAY_OVERRIDE" \
   -f "$PHASE5_OVERRIDE" \
+  -f "$IDENTITY_OVERRIDE" \
   "$@"

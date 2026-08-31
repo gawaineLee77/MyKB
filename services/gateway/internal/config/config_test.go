@@ -53,3 +53,49 @@ func TestLoadRejectsInvalidModelOverrideBooleans(t *testing.T) {
 		t.Fatal("Load() accepted an invalid override capability value")
 	}
 }
+
+func TestLoadIdentityContract(t *testing.T) {
+	t.Setenv("MINDCREEK_IDENTITY_ENABLED", "true")
+	t.Setenv("MINDCREEK_IDENTITY_ALLOW_INSECURE_HTTP", "true")
+	t.Setenv("MINDCREEK_EXTERNAL_ORIGIN", "http://mindcreek.internal:18080")
+	t.Setenv("MINDCREEK_IDENTITY_ISSUER", "http://identity.internal")
+	t.Setenv("MINDCREEK_IDENTITY_CLIENT_ID", "mindcreek")
+	t.Setenv("MINDCREEK_IDENTITY_CLIENT_SECRET", "corporate-secret-value")
+	t.Setenv("MINDCREEK_BROKER_CLIENT_SECRET", "broker-secret-value-with-32-characters")
+	t.Setenv("MINDCREEK_IDENTITY_REQUIRED_GROUPS", " Knowledge, Research,knowledge ")
+
+	cfg, err := Load("test-version")
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity := cfg.Identity
+	if !identity.Enabled || identity.CallbackURL != "http://mindcreek.internal:18080/api/v1/mindcreek/oidc/callback" {
+		t.Fatalf("identity contract = %+v", identity)
+	}
+	if identity.BrokerRedirectURI != "http://mindcreek.internal:18080/api/v1/auth/oidc/callback" ||
+		!identity.RequiredGroups["knowledge"] || !identity.RequiredGroups["research"] {
+		t.Fatalf("identity mapping = %+v", identity)
+	}
+}
+
+func TestLoadIdentityFailsClosed(t *testing.T) {
+	base := map[string]string{
+		"MINDCREEK_IDENTITY_ENABLED":       "true",
+		"MINDCREEK_EXTERNAL_ORIGIN":        "https://mindcreek.internal",
+		"MINDCREEK_IDENTITY_ISSUER":        "https://identity.internal",
+		"MINDCREEK_IDENTITY_CLIENT_ID":     "mindcreek",
+		"MINDCREEK_IDENTITY_CLIENT_SECRET": "corporate-secret-value",
+		"MINDCREEK_BROKER_CLIENT_SECRET":   "broker-secret-value-with-32-characters",
+	}
+	for name, value := range base {
+		t.Setenv(name, value)
+	}
+	if _, err := Load("test-version"); err != nil {
+		t.Fatalf("valid contract rejected: %v", err)
+	}
+
+	t.Setenv("MINDCREEK_IDENTITY_SCOPES", "profile,email")
+	if _, err := Load("test-version"); err == nil {
+		t.Fatal("identity contract accepted scopes without openid")
+	}
+}

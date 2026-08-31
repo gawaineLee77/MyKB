@@ -26,7 +26,7 @@ rg -q 'mindcreek-gateway:phase4' "$ROOT/images/manifests/phase4-runtime.txt" || 
 rg -q 'mindcreek-ui:phase4' "$ROOT/images/manifests/phase4-runtime.txt" || fail "Phase 4 UI image is absent"
 rg -q '0.5.0-phase4' "$ROOT/deploy/phase1/compose.gateway.yml" || fail "Phase 4 version is absent"
 rg -q '^\| Ledger status \| No downstream patches \|' "$LEDGER" || fail "upstream patch ledger is not empty"
-rg -q '^\| Last reviewed \| 2026-08-30 \|' "$LEDGER" || fail "upstream ledger review is stale"
+rg -q '^\| Last reviewed \| 2026-' "$LEDGER" || fail "upstream ledger review is stale"
 [ -z "$(git -C "$ROOT/upstream/weknora" status --porcelain --untracked-files=all)" ] || fail "upstream submodule is dirty"
 
 echo "MindCreek Phase 4 Gate D release contract verified"

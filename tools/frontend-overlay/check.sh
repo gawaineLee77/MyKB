@@ -18,6 +18,7 @@ copy_anchor embed.html
 copy_anchor nginx.conf
 copy_anchor src/views/auth/Login.vue
 copy_anchor src/components/menu.vue
+copy_anchor src/components/UserMenu.vue
 copy_anchor src/router/index.ts
 copy_anchor src/utils/request.ts
 copy_anchor src/assets/theme/theme.css
@@ -41,11 +42,15 @@ grep -q 'mindcreekNotesWorkspace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekRAGWorkspace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekAskWorkspace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekAdvancedModelSettings' "$TARGET/src/router/index.ts"
+grep -q 'mindcreek/AuthEntry.vue' "$TARGET/src/router/index.ts"
 grep -q 'mindcreek/KnowledgeLibrary.vue' "$TARGET/src/router/index.ts"
 grep -q 'export function patch' "$TARGET/src/utils/request.ts"
 grep -q 'Create a knowledge space' "$TARGET/src/mindcreek/CreateKnowledgeSpace.vue"
 grep -q 'Managed AI is ready' "$TARGET/src/mindcreek/CreateKnowledgeSpace.vue"
 grep -q 'Workspace model overrides' "$TARGET/src/mindcreek/AdvancedModelSettings.vue"
+grep -q 'Sign in with your organization' "$TARGET/src/mindcreek/SSOLogin.vue"
+grep -q 'configuration/network failure must not expose' "$TARGET/src/mindcreek/AuthEntry.vue"
+grep -q '/api/v1/mindcreek/oidc/logout' "$TARGET/src/components/UserMenu.vue"
 grep -q '/api/v1/mindcreek/models' "$TARGET/src/mindcreek/api.ts"
 ! grep -q "@/api/model" "$TARGET/src/mindcreek/api.ts"
 grep -q 'A quiet place for working notes' "$TARGET/src/mindcreek/NotesWorkspace.vue"

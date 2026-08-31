@@ -27,5 +27,6 @@ docker build \
   --build-arg MINDCREEK_UI_VERSION=0.6.0 \
   --tag mindcreek-ui:phase5 \
   "$BUILD_ROOT"
+docker tag mindcreek-ui:phase5 mindcreek-ui:0.6.0
 
 echo "Built mindcreek-ui:phase5 from the pinned local dependencies and Phase 4 runtime base"

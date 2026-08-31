@@ -1,0 +1,11 @@
+# Seven distinct Phase 5 runtime images. Product images carry both the release
+# and compatibility tags so an offline load works with default or pinned envs.
+mindcreek-ui:phase5
+mindcreek-ui:0.6.0
+mindcreek-gateway:phase5
+mindcreek-gateway:0.6.0-phase5
+wechatopenai/weknora-app:v0.7.2
+wechatopenai/weknora-docreader:v0.7.2
+paradedb/paradedb:v0.22.2-pg17
+redis:7.0-alpine
+python:3.12-alpine

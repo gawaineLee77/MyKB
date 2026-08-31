@@ -1,0 +1,27 @@
+services:
+  frontend:
+    ports: !override
+      - "${MINDCREEK_HTTP_BIND:-0.0.0.0}:${MINDCREEK_HTTP_PORT:-80}:80"
+      - "${MINDCREEK_HTTPS_BIND:-0.0.0.0}:${MINDCREEK_HTTPS_PORT:-443}:443"
+    volumes:
+      - ../../deploy/phase5/nginx.production.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${MINDCREEK_TLS_CERT_FILE:?set MINDCREEK_TLS_CERT_FILE}:/run/mindcreek-tls/tls.crt:ro
+      - ${MINDCREEK_TLS_KEY_FILE:?set MINDCREEK_TLS_KEY_FILE}:/run/mindcreek-tls/tls.key:ro
+    networks: !override
+      - WeKnora-network
+
+  gateway:
+    networks: !override
+      - WeKnora-network
+      - mindcreek-egress
+
+  app:
+    networks: !override
+      - WeKnora-network
+      - mindcreek-egress
+
+networks:
+  WeKnora-network:
+    internal: true
+  mindcreek-egress:
+    driver: bridge

@@ -20,9 +20,11 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/catalog"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
+	corporateidentity "github.com/gawaineLee77/MyKB/services/gateway/internal/identity"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/managedmodel"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/note"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/observability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/profile"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/publication"
@@ -36,21 +38,29 @@ type PrincipalResolver interface {
 }
 
 type Dependencies struct {
-	Principals    PrincipalResolver
-	Access        *access.Gate
-	Spaces        KnowledgeSpaceService
-	Notes         NoteService
-	Ingestions    IngestionService
-	Library       AuthorizedLibraryService
-	Grants        GrantService
-	Directory     UserDirectory
-	Decisions     AuthorizationDecisionService
-	Publications  PublicationService
-	Catalog       CatalogService
-	Subscriptions SubscriptionService
-	AgentScopes   AgentScopeService
-	Models        ManagedModelService
-	MCP           http.Handler
+	Principals     PrincipalResolver
+	Access         *access.Gate
+	Spaces         KnowledgeSpaceService
+	Notes          NoteService
+	Ingestions     IngestionService
+	Library        AuthorizedLibraryService
+	Grants         GrantService
+	Directory      UserDirectory
+	Decisions      AuthorizationDecisionService
+	Publications   PublicationService
+	Catalog        CatalogService
+	Subscriptions  SubscriptionService
+	AgentScopes    AgentScopeService
+	Models         ManagedModelService
+	MCP            http.Handler
+	IdentityBroker http.Handler
+	IdentityGate   CorporateIdentityGate
+	IdentityAdmin  IdentityAdminService
+	Observability  *observability.Recorder
+}
+
+type CorporateIdentityGate interface {
+	Check(context.Context, weknora.Principal) error
 }
 
 type ManagedModelService interface {
@@ -184,6 +194,9 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 			"compatible_weknora_version": cfg.UpstreamVersion,
 		})
 	})
+	if dependencies.Observability != nil {
+		mux.Handle("GET /internal/metrics", dependencies.Observability)
+	}
 	if capabilities != nil {
 		mux.HandleFunc("GET /api/v1/capabilities/knowledge-modes", func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Cache-Control", "no-store")
@@ -196,6 +209,12 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 	registerPublicationRoutes(mux, dependencies)
 	registerAgentRoutes(mux, dependencies)
 	registerManagedModelRoutes(mux, dependencies)
+	if dependencies.IdentityAdmin != nil {
+		registerIdentityAdminRoutes(mux, dependencies)
+	}
+	if dependencies.IdentityBroker != nil {
+		mux.Handle("/api/v1/mindcreek/oidc/", dependencies.IdentityBroker)
+	}
 	if dependencies.MCP != nil {
 		mux.Handle("/mcp", dependencies.MCP)
 	}
@@ -262,7 +281,11 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result})
 	})
 	mux.Handle("/", fallback)
-	return requestIDMiddleware(mux)
+	handler := corporateIdentityMiddleware(mux, dependencies)
+	if dependencies.Observability != nil {
+		handler = dependencies.Observability.Wrap(handler)
+	}
+	return requestIDMiddleware(handler)
 }
 
 func writeSpaceError(w http.ResponseWriter, r *http.Request, err error) {
@@ -285,7 +308,7 @@ type requestIDKey struct{}
 func requestIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := r.Header.Get("X-Request-ID")
-		if id == "" || len(id) > 128 {
+		if !validRequestID(id) {
 			var raw [16]byte
 			if _, err := rand.Read(raw[:]); err == nil {
 				id = hex.EncodeToString(raw[:])
@@ -297,6 +320,20 @@ func requestIDMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("X-Request-ID", id)
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestIDKey{}, id)))
 	})
+}
+
+func validRequestID(value string) bool {
+	if value == "" || len(value) > 128 {
+		return false
+	}
+	for _, character := range value {
+		if (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') ||
+			(character >= '0' && character <= '9') || strings.ContainsRune("._:-", character) {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func requestID(r *http.Request) string {
@@ -368,10 +405,14 @@ func resolvePrincipal(w http.ResponseWriter, r *http.Request, resolver Principal
 		apierror.Write(w, http.StatusUnauthorized, "auth.required", "Authentication is required", requestID(r))
 		return weknora.Principal{}, false
 	}
-	principal, err := resolver.CurrentPrincipal(r.Context(), r.Header)
-	if err != nil {
-		writePrincipalError(w, r, err)
-		return weknora.Principal{}, false
+	principal, cached := principalFromRequest(r)
+	if !cached {
+		var err error
+		principal, err = resolver.CurrentPrincipal(r.Context(), r.Header)
+		if err != nil {
+			writePrincipalError(w, r, err)
+			return weknora.Principal{}, false
+		}
 	}
 	if principal.User == nil || principal.User.ID == "" || principal.Tenant == nil || principal.Tenant.ID == 0 {
 		apierror.Write(w, http.StatusBadGateway, "auth.principal_invalid", "Identity provider returned an invalid principal", requestID(r))
@@ -386,6 +427,74 @@ func resolvePrincipal(w http.ResponseWriter, r *http.Request, resolver Principal
 	}
 	return principal, true
 }
+
+func corporateIdentityMiddleware(next http.Handler, dependencies Dependencies) http.Handler {
+	if dependencies.IdentityGate == nil {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if closedIdentityRoute(r.Method, r.URL.Path) {
+			apierror.Write(w, http.StatusNotFound, "identity.closed_registration", "Local passwords and public registration are disabled", requestID(r))
+			return
+		}
+		if methodPath(r) == "POST /api/v1/auth/refresh" {
+			apierror.Write(w, http.StatusUnauthorized, "identity.reauthentication_required", "Corporate sign-in must be renewed", requestID(r))
+			return
+		}
+		if !strings.HasPrefix(r.URL.Path, "/api/v1/") && r.URL.Path != "/mcp" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/api/v1/mindcreek/oidc/") ||
+			(methodPath(r) == "POST /api/v1/auth/logout") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		// Service API keys retain their separately scoped principal model. Human
+		// bearer sessions must be linked to an active corporate subject.
+		if strings.TrimSpace(r.Header.Get("Authorization")) == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if dependencies.Principals == nil {
+			apierror.Write(w, http.StatusServiceUnavailable, "identity.unavailable", "Corporate identity enforcement is unavailable", requestID(r))
+			return
+		}
+		principal, err := dependencies.Principals.CurrentPrincipal(r.Context(), r.Header)
+		if err != nil {
+			writePrincipalError(w, r, err)
+			return
+		}
+		if err := dependencies.IdentityGate.Check(r.Context(), principal); err != nil {
+			code := "identity.unlinked"
+			if errors.Is(err, corporateidentity.ErrSuspended) {
+				code = "identity.suspended"
+			}
+			apierror.Write(w, http.StatusForbidden, code, "The corporate identity is not active for MindCreek", requestID(r))
+			return
+		}
+		ctx := context.WithValue(r.Context(), principalKey{}, principal)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func closedIdentityRoute(method, requestPath string) bool {
+	switch method + " " + requestPath {
+	case "POST /api/v1/auth/register",
+		"POST /api/v1/auth/register-by-invite",
+		"POST /api/v1/auth/invitations/lookup",
+		"POST /api/v1/auth/login",
+		"POST /api/v1/auth/auto-setup",
+		"POST /api/v1/auth/change-password":
+		return true
+	}
+	if method == http.MethodPost && strings.HasSuffix(requestPath, "/invite-links") {
+		return true
+	}
+	return method == http.MethodPost && strings.Contains(requestPath, "/invitations") && strings.HasPrefix(requestPath, "/api/v1/tenants/")
+}
+
+func methodPath(r *http.Request) string { return r.Method + " " + r.URL.Path }
 
 func writePrincipalError(w http.ResponseWriter, r *http.Request, err error) {
 	var upstreamError *weknora.Error
