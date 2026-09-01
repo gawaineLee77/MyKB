@@ -28,6 +28,10 @@ def request(path: str, method: str = "GET") -> tuple[int, dict]:
 
 status, broker = request("/api/v1/mindcreek/oidc/status")
 assert status == 200 and broker.get("enabled") is True and broker.get("registration") == "closed", broker
+assert broker.get("corporate_protocol") in {"oauth2", "oidc"}, broker
+if broker.get("corporate_protocol") == "oauth2":
+    assert broker.get("authorization_method") in {"GET", "POST"}, broker
+    assert broker.get("userinfo_token_transport") in {"bearer", "query"}, broker
 
 status, closed = request("/api/v1/auth/login", "POST")
 assert status == 404 and closed.get("error", {}).get("code") == "identity.closed_registration", closed

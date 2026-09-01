@@ -2,7 +2,7 @@
 
 ## Release contents
 
-MindCreek `0.6.0-phase5` uses unmodified WeKnora v0.7.2 and seven distinct runtime images listed in `images/manifests/phase5-runtime.txt`. Product images also carry immutable `mindcreek-ui:0.6.0` and `mindcreek-gateway:0.6.0-phase5` tags. Phase 5 adds managed zero-key models, corporate OIDC, closed registration, TLS/network hardening, backup/recovery, and redacted telemetry.
+MindCreek `0.6.0-phase5` uses unmodified WeKnora v0.7.2 and seven distinct runtime images listed in `images/manifests/phase5-runtime.txt`. Product images also carry immutable `mindcreek-ui:0.6.0` and `mindcreek-gateway:0.6.0-phase5` tags. Phase 5 adds managed zero-key models, corporate plain OAuth 2.0 with optional OIDC compatibility, closed registration, TLS/network hardening, backup/recovery, and redacted telemetry.
 
 ## Build and development start
 
@@ -22,7 +22,7 @@ The vulnerability gate uses Docker Scout and may transmit runtime-image PURLs an
 
 ## Production start
 
-Install the TLS certificate/key and protected `.local/mindcreek.env`, set `MINDCREEK_DEPLOYMENT_ENV=production`, enable corporate identity, and provide approved HTTPS model endpoints. Register this exact corporate callback:
+Install the TLS certificate/key and protected `.local/mindcreek.env`, set `MINDCREEK_DEPLOYMENT_ENV=production`, enable corporate identity, configure its HTTPS authorization/token/UserInfo endpoints and five-field mapping, and provide approved HTTPS model endpoints. Register this exact corporate callback:
 
 ```text
 https://<mindcreek-host>/api/v1/mindcreek/oidc/callback

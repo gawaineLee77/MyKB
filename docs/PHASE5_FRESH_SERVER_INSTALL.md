@@ -42,7 +42,7 @@ mv .local/mindcreek.env.phase5-new .local/mindcreek.env
 make phase5-compose-config
 ```
 
-Replace every placeholder. Set independent database, Redis, JWT, and 32-character AES secrets; configure the managed chat, embedding, and rerank providers; and use the provider's exact embedding dimension. For production, also configure HTTPS URLs, TLS files, corporate OIDC, allowed groups, and the exact callback documented in [PHASE5_IDENTITY_PROVIDER.md](PHASE5_IDENTITY_PROVIDER.md). Never paste secrets into Git or deployment logs.
+Replace every placeholder. Set independent database, Redis, JWT, and 32-character AES secrets; configure the managed chat, embedding, and rerank providers; and use the provider's exact embedding dimension. For production, also configure HTTPS URLs, TLS files, corporate plain OAuth 2.0 endpoints, five-field UserInfo mapping, employee-type policy, and the exact callback documented in [PHASE5_IDENTITY_PROVIDER.md](PHASE5_IDENTITY_PROVIDER.md). Never paste secrets into Git or deployment logs.
 
 ## 4. Start the service
 

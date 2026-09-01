@@ -10,9 +10,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"html"
 	"math/big"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -55,11 +57,12 @@ type Broker struct {
 	signingKey *rsa.PrivateKey
 	now        func() time.Time
 
-	mu           sync.Mutex
-	transactions map[string]authTransaction
-	codes        map[string]authorizationCode
-	tokens       map[string]accessGrant
-	handler      http.Handler
+	mu                 sync.Mutex
+	transactions       map[string]authTransaction
+	transactionCookies map[string]string
+	codes              map[string]authorizationCode
+	tokens             map[string]accessGrant
+	handler            http.Handler
 }
 
 func NewBroker(settings config.IdentityConfig, provider Provider, store Store) (*Broker, error) {
@@ -74,7 +77,8 @@ func NewBroker(settings config.IdentityConfig, provider Provider, store Store) (
 	broker := &Broker{
 		settings: settings, provider: provider, store: store, signingKey: key,
 		now: time.Now, transactions: make(map[string]authTransaction),
-		codes: make(map[string]authorizationCode), tokens: make(map[string]accessGrant),
+		transactionCookies: make(map[string]string),
+		codes:              make(map[string]authorizationCode), tokens: make(map[string]accessGrant),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/mindcreek/oidc/.well-known/openid-configuration", broker.discovery)
@@ -112,7 +116,10 @@ func (b *Broker) discovery(w http.ResponseWriter, _ *http.Request) {
 
 func (b *Broker) status(w http.ResponseWriter, _ *http.Request) {
 	writeBrokerJSON(w, http.StatusOK, map[string]any{
-		"enabled": true, "provider_display_name": b.settings.ProviderName, "registration": "closed",
+		"enabled": true, "provider_display_name": b.settings.ProviderName,
+		"corporate_protocol": b.settings.Protocol, "authorization_method": b.settings.AuthorizationMethod,
+		"state_required": b.settings.StateRequired, "pkce_enabled": b.settings.PKCEEnabled,
+		"userinfo_token_transport": b.settings.UserInfoTokenTransport, "registration": "closed",
 	})
 }
 
@@ -147,7 +154,7 @@ func (b *Broker) authorize(w http.ResponseWriter, r *http.Request) {
 	}
 	challengeDigest := sha256.Sum256([]byte(verifier))
 	challenge := base64.RawURLEncoding.EncodeToString(challengeDigest[:])
-	redirect, err := b.provider.AuthorizationURL(r.Context(), corporateState, corporateNonce, challenge)
+	authorization, err := b.provider.AuthorizationRequest(r.Context(), corporateState, corporateNonce, challenge)
 	if err != nil {
 		writeBrokerError(w, http.StatusBadGateway, "identity_provider_unavailable")
 		return
@@ -155,33 +162,45 @@ func (b *Broker) authorize(w http.ResponseWriter, r *http.Request) {
 	now := b.now().UTC()
 	b.mu.Lock()
 	b.cleanupLocked(now)
-	b.transactions[hashText(corporateState)] = authTransaction{
+	stateHash := hashText(corporateState)
+	b.transactions[stateHash] = authTransaction{
 		CookieBinding: cookieBinding, CorporateNonce: corporateNonce, PKCEVerifier: verifier,
 		UpstreamState: query.Get("state"), UpstreamRedirect: query.Get("redirect_uri"), ExpiresAt: now.Add(transactionTTL),
 	}
+	b.transactionCookies[hashText(cookieBinding)] = stateHash
 	b.mu.Unlock()
 	http.SetCookie(w, &http.Cookie{
 		Name: loginCookie, Value: cookieBinding, Path: "/api/v1/mindcreek/oidc/callback",
 		MaxAge: int(transactionTTL.Seconds()), HttpOnly: true,
 		Secure: b.settings.ExternalOrigin.Scheme == "https", SameSite: http.SameSiteLaxMode,
 	})
-	http.Redirect(w, r, redirect, http.StatusFound)
+	if authorization.Method == http.MethodPost {
+		b.writeAuthorizationPost(w, authorization)
+		return
+	}
+	http.Redirect(w, r, authorization.URL, http.StatusFound)
 }
 
 func (b *Broker) callback(w http.ResponseWriter, r *http.Request) {
 	state := strings.TrimSpace(r.URL.Query().Get("state"))
-	if state == "" {
-		writeBrokerError(w, http.StatusBadRequest, "invalid_state")
-		return
-	}
-	b.mu.Lock()
-	transaction, ok := b.transactions[hashText(state)]
-	delete(b.transactions, hashText(state))
-	b.mu.Unlock()
 	cookie, cookieErr := r.Cookie(loginCookie)
 	http.SetCookie(w, &http.Cookie{Name: loginCookie, Value: "", Path: "/api/v1/mindcreek/oidc/callback", MaxAge: -1, HttpOnly: true})
-	if !ok || b.now().UTC().After(transaction.ExpiresAt) || cookieErr != nil ||
-		subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(transaction.CookieBinding)) != 1 {
+	b.mu.Lock()
+	stateHash := ""
+	if state != "" {
+		stateHash = hashText(state)
+	} else if !b.settings.StateRequired && cookieErr == nil {
+		stateHash = b.transactionCookies[hashText(cookie.Value)]
+	}
+	transaction, ok := b.transactions[stateHash]
+	valid := ok && !b.now().UTC().After(transaction.ExpiresAt) && cookieErr == nil &&
+		subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(transaction.CookieBinding)) == 1
+	if valid {
+		delete(b.transactions, stateHash)
+		delete(b.transactionCookies, hashText(transaction.CookieBinding))
+	}
+	b.mu.Unlock()
+	if !valid {
 		writeBrokerError(w, http.StatusBadRequest, "invalid_state")
 		return
 	}
@@ -200,8 +219,12 @@ func (b *Broker) callback(w http.ResponseWriter, r *http.Request) {
 			claims = Claims{Issuer: b.settings.Issuer, Subject: "unknown"}
 		}
 		code := "identity.validation_failed"
-		if errorsIsGroupDenied(err) {
-			code = "identity.group_denied"
+		if errorsIsEligibilityDenied(err) {
+			if err == ErrEmployeeTypeDenied {
+				code = "identity.employee_type_denied"
+			} else {
+				code = "identity.group_denied"
+			}
 			_, upstreamEmail := stableAliases(claims.Issuer, claims.Subject)
 			if existing, lookupErr := b.store.GetByUpstreamEmail(r.Context(), upstreamEmail); lookupErr == nil {
 				_, _ = b.store.SetStatus(r.Context(), existing.BrokerSubject, StatusSuspended, b.now().UTC())
@@ -375,6 +398,7 @@ func (b *Broker) cleanupLocked(now time.Time) {
 	for key, value := range b.transactions {
 		if now.After(value.ExpiresAt) {
 			delete(b.transactions, key)
+			delete(b.transactionCookies, hashText(value.CookieBinding))
 		}
 	}
 	for key, value := range b.codes {
@@ -387,6 +411,37 @@ func (b *Broker) cleanupLocked(now time.Time) {
 			delete(b.tokens, key)
 		}
 	}
+}
+
+func (b *Broker) writeAuthorizationPost(w http.ResponseWriter, request AuthorizationRequest) {
+	target, err := url.Parse(request.URL)
+	if err != nil || target.Scheme == "" || target.Host == "" {
+		writeBrokerError(w, http.StatusBadGateway, "identity_provider_unavailable")
+		return
+	}
+	nonce, err := randomToken(16)
+	if err != nil {
+		writeBrokerError(w, http.StatusInternalServerError, "server_error")
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action "+target.Scheme+"://"+target.Host+"; script-src 'nonce-"+nonce+"'")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("X-Frame-Options", "DENY")
+	w.WriteHeader(http.StatusOK)
+	_, _ = fmt.Fprintf(w, "<!doctype html><html><head><meta charset=\"utf-8\"><title>Corporate sign-in</title></head><body><form id=\"corporate-login\" method=\"post\" action=\"%s\">", html.EscapeString(request.URL))
+	keys := make([]string, 0, len(request.Form))
+	for key := range request.Form {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		for _, value := range request.Form[key] {
+			_, _ = fmt.Fprintf(w, "<input type=\"hidden\" name=\"%s\" value=\"%s\">", html.EscapeString(key), html.EscapeString(value))
+		}
+	}
+	_, _ = fmt.Fprintf(w, "<noscript><button type=\"submit\">Continue to corporate sign-in</button></noscript></form><script nonce=\"%s\">document.getElementById('corporate-login').submit();</script></body></html>", html.EscapeString(nonce))
 }
 
 func randomToken(size int) (string, error) {
@@ -416,7 +471,9 @@ func scopeContains(raw, scope string) bool {
 	return false
 }
 
-func errorsIsGroupDenied(err error) bool { return err == ErrGroupDenied }
+func errorsIsEligibilityDenied(err error) bool {
+	return err == ErrGroupDenied || err == ErrEmployeeTypeDenied
+}
 
 func writeBrokerJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

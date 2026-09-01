@@ -23,9 +23,15 @@ import (
 )
 
 type Provider interface {
-	AuthorizationURL(context.Context, string, string, string) (string, error)
+	AuthorizationRequest(context.Context, string, string, string) (AuthorizationRequest, error)
 	Authenticate(context.Context, string, string, string) (Claims, error)
 	EndSessionURL() string
+}
+
+type AuthorizationRequest struct {
+	Method string
+	URL    string
+	Form   url.Values
 }
 
 type providerMetadata struct {
@@ -44,25 +50,42 @@ type CorporateProvider struct {
 	metadata *providerMetadata
 }
 
+// NewProvider selects the corporate-facing protocol adapter. MindCreek still
+// exposes its private OIDC broker to WeKnora regardless of this selection.
+func NewProvider(settings config.IdentityConfig, client *http.Client) (Provider, error) {
+	switch settings.Protocol {
+	case config.IdentityProtocolOAuth2:
+		return NewOAuth2Provider(settings, client)
+	case config.IdentityProtocolOIDC, "":
+		return NewCorporateProvider(settings, client)
+	default:
+		return nil, fmt.Errorf("unsupported corporate identity protocol")
+	}
+}
+
 func NewCorporateProvider(settings config.IdentityConfig, client *http.Client) (*CorporateProvider, error) {
 	if !settings.Enabled || settings.DiscoveryURL == nil {
 		return nil, fmt.Errorf("corporate identity settings are incomplete")
 	}
 	if client == nil {
-		client = &http.Client{
-			Timeout: 15 * time.Second,
-			CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
-				return errors.New("corporate OIDC redirects are disabled")
-			},
-		}
+		client = corporateHTTPClient()
 	}
 	return &CorporateProvider{settings: settings, client: client}, nil
 }
 
-func (p *CorporateProvider) AuthorizationURL(ctx context.Context, state, nonce, challenge string) (string, error) {
+func corporateHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout: 15 * time.Second,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return errors.New("corporate identity redirects are disabled")
+		},
+	}
+}
+
+func (p *CorporateProvider) AuthorizationRequest(ctx context.Context, state, nonce, challenge string) (AuthorizationRequest, error) {
 	metadata, err := p.loadMetadata(ctx)
 	if err != nil {
-		return "", err
+		return AuthorizationRequest{}, err
 	}
 	query := url.Values{
 		"response_type":         {"code"},
@@ -76,10 +99,10 @@ func (p *CorporateProvider) AuthorizationURL(ctx context.Context, state, nonce, 
 	}
 	target, err := url.Parse(metadata.AuthorizationEndpoint)
 	if err != nil {
-		return "", fmt.Errorf("invalid corporate authorization endpoint")
+		return AuthorizationRequest{}, fmt.Errorf("invalid corporate authorization endpoint")
 	}
 	target.RawQuery = query.Encode()
-	return target.String(), nil
+	return AuthorizationRequest{Method: http.MethodGet, URL: target.String()}, nil
 }
 
 func (p *CorporateProvider) Authenticate(ctx context.Context, code, verifier, nonce string) (Claims, error) {
@@ -141,7 +164,7 @@ func (p *CorporateProvider) Authenticate(ctx context.Context, code, verifier, no
 		Subject:        claimString(verified, "sub"),
 		CorporateEmail: claimString(verified, p.settings.EmailClaim),
 		Username:       claimString(verified, p.settings.UsernameClaim),
-		DisplayName:    claimString(verified, "name"),
+		DisplayName:    claimString(verified, p.settings.DisplayNameClaim),
 		Groups:         claimStrings(verified[p.settings.GroupClaim]),
 	}
 	if claims.Username == "" {
@@ -167,6 +190,7 @@ func (p *CorporateProvider) EndSessionURL() string {
 }
 
 var ErrGroupDenied = errors.New("corporate identity is not in an approved group")
+var ErrEmployeeTypeDenied = errors.New("corporate identity has an unapproved employee type")
 
 func (p *CorporateProvider) loadMetadata(ctx context.Context) (*providerMetadata, error) {
 	p.mu.Lock()
@@ -429,7 +453,8 @@ func groupsAllowed(groups []string, required map[string]bool) bool {
 
 func validateProviderURL(name, raw string, allowHTTP bool) error {
 	parsed, err := url.Parse(raw)
-	if err != nil || parsed.Host == "" || parsed.User != nil || (parsed.Scheme != "https" && !(allowHTTP && parsed.Scheme == "http")) {
+	if err != nil || parsed.Host == "" || parsed.User != nil || parsed.Fragment != "" ||
+		(parsed.Scheme != "https" && !(allowHTTP && parsed.Scheme == "http")) {
 		return fmt.Errorf("corporate OIDC %s is not an approved URL", name)
 	}
 	return nil

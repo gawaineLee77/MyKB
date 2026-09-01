@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -37,29 +38,53 @@ type Config struct {
 	Identity               IdentityConfig
 }
 
-// IdentityConfig defines the closed-registration corporate OIDC contract.
+const (
+	IdentityProtocolOAuth2 = "oauth2"
+	IdentityProtocolOIDC   = "oidc"
+)
+
+// IdentityConfig defines the closed-registration corporate identity contract.
 // Corporate credentials are consumed only by the gateway identity broker;
 // WeKnora is configured as a separate, private client of that broker.
 type IdentityConfig struct {
-	Enabled            bool
-	AllowInsecureHTTP  bool
-	ProviderName       string
-	Issuer             string
-	DiscoveryURL       *url.URL
-	ClientID           string
-	ClientSecret       string
-	ExternalOrigin     *url.URL
-	CallbackURL        string
-	Scopes             []string
-	UsernameClaim      string
-	EmailClaim         string
-	GroupClaim         string
-	RequiredGroups     map[string]bool
-	BrokerIssuer       string
-	BrokerClientID     string
-	BrokerClientSecret string
-	BrokerRedirectURI  string
-	BreakGlassUserIDs  map[string]bool
+	Enabled                bool
+	Protocol               string
+	AllowInsecureHTTP      bool
+	ProviderName           string
+	Issuer                 string
+	DiscoveryURL           *url.URL
+	AuthorizationURL       *url.URL
+	TokenURL               *url.URL
+	UserInfoURL            *url.URL
+	RefreshURL             *url.URL
+	ClientID               string
+	ClientSecret           string
+	ClientAuthMethod       string
+	AuthorizationMethod    string
+	AuthorizationGrant     string
+	PKCEEnabled            bool
+	StateRequired          bool
+	UserInfoTokenTransport string
+	ExternalOrigin         *url.URL
+	CallbackURL            string
+	Scopes                 []string
+	SubjectClaim           string
+	TenantClaim            string
+	SubjectTenantScoped    bool
+	UsernameClaim          string
+	EmailClaim             string
+	GroupClaim             string
+	DisplayNameClaim       string
+	UUIDClaim              string
+	EmployeeTypeClaim      string
+	UserInfoDataPath       string
+	RequiredGroups         map[string]bool
+	AllowedEmployeeTypes   map[string]bool
+	BrokerIssuer           string
+	BrokerClientID         string
+	BrokerClientSecret     string
+	BrokerRedirectURI      string
+	BreakGlassUserIDs      map[string]bool
 }
 
 // Load reads and validates gateway configuration from the environment.
@@ -126,21 +151,78 @@ func loadIdentityConfig() (IdentityConfig, error) {
 	if err != nil {
 		return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_ALLOW_INSECURE_HTTP must be true or false")
 	}
+	protocol := strings.ToLower(value("MINDCREEK_IDENTITY_PROTOCOL", IdentityProtocolOIDC))
+	if protocol != IdentityProtocolOAuth2 && protocol != IdentityProtocolOIDC {
+		return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_PROTOCOL must be oauth2 or oidc")
+	}
+	pkceEnabled, err := strconv.ParseBool(value("MINDCREEK_IDENTITY_PKCE_ENABLED", "true"))
+	if err != nil {
+		return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_PKCE_ENABLED must be true or false")
+	}
+	tenantScoped, err := strconv.ParseBool(value("MINDCREEK_IDENTITY_SUBJECT_TENANT_SCOPED", "true"))
+	if err != nil {
+		return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_SUBJECT_TENANT_SCOPED must be true or false")
+	}
+	stateRequired, err := strconv.ParseBool(value("MINDCREEK_IDENTITY_STATE_REQUIRED", "true"))
+	if err != nil {
+		return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_STATE_REQUIRED must be true or false")
+	}
+	defaultScopes := ""
+	defaultSubjectClaim := "globalUserID"
+	defaultTenantClaim := "tenantId"
+	defaultUsernameClaim := "uid"
+	defaultEmailClaim := ""
+	defaultGroupClaim := ""
+	defaultDisplayNameClaim := "uid"
+	defaultUUIDClaim := "uuid"
+	defaultEmployeeTypeClaim := "employeeType"
+	if protocol == IdentityProtocolOIDC {
+		defaultScopes = "openid,profile,email"
+		defaultSubjectClaim = "sub"
+		defaultTenantClaim = ""
+		defaultUsernameClaim = "preferred_username"
+		defaultEmailClaim = "email"
+		defaultGroupClaim = "groups"
+		defaultDisplayNameClaim = "name"
+		defaultUUIDClaim = ""
+		defaultEmployeeTypeClaim = ""
+		tenantScoped = false
+		stateRequired = true
+	}
+	scopesValue := optionalValue("MINDCREEK_IDENTITY_SCOPES")
+	if scopesValue == "" {
+		scopesValue = defaultScopes
+	}
 	result := IdentityConfig{
-		Enabled:            enabled,
-		AllowInsecureHTTP:  allowHTTP,
-		ProviderName:       value("MINDCREEK_IDENTITY_PROVIDER_NAME", "Corporate account"),
-		Issuer:             strings.TrimRight(optionalValue("MINDCREEK_IDENTITY_ISSUER"), "/"),
-		ClientID:           optionalValue("MINDCREEK_IDENTITY_CLIENT_ID"),
-		ClientSecret:       optionalValue("MINDCREEK_IDENTITY_CLIENT_SECRET"),
-		Scopes:             csvList(value("MINDCREEK_IDENTITY_SCOPES", "openid,profile,email")),
-		UsernameClaim:      value("MINDCREEK_IDENTITY_USERNAME_CLAIM", "preferred_username"),
-		EmailClaim:         value("MINDCREEK_IDENTITY_EMAIL_CLAIM", "email"),
-		GroupClaim:         value("MINDCREEK_IDENTITY_GROUP_CLAIM", "groups"),
-		RequiredGroups:     csvSet(optionalValue("MINDCREEK_IDENTITY_REQUIRED_GROUPS")),
-		BrokerClientID:     value("MINDCREEK_BROKER_CLIENT_ID", "mindcreek-weknora"),
-		BrokerClientSecret: optionalValue("MINDCREEK_BROKER_CLIENT_SECRET"),
-		BreakGlassUserIDs:  csvSet(optionalValue("MINDCREEK_BREAK_GLASS_USER_IDS")),
+		Enabled:                enabled,
+		Protocol:               protocol,
+		AllowInsecureHTTP:      allowHTTP,
+		ProviderName:           value("MINDCREEK_IDENTITY_PROVIDER_NAME", "Corporate account"),
+		Issuer:                 strings.TrimRight(optionalValue("MINDCREEK_IDENTITY_ISSUER"), "/"),
+		ClientID:               optionalValue("MINDCREEK_IDENTITY_CLIENT_ID"),
+		ClientSecret:           optionalValue("MINDCREEK_IDENTITY_CLIENT_SECRET"),
+		ClientAuthMethod:       value("MINDCREEK_IDENTITY_CLIENT_AUTH_METHOD", "client_secret_post"),
+		AuthorizationMethod:    strings.ToUpper(value("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD", http.MethodGet)),
+		AuthorizationGrant:     value("MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE", "authorization_code"),
+		PKCEEnabled:            pkceEnabled,
+		StateRequired:          stateRequired,
+		UserInfoTokenTransport: strings.ToLower(value("MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT", "bearer")),
+		Scopes:                 csvList(scopesValue),
+		SubjectClaim:           value("MINDCREEK_IDENTITY_SUBJECT_CLAIM", defaultSubjectClaim),
+		TenantClaim:            value("MINDCREEK_IDENTITY_TENANT_CLAIM", defaultTenantClaim),
+		SubjectTenantScoped:    tenantScoped,
+		UsernameClaim:          value("MINDCREEK_IDENTITY_USERNAME_CLAIM", defaultUsernameClaim),
+		EmailClaim:             value("MINDCREEK_IDENTITY_EMAIL_CLAIM", defaultEmailClaim),
+		GroupClaim:             value("MINDCREEK_IDENTITY_GROUP_CLAIM", defaultGroupClaim),
+		DisplayNameClaim:       value("MINDCREEK_IDENTITY_DISPLAY_NAME_CLAIM", defaultDisplayNameClaim),
+		UUIDClaim:              value("MINDCREEK_IDENTITY_UUID_CLAIM", defaultUUIDClaim),
+		EmployeeTypeClaim:      value("MINDCREEK_IDENTITY_EMPLOYEE_TYPE_CLAIM", defaultEmployeeTypeClaim),
+		UserInfoDataPath:       optionalValue("MINDCREEK_IDENTITY_USERINFO_DATA_PATH"),
+		RequiredGroups:         csvSet(optionalValue("MINDCREEK_IDENTITY_REQUIRED_GROUPS")),
+		AllowedEmployeeTypes:   csvSet(optionalValue("MINDCREEK_IDENTITY_ALLOWED_EMPLOYEE_TYPES")),
+		BrokerClientID:         value("MINDCREEK_BROKER_CLIENT_ID", "mindcreek-weknora"),
+		BrokerClientSecret:     optionalValue("MINDCREEK_BROKER_CLIENT_SECRET"),
+		BreakGlassUserIDs:      csvSet(optionalValue("MINDCREEK_BREAK_GLASS_USER_IDS")),
 	}
 	if !enabled {
 		return result, nil
@@ -163,31 +245,93 @@ func loadIdentityConfig() (IdentityConfig, error) {
 	if err != nil {
 		return IdentityConfig{}, err
 	}
-	result.Issuer = strings.TrimRight(issuer.String(), "/")
-	discoveryValue := optionalValue("MINDCREEK_IDENTITY_DISCOVERY_URL")
-	if discoveryValue == "" {
-		discoveryValue = result.Issuer + "/.well-known/openid-configuration"
+	if issuer.RawQuery != "" || issuer.Fragment != "" {
+		return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_ISSUER must not include a query or fragment")
 	}
-	result.DiscoveryURL, err = parseIdentityURL("MINDCREEK_IDENTITY_DISCOVERY_URL", discoveryValue, allowHTTP)
-	if err != nil {
-		return IdentityConfig{}, err
+	result.Issuer = strings.TrimRight(issuer.String(), "/")
+	if result.Protocol == IdentityProtocolOIDC {
+		discoveryValue := optionalValue("MINDCREEK_IDENTITY_DISCOVERY_URL")
+		if discoveryValue == "" {
+			discoveryValue = result.Issuer + "/.well-known/openid-configuration"
+		}
+		result.DiscoveryURL, err = parseIdentityURL("MINDCREEK_IDENTITY_DISCOVERY_URL", discoveryValue, allowHTTP)
+		if err != nil {
+			return IdentityConfig{}, err
+		}
+		if !contains(result.Scopes, "openid") {
+			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_SCOPES must include openid for oidc")
+		}
+	} else {
+		for name, raw := range map[string]string{
+			"MINDCREEK_IDENTITY_AUTHORIZATION_URL": optionalValue("MINDCREEK_IDENTITY_AUTHORIZATION_URL"),
+			"MINDCREEK_IDENTITY_TOKEN_URL":         optionalValue("MINDCREEK_IDENTITY_TOKEN_URL"),
+			"MINDCREEK_IDENTITY_USERINFO_URL":      optionalValue("MINDCREEK_IDENTITY_USERINFO_URL"),
+		} {
+			parsed, parseErr := parseIdentityURL(name, raw, allowHTTP)
+			if parseErr != nil {
+				return IdentityConfig{}, parseErr
+			}
+			switch name {
+			case "MINDCREEK_IDENTITY_AUTHORIZATION_URL":
+				result.AuthorizationURL = parsed
+			case "MINDCREEK_IDENTITY_TOKEN_URL":
+				result.TokenURL = parsed
+			case "MINDCREEK_IDENTITY_USERINFO_URL":
+				result.UserInfoURL = parsed
+			}
+		}
+		if refreshValue := optionalValue("MINDCREEK_IDENTITY_REFRESH_URL"); refreshValue != "" {
+			result.RefreshURL, err = parseIdentityURL("MINDCREEK_IDENTITY_REFRESH_URL", refreshValue, allowHTTP)
+			if err != nil {
+				return IdentityConfig{}, err
+			}
+		}
+		if result.ClientAuthMethod != "client_secret_post" && result.ClientAuthMethod != "client_secret_basic" {
+			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_CLIENT_AUTH_METHOD must be client_secret_post or client_secret_basic")
+		}
+		if result.AuthorizationMethod != http.MethodGet && result.AuthorizationMethod != http.MethodPost {
+			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD must be GET or POST")
+		}
+		if result.UserInfoTokenTransport != "bearer" && result.UserInfoTokenTransport != "query" {
+			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT must be bearer or query")
+		}
+		if !validOAuthParameter(result.AuthorizationGrant) {
+			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE is invalid")
+		}
+		if result.SubjectClaim == "" || result.UsernameClaim == "" || result.DisplayNameClaim == "" ||
+			(result.SubjectTenantScoped && result.TenantClaim == "") {
+			return IdentityConfig{}, fmt.Errorf("corporate OAuth2 UserInfo claim mappings are incomplete")
+		}
 	}
 	if result.ClientID == "" || len(result.ClientSecret) < 16 {
-		return IdentityConfig{}, fmt.Errorf("corporate OIDC client ID and a client secret of at least 16 characters are required")
+		return IdentityConfig{}, fmt.Errorf("corporate identity client ID and a client secret of at least 16 characters are required")
 	}
 	if len(result.BrokerClientSecret) < 32 {
 		return IdentityConfig{}, fmt.Errorf("MINDCREEK_BROKER_CLIENT_SECRET must contain at least 32 characters")
 	}
-	if !contains(result.Scopes, "openid") {
-		return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_SCOPES must include openid")
-	}
 	return result, nil
+}
+
+func validOAuthParameter(value string) bool {
+	if value == "" || len(value) > 64 {
+		return false
+	}
+	for _, character := range value {
+		if (character < 'a' || character > 'z') && (character < 'A' || character > 'Z') &&
+			(character < '0' || character > '9') && character != '_' && character != '-' && character != '.' {
+			return false
+		}
+	}
+	return true
 }
 
 func parseIdentityURL(name, raw string, allowHTTP bool) (*url.URL, error) {
 	parsed, err := url.Parse(strings.TrimSpace(raw))
 	if err != nil || parsed.Host == "" || parsed.User != nil || (parsed.Scheme != "https" && !(allowHTTP && parsed.Scheme == "http")) {
 		return nil, fmt.Errorf("%s must be an absolute HTTPS URL%s", name, map[bool]string{true: " (or HTTP when the development override is enabled)"}[allowHTTP])
+	}
+	if parsed.Fragment != "" {
+		return nil, fmt.Errorf("%s must not include a fragment", name)
 	}
 	return parsed, nil
 }

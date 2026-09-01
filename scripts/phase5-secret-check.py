@@ -47,6 +47,14 @@ def validate_file_mode(path: Path, maximum: int) -> None:
         raise ValueError(f"protected file permissions are too broad: {path} ({mode:o})")
 
 
+def require_https_url(values: dict[str, str], name: str, origin_only: bool = False) -> None:
+    parsed = urlparse(values.get(name, ""))
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
+        raise ValueError(f"{name} must be an absolute HTTPS URL in production")
+    if origin_only and (parsed.path not in ("", "/") or parsed.query):
+        raise ValueError(f"{name} must be an HTTPS origin")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--env-file", type=Path, required=True)
@@ -69,17 +77,38 @@ def main() -> int:
         "MINDCREEK_MANAGED_EMBEDDING_BASE_URL",
         "MINDCREEK_MANAGED_RERANK_BASE_URL",
     ):
-        parsed = urlparse(values.get(name, ""))
-        if parsed.scheme != "https" or not parsed.hostname:
-            raise ValueError(f"{name} must be an absolute HTTPS URL in production")
+        require_https_url(values, name)
 
     if values.get("MINDCREEK_IDENTITY_ENABLED", "false").lower() != "true":
         raise ValueError("corporate identity must be enabled in the production pilot")
     require_secret(values, "MINDCREEK_IDENTITY_CLIENT_SECRET", 16)
     require_secret(values, "MINDCREEK_BROKER_CLIENT_SECRET", 32)
-    origin = urlparse(values.get("MINDCREEK_EXTERNAL_ORIGIN", ""))
-    if origin.scheme != "https" or not origin.hostname or origin.path not in ("", "/"):
-        raise ValueError("MINDCREEK_EXTERNAL_ORIGIN must be an HTTPS origin")
+    require_https_url(values, "MINDCREEK_EXTERNAL_ORIGIN", origin_only=True)
+    protocol = values.get("MINDCREEK_IDENTITY_PROTOCOL", "oidc").lower()
+    if protocol == "oauth2":
+        for name in (
+            "MINDCREEK_IDENTITY_ISSUER",
+            "MINDCREEK_IDENTITY_AUTHORIZATION_URL",
+            "MINDCREEK_IDENTITY_TOKEN_URL",
+            "MINDCREEK_IDENTITY_USERINFO_URL",
+        ):
+            require_https_url(values, name)
+        refresh_url = values.get("MINDCREEK_IDENTITY_REFRESH_URL", "")
+        if refresh_url:
+            require_https_url(values, "MINDCREEK_IDENTITY_REFRESH_URL")
+        if values.get("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD", "GET").upper() not in {"GET", "POST"}:
+            raise ValueError("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD must be GET or POST")
+        if values.get("MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT", "bearer").lower() not in {"bearer", "query"}:
+            raise ValueError("MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT must be bearer or query")
+        for name in ("MINDCREEK_IDENTITY_PKCE_ENABLED", "MINDCREEK_IDENTITY_STATE_REQUIRED"):
+            if values.get(name, "true").lower() not in {"true", "false"}:
+                raise ValueError(f"{name} must be true or false")
+    elif protocol == "oidc":
+        require_https_url(values, "MINDCREEK_IDENTITY_ISSUER")
+        if values.get("MINDCREEK_IDENTITY_DISCOVERY_URL", ""):
+            require_https_url(values, "MINDCREEK_IDENTITY_DISCOVERY_URL")
+    else:
+        raise ValueError("MINDCREEK_IDENTITY_PROTOCOL must be oauth2 or oidc")
 
     cert = Path(values.get("MINDCREEK_TLS_CERT_FILE", ""))
     key = Path(values.get("MINDCREEK_TLS_KEY_FILE", ""))

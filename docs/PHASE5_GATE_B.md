@@ -4,10 +4,11 @@ Gate B implements corporate SSO, just-in-time local account provisioning, closed
 
 ## Delivered controls
 
-- MindCreek-owned OIDC broker with corporate Authorization Code + PKCE `S256`.
-- RS256 signature, exact issuer/audience, nonce, expiry, subject, and UserInfo subject validation.
-- Stable `issuer + subject` mapping; corporate email changes cannot create a second account.
-- Optional corporate group eligibility and first-login personal-workspace provisioning.
+- MindCreek-owned identity broker with corporate form-POST authorization, callback-cookie binding when provider state is absent, and configurable provider state/PKCE for future upgrades.
+- Form-POST access-token exchange and server-side query-parameter UserInfo mapping for the provider's flat `employeeType`, `globalUserID`, `tenantId`, `uid`, and `uuid` object; standard Bearer UserInfo and `client_secret_basic` remain supported.
+- Stable provider plus tenant/user mapping and generated internal email alias; absent corporate email cannot block first-login provisioning.
+- Optional OIDC corporate mode with RS256 signature, exact issuer/audience, nonce, expiry, subject, and UserInfo subject validation.
+- Optional employee-type/group eligibility and first-login personal-workspace provisioning.
 - Password login, self-registration, invitation registration, auto-setup, password changes, and new public invitations closed whenever corporate identity is enabled.
 - SSO-only web entry with automatic redirect and a retry guard for callback failures.
 - Human bearer sessions bound to an active corporate identity; unlinked and suspended sessions fail closed, and refresh requires corporate reauthentication.
@@ -16,7 +17,7 @@ Gate B implements corporate SSO, just-in-time local account provisioning, closed
 
 ## Automated evidence
 
-The Gate B suite covers valid login, callback-cookie binding, state and authorization-code replay, PKCE propagation, wrong issuer, wrong audience, wrong nonce, expired token, missing subject, stable JIT mapping, suspension, closed routes, migration presence, secret-free configuration, frontend overlay assertions, and a clean upstream submodule.
+The Gate B suite covers form-POST authorization, callbacks with and without provider state, query-token and Bearer UserInfo, OAuth token mapping, both client authentication methods, nested UserInfo, employee-type denial, callback-cookie binding, authorization-code replay, PKCE propagation, the OIDC token-security matrix, missing stable identity, JIT mapping, suspension, closed routes, migration presence, secret-free configuration, frontend assertions, and a clean upstream submodule.
 
 ```sh
 make phase5-gate-b

@@ -41,10 +41,21 @@ MINDCREEK_MANAGED_RERANK_BASE_URL=https://rerank.example.invalid/v1
 MINDCREEK_MANAGED_RERANK_API_KEY=synthetic-rerank-credential-000006
 MINDCREEK_MANAGED_RERANK_PROVIDER=generic
 MINDCREEK_IDENTITY_ENABLED=true
+MINDCREEK_IDENTITY_PROTOCOL=oauth2
 MINDCREEK_EXTERNAL_ORIGIN=https://mindcreek.example.invalid
 MINDCREEK_IDENTITY_ISSUER=https://identity.example.invalid
+MINDCREEK_IDENTITY_AUTHORIZATION_URL=https://identity.example.invalid/authorize
+MINDCREEK_IDENTITY_TOKEN_URL=https://identity.example.invalid/accesstoken
+MINDCREEK_IDENTITY_USERINFO_URL=https://identity.example.invalid/userinfo
+MINDCREEK_IDENTITY_REFRESH_URL=https://identity.example.invalid/refreshtoken
 MINDCREEK_IDENTITY_CLIENT_ID=synthetic-client
 MINDCREEK_IDENTITY_CLIENT_SECRET=synthetic-identity-credential-0007
+MINDCREEK_IDENTITY_AUTHORIZATION_METHOD=POST
+MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE=authorization_code
+MINDCREEK_IDENTITY_PKCE_ENABLED=false
+MINDCREEK_IDENTITY_STATE_REQUIRED=false
+MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT=query
+MINDCREEK_IDENTITY_SCOPES=base.profile
 MINDCREEK_BROKER_CLIENT_SECRET=synthetic-broker-credential-00000008
 MINDCREEK_TLS_CERT_FILE=$CERT
 MINDCREEK_TLS_KEY_FILE=$KEY
@@ -80,5 +91,12 @@ assert published == {"80", "443"}, published
 assert config["networks"]["WeKnora-network"].get("internal") is True
 assert "mindcreek-egress" in services["gateway"]["networks"]
 assert "mindcreek-egress" in services["app"]["networks"]
+identity = services["gateway"]["environment"]
+assert identity["MINDCREEK_IDENTITY_PROTOCOL"] == "oauth2"
+assert identity["MINDCREEK_IDENTITY_AUTHORIZATION_METHOD"] == "POST"
+assert identity["MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT"] == "query"
+assert identity["MINDCREEK_IDENTITY_AUTHORIZATION_URL"].endswith("/authorize")
+assert identity["MINDCREEK_IDENTITY_TOKEN_URL"].endswith("/accesstoken")
+assert identity["MINDCREEK_IDENTITY_USERINFO_URL"].endswith("/userinfo")
 PY
 echo "MindCreek Phase 5 production profile verified: TLS edge only, private dependencies, controlled egress"

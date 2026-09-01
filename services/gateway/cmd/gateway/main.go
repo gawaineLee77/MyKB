@@ -219,7 +219,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("corporate identity repository error: %v", err)
 		}
-		corporateProvider, err := identity.NewCorporateProvider(cfg.Identity, nil)
+		corporateProvider, err := identity.NewProvider(cfg.Identity, nil)
 		if err != nil {
 			log.Fatalf("corporate identity provider error: %v", err)
 		}
@@ -236,7 +236,7 @@ func main() {
 			log.Fatalf("corporate identity broker error: %v", err)
 		}
 		identityBroker = broker
-		log.Printf("corporate identity enabled provider=%q registration=closed", cfg.Identity.ProviderName)
+		log.Printf("corporate identity enabled provider=%q protocol=%s registration=closed", cfg.Identity.ProviderName, cfg.Identity.Protocol)
 	}
 
 	log.Printf("mindcreek-gateway version=%s listen=%s", cfg.ProductVersion, cfg.ListenAddr)

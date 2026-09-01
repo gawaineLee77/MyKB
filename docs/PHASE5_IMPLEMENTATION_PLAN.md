@@ -31,8 +31,8 @@ Ordinary users use the managed defaults automatically. Optional user-supplied pr
 
 ### B. Corporate OAuth 2.0 and closed registration
 
-- [x] **P5-08 — Identity-provider contract.** Record issuer/endpoints, client type, scopes, claims, stable subject, group mapping, logout, and failure behavior.
-- [x] **P5-09 — Authorization flow.** Configure Authorization Code with PKCE, state, nonce where supported, exact redirect URIs, secure cookies, and trusted proxy behavior.
+- [x] **P5-08 — Identity-provider contract.** Record plain OAuth 2.0 authorization/token/UserInfo/refresh endpoints, client authentication, scopes, five-field mapping, stable subject, eligibility, logout, and failure behavior; retain optional OIDC compatibility.
+- [x] **P5-09 — Authorization flow.** Support the corporate form-POST authorization and cookie-bound no-state callback, while retaining provider state, PKCE, and nonce where supported; enforce exact redirect URIs, secure cookies, CSP form submission, and trusted proxy behavior.
 - [x] **P5-10 — User and workspace provisioning.** Idempotently map the validated organization identity to MindCreek users, active workspace membership, and approved roles/groups.
 - [x] **P5-11 — Closed registration and break-glass access.** Disable self-registration, public invitations, password signup, and unintended tenant creation; retain one separately protected and audited emergency administrator.
 - [x] **P5-12 — Session lifecycle.** Implement logout, suspension, role/group change, token expiry, refresh failure, and session revocation behavior across Web and MCP.
@@ -40,7 +40,7 @@ Ordinary users use the managed defaults automatically. Optional user-supplied pr
 
 **Gate B:** Only active organization identities and the controlled break-glass administrator can sign in; self-registration is unreachable.
 
-**Gate B acceptance:** Passed on 2026-08-30 with the synthetic OIDC security suite. Production activation requires the operator-supplied corporate provider contract and the manual browser exercise recorded in [PHASE5_GATE_B.md](PHASE5_GATE_B.md).
+**Gate B acceptance:** Passed on 2026-09-01 with the synthetic plain-OAuth adapter suite plus the retained OIDC security matrix. Production activation requires the operator-supplied corporate request/response contract and the manual browser exercise recorded in [PHASE5_GATE_B.md](PHASE5_GATE_B.md).
 
 ### C. Operational hardening
 

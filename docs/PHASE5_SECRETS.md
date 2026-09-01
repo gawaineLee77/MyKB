@@ -4,7 +4,9 @@ MindCreek keeps production values outside Git in `.local/mindcreek.env` or an ap
 
 ## Creation and custody
 
-Generate independent high-entropy values for PostgreSQL, Redis, JWT, the OIDC client, the internal broker client, and every model provider. `SYSTEM_AES_KEY` is exactly 32 bytes and must be escrowed because losing it makes stored provider overrides unreadable. Store TLS private keys and the environment file separately from ordinary deployment artifacts. Grant read access only to the service account and two designated operators.
+Generate independent high-entropy values for PostgreSQL, Redis, JWT, the corporate OAuth client, the internal OIDC broker client, and every model provider. `SYSTEM_AES_KEY` is exactly 32 bytes and must be escrowed because losing it makes stored provider overrides unreadable. Store TLS private keys and the environment file separately from ordinary deployment artifacts. Grant read access only to the service account and two designated operators.
+
+The current corporate UserInfo interface requires `access_token` in the query string. Corporate reverse proxies, load balancers, APM agents, and identity-service access logs must redact the full query. MindCreek intentionally omits the outbound UserInfo URL from error and audit records. Do not enable request-debug logging on this egress path.
 
 ## Backup and recovery
 
@@ -13,7 +15,7 @@ The normal data bundle intentionally excludes live secrets. Back up secrets with
 ## Rotation order
 
 1. Take and verify a data backup.
-2. Rotate model and corporate-OIDC credentials at the provider; install and probe the new version before revoking the old one.
+2. Rotate model and corporate-OAuth credentials at the provider; install and probe the new version before revoking the old one.
 3. Rotate the broker secret during a maintenance window; existing OIDC exchanges are invalidated.
 4. Rotate JWT to revoke Web/MCP sessions. Rotate Redis and PostgreSQL credentials with coordinated service restarts.
 5. Rotate `SYSTEM_AES_KEY` only with an export/re-encryption plan for workspace overrides.

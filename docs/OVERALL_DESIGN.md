@@ -345,7 +345,7 @@ This mode follows “human in command”: an LLM accelerates bootstrapping, but 
 
 ### 7.8 Managed model defaults and optional overrides
 
-**Implementation status (2026-08-31):** Phase 5 Gates A–D are implemented with stable managed IDs, corporate OIDC, a secret-free deployment renderer, TLS/network hardening, recovery and redacted observability, and controlled-pilot evidence. Production provider activation and selected-team sign-off remain operator actions.
+**Implementation status (2026-09-01):** Phase 5 Gates A–D are implemented with stable managed IDs, a plain corporate OAuth 2.0 adapter behind MindCreek's private OIDC broker, a secret-free deployment renderer, TLS/network hardening, recovery and redacted observability, and controlled-pilot evidence. Production provider activation and selected-team sign-off remain operator actions.
 
 - Every pilot or production deployment must configure one healthy default `KnowledgeQA`, `Embedding`, and `Rerank` model before it is marked ready for users.
 - Reuse WeKnora's declarative built-in model catalog with stable IDs. Product-owned YAML contains only `${ENV_VAR}` references; real base URLs and API keys come from a secret manager, container secrets, or a root-readable untracked environment file.
@@ -1104,8 +1104,11 @@ All workers must be idempotent or safely retryable before horizontal scaling.
 
 ### 15.1 Identity and session security
 
-- Use OAuth 2.0 Authorization Code flow with PKCE and OIDC. A product-owned identity broker validates the corporate RS256 ID token, exact issuer/audience, nonce, expiry, stable subject, and UserInfo subject before exposing a pairwise identity to WeKnora.
-- Persist the corporate `issuer + subject` mapping outside the upstream schema. Use a stable internal login alias so an email change cannot create or capture another account; retain current corporate profile attributes only in the product identity record.
+- Adapt the current corporate plain OAuth 2.0 profile with a CSP-restricted browser form POST to `/authorize`, server-side form POST to `/accesstoken`, and server-side GET to `/userinfo`. Because the provider does not currently return state or accept PKCE in the described exchange, bind the transaction to a Secure, HttpOnly, SameSite callback cookie; retain configurable state and PKCE and request provider support as the preferred hardening path.
+- The current UserInfo call carries `access_token`, `scope`, and `client_id` in its query. Corporate proxies and access logs must redact query values, and MindCreek errors/audits must never contain the outbound URL. Corporate access and refresh tokens never reach the browser or WeKnora; the configured GET refresh endpoint is not consumed by the initial session design.
+- Map the provider's flat `employeeType`, `globalUserID`, `tenantId`, `uid`, and `uuid` object explicitly. Derive the stable subject from provider issuer plus `tenantId + globalUserID`, use `uid` for both username and display name, and treat `employeeType` only as an optional eligibility signal. Never infer a MindCreek administrator role from it.
+- Expose a private RS256 OIDC broker to unmodified WeKnora. Optional corporate OIDC mode remains available and validates exact issuer/audience, nonce, expiry, signature, stable subject, and UserInfo subject.
+- Persist the stable provider/tenant/user mapping outside the upstream schema. Generate a stable internal login alias because corporate UserInfo has no email; this prevents mutable or absent profile fields from creating or capturing another account.
 - Disable public registration and invite links not limited to the organization.
 - Require secure, HTTP-only, same-site cookies or equally protected bearer-token handling.
 - Bind every human bearer session to an active corporate identity and reject it immediately after MindCreek suspension. Re-evaluate provider groups on login and retain an audited system-administrator suspension path for provider outages or delayed directory events.
@@ -1355,7 +1358,7 @@ Audit records contain actor, effective principal, action, target, timestamp, req
 **Outcome:** Production-ready internal pilot.
 
 - **Complete (Gate A):** provision administrator-managed default chat, embedding, and rerank models through server-side secrets; simplify ordinary onboarding and gate optional workspace providers behind Advanced Settings.
-- **Complete (Gate B):** integrate the organization's OAuth/OIDC identity provider through the MindCreek broker, provide first-login account/workspace provisioning, close local registration/password entry points, and enforce suspension and audited break-glass behavior.
+- **Complete (Gate B):** integrate the organization's plain OAuth 2.0 authorization/token/UserInfo interfaces through the MindCreek broker, retain optional corporate OIDC compatibility, provide first-login account/workspace provisioning, close local registration/password entry points, and enforce eligibility, suspension, and audited break-glass behavior.
 - **Complete (Gate C):** provide network isolation, TLS, secret lifecycle, consistent backup/restore, redacted logging/metrics, alert thresholds, and security/load/migration/recovery acceptance.
 - **Complete (Gate D engineering):** provide bilingual pilot measurement, current/candidate upstream and clean-copy verification, versioned images, and release/incident runbooks.
 - **Operator activation:** run the corporate IdP browser exercise, target-server recovery drill, provider cost review, and selected-team scorecard before expanding beyond the controlled pilot.

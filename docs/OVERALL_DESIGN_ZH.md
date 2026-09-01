@@ -345,7 +345,7 @@
 
 ### 7.8 托管默认模型与可选自定义模型
 
-**实施状态（2026-08-31）：** 阶段 5 门禁 A–D 已完成工程实施，包含稳定托管模型 ID、企业 OIDC、无密钥部署渲染器、TLS/网络加固、恢复与脱敏可观测性，以及受控试点证据。生产供应商启用和试点团队签字仍由运维执行。
+**实施状态（2026-09-01）：** 阶段 5 门禁 A–D 已完成工程实施，包含稳定托管模型 ID、位于 MindCreek 私有 OIDC 代理之后的企业标准 OAuth 2.0 适配器、无密钥部署渲染器、TLS/网络加固、恢复与脱敏可观测性，以及受控试点证据。生产供应商启用和试点团队签字仍由运维执行。
 
 - 每个试点或生产部署在对用户标记为就绪前，必须配置一个健康的默认 `KnowledgeQA`、`Embedding` 和 `Rerank` 模型。
 - 复用 WeKnora 的声明式内置模型目录并使用稳定 ID。产品自有 YAML 只保存 `${ENV_VAR}` 引用；真实 Base URL 和 API Key 来自密钥管理系统、容器 Secret 或仅 root 可读且不受 Git 管理的环境文件。
@@ -1100,8 +1100,11 @@ flowchart LR
 
 ### 15.1 身份与会话安全
 
-- 使用带 PKCE 的 OAuth 2.0 Authorization Code Flow 和 OIDC。由产品自有身份代理验证企业 RS256 ID Token、精确 Issuer/Audience、Nonce、过期时间、稳定 Subject 以及 UserInfo Subject，再向 WeKnora 提供成对身份标识。
-- 在上游 Schema 之外保存企业 `issuer + subject` 映射。使用稳定的内部登录别名，确保邮箱变化不会创建或接管其他账户；当前企业资料属性仅保存在产品身份记录中。
+- 适配当前企业标准 OAuth 2.0 配置：浏览器通过受 CSP 限制的表单 POST 调用 `/authorize`，服务端以表单 POST 调用 `/accesstoken`，并由服务端 GET 调用 `/userinfo`。由于所述提供商当前不回传 `state`，Token 兑换也不接受 PKCE，因此使用 Secure、HttpOnly、SameSite 回调 Cookie 绑定登录事务；同时保留可配置的 `state` 与 PKCE，并把提供商支持它们作为首选加固方向。
+- 当前 UserInfo 调用在查询参数中携带 `access_token`、`scope` 和 `client_id`。企业代理与访问日志必须脱敏查询参数，MindCreek 错误和审计不得记录出站 URL。企业 Access/Refresh Token 不进入浏览器或 WeKnora；已配置的 GET Refresh 接口不用于初始会话设计。
+- 显式映射提供商返回的扁平对象 `employeeType`、`globalUserID`、`tenantId`、`uid` 和 `uuid`。默认由提供商 Issuer 与 `tenantId + globalUserID` 生成稳定 Subject，使用 `uid` 同时作为用户名和显示名，仅将 `employeeType` 作为可选准入条件，绝不据此授予 MindCreek 管理员角色。
+- 对未修改的 WeKnora 暴露私有 RS256 OIDC 代理。仍可选用企业 OIDC 模式，并验证精确 Issuer/Audience、Nonce、过期时间、签名、稳定 Subject 与 UserInfo Subject。
+- 在上游 Schema 之外保存稳定的提供商/租户/用户映射。由于企业 UserInfo 不含邮箱，生成稳定内部登录别名，防止可变或缺失的资料字段创建或接管其他账户。
 - 关闭公开注册和不受组织限制的邀请链接。
 - 使用 Secure、HTTP-only、SameSite Cookie，或同等安全的 Bearer Token 管理方式。
 - 将每个人类 Bearer 会话绑定到活动企业身份，在 MindCreek 停用身份后立即拒绝该会话。登录时重新检查身份提供商用户组，并为提供商故障或目录事件延迟保留经审计的系统管理员停用入口。
@@ -1351,7 +1354,7 @@ flowchart LR
 **结果：** 达到内部生产试点条件。
 
 - **已完成（门禁 A）：** 通过服务端密钥提供管理员托管默认对话、Embedding 和 Rerank 模型；简化普通用户首次使用流程，并把可选工作空间供应商配置置于“高级设置”之后。
-- **已完成（门禁 B）：** 通过 MindCreek 身份代理集成组织 OAuth/OIDC 身份提供商，提供首次登录账户/工作空间创建，关闭本地注册和密码入口，并执行停用与经审计的紧急访问策略。
+- **已完成（门禁 B）：** 通过 MindCreek 身份代理集成组织的标准 OAuth 2.0 授权、Token 与 UserInfo 接口，保留可选企业 OIDC 兼容模式，提供首次登录账户/工作空间创建，关闭本地注册和密码入口，并执行准入、停用与经审计的紧急访问策略。
 - **已完成（门禁 C）：** 提供网络隔离、TLS、密钥生命周期、一致性备份/恢复、脱敏日志/指标、告警阈值，以及安全、压力、迁移和恢复验收。
 - **已完成（门禁 D 工程部分）：** 提供双语试点测量、当前/候选上游与干净副本验证、版本化镜像和发布/事件处置手册。
 - **运维启用条件：** 在扩大受控试点前，完成企业 IdP 浏览器验证、目标服务器恢复演练、供应商成本审查和试点团队评分表。

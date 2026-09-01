@@ -13,7 +13,7 @@ The final clean-copy reconstruction, gateway suite, production-profile rendering
 
 - Synthetic bilingual pilot fixture with zero-key onboarding, Recall@5/MRR, latency, groundedness, and citation measurements.
 - Human pilot scorecard and explicit blockers for broad rollout; no private prompt or document retention.
-- Current/candidate upstream model, OIDC, retrieval, and MCP seam checks.
+- Current/candidate upstream model, private-broker OIDC, retrieval, and MCP seam checks.
 - Clean-copy reconstruction including untracked candidate files, compile/unit checks, Compose rendering, and empty patch-ledger assertion.
 - Seven-image manifest with Phase 5 compatibility and immutable product tags, native/AMD64 build and offline archive commands.
 - Installation, Phase 0–4 upgrade, production TLS/identity activation, backup, rollback, and incident procedures.

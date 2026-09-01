@@ -1,8 +1,12 @@
 # Phase 5 Corporate Identity Provider
 
-## Contract
+## Plain OAuth 2.0 contract
 
-MindCreek Gate B uses a product-owned OIDC broker between WeKnora and the corporate identity provider. The corporate provider must support Authorization Code Flow, PKCE `S256`, OIDC discovery, RS256 ID tokens, and stable `iss` and `sub` claims. The required scopes default to `openid profile email`; configure the provider to return the selected username, email, and optional group claim.
+MindCreek Gate B places a product-owned identity broker between WeKnora and the corporate provider. The corporate-facing default is OAuth 2.0 Authorization Code Flow. WeKnora continues to use the broker's private OIDC interface, so no upstream change is required.
+
+The corporate provider exposes POST authorization, POST access-token, GET UserInfo, and GET refresh-token interfaces. MindCreek renders a CSP-restricted auto-submitting browser form for authorization, sends an `application/x-www-form-urlencoded` token request, and calls UserInfo server-to-server with `access_token`, the scope returned by the token response (falling back to configured scope), and `client_id` query parameters. Refresh-token configuration is accepted but is not used by the initial login flow.
+
+This provider does not currently return `state` or accept PKCE in the described token exchange. MindCreek therefore binds the one-time login transaction to a Secure, HttpOnly, SameSite callback cookie. This is weaker than provider-returned `state` plus PKCE; request both capabilities from the provider owner when possible. Query-string access tokens can also appear in corporate proxy/access logs, so those systems must redact query values. MindCreek does not include the outbound URL in its errors or audit events.
 
 Register this exact corporate callback URI:
 
@@ -10,45 +14,65 @@ Register this exact corporate callback URI:
 https://mindcreek.example/api/v1/mindcreek/oidc/callback
 ```
 
-Do not register `/api/v1/auth/oidc/callback` with the corporate provider. That is the private broker-to-WeKnora callback.
+Do not register `/api/v1/auth/oidc/callback`; that is the private broker-to-WeKnora callback.
 
-## Provisioning and authorization
+## UserInfo mapping
 
-The broker validates signature, issuer, audience, expiry, nonce, user-info subject, and the optional any-of group allow-list before provisioning. It maps the immutable `issuer + subject` pair to a pairwise broker subject and a stable internal `@identity.invalid` email. Corporate email changes therefore do not create another MindCreek account. The real corporate email and current groups remain in the product-owned identity record.
+The UserInfo response is a flat JSON object with `employeeType`, `globalUserID`, `tenantId`, `uid`, and `uuid`. MindCreek hashes `tenantId + globalUserID` into the stable corporate subject, uses `uid` as both username and display name, uses `uuid` only as a username fallback, and exposes `employeeType` as a prefixed broker group. It generates a stable `@identity.invalid` login alias because the corporate response has no email.
 
-On first successful login, WeKnora creates the local user and personal workspace. Further workspace creation is disabled by default. Optional `MINDCREEK_IDENTITY_REQUIRED_GROUPS` controls organization eligibility; a blank value admits every active identity from the configured issuer.
+`globalUserID` and `tenantId` must be immutable and non-empty. Set `MINDCREEK_IDENTITY_SUBJECT_TENANT_SCOPED=false` only after the provider owner confirms `globalUserID` is globally unique, permanent, and never recycled. `employeeType` controls login eligibility only; it never grants a MindCreek role. A blank allow-list admits every successfully authenticated employee type.
+
+`MINDCREEK_IDENTITY_USERINFO_DATA_PATH` must remain empty for this flat response. Field values may be JSON strings or numbers; `employeeType` may also be an array or a comma/space-separated string.
 
 ## Configuration
 
-Set these values only in `.local/mindcreek.env` or an approved secret injector:
+Set values only in `.local/mindcreek.env` or an approved secret injector:
 
 ```dotenv
 MINDCREEK_IDENTITY_ENABLED=true
+MINDCREEK_IDENTITY_PROTOCOL=oauth2
 MINDCREEK_EXTERNAL_ORIGIN=https://mindcreek.example
+MINDCREEK_IDENTITY_PROVIDER_NAME=Corporate account
 MINDCREEK_IDENTITY_ISSUER=https://identity.example
+MINDCREEK_IDENTITY_AUTHORIZATION_URL=https://identity.example/authorize
+MINDCREEK_IDENTITY_TOKEN_URL=https://identity.example/accesstoken
+MINDCREEK_IDENTITY_USERINFO_URL=https://identity.example/userinfo
+MINDCREEK_IDENTITY_REFRESH_URL=https://identity.example/refreshtoken
 MINDCREEK_IDENTITY_CLIENT_ID=mindcreek
 MINDCREEK_IDENTITY_CLIENT_SECRET=<corporate-client-secret>
+MINDCREEK_IDENTITY_CLIENT_AUTH_METHOD=client_secret_post
+MINDCREEK_IDENTITY_AUTHORIZATION_METHOD=POST
+MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE=authorization_code
+MINDCREEK_IDENTITY_PKCE_ENABLED=false
+MINDCREEK_IDENTITY_STATE_REQUIRED=false
+MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT=query
+MINDCREEK_IDENTITY_SCOPES=base.profile
+MINDCREEK_IDENTITY_USERINFO_DATA_PATH=
+MINDCREEK_IDENTITY_SUBJECT_CLAIM=globalUserID
+MINDCREEK_IDENTITY_TENANT_CLAIM=tenantId
+MINDCREEK_IDENTITY_SUBJECT_TENANT_SCOPED=true
+MINDCREEK_IDENTITY_USERNAME_CLAIM=uid
+MINDCREEK_IDENTITY_DISPLAY_NAME_CLAIM=uid
+MINDCREEK_IDENTITY_UUID_CLAIM=uuid
+MINDCREEK_IDENTITY_EMPLOYEE_TYPE_CLAIM=employeeType
+MINDCREEK_IDENTITY_ALLOWED_EMPLOYEE_TYPES=
 MINDCREEK_BROKER_CLIENT_SECRET=<random-32-plus-character-secret>
-MINDCREEK_IDENTITY_REQUIRED_GROUPS=knowledge-users
 ```
 
-Use `MINDCREEK_IDENTITY_ALLOW_INSECURE_HTTP=true` only for isolated development. Production requires HTTPS and an exact external origin.
+Use `MINDCREEK_IDENTITY_ALLOW_INSECURE_HTTP=true` only for isolated development. Production requires HTTPS and an exact external origin. Keep the environment file mode at `0600`.
 
-## Sessions, suspension, and logout
+The standard grant value is `authorization_code`. If the corporate service literally requires the documented misspelling `autorization_code`, set that exact value only after confirming it with a successful sanitized request from the provider owner.
 
-WeKnora issues the business access token; corporate tokens never reach the browser or WeKnora. Although the upstream callback also returns its normal refresh token for compatibility, Gate B rejects refresh at the gateway and requires corporate reauthentication after access-token expiry. The gateway binds the first local principal to the corporate record and checks every human bearer session. A suspended or unlinked identity is rejected even if a local token has not expired. A system administrator can call:
+## OIDC compatibility mode
 
-```text
-POST /api/v1/mindcreek/identities/{pairwise-subject}/suspend
-POST /api/v1/mindcreek/identities/{pairwise-subject}/activate
-```
+An OIDC corporate provider remains supported. Set `MINDCREEK_IDENTITY_PROTOCOL=oidc`, configure the issuer/discovery URL and `openid` scope, and map `sub`, `preferred_username`, `email`, `name`, and optional `groups`. This mode uses redirect-based GET authorization, provider-returned state, PKCE, and RS256 signature, issuer, audience, expiry, nonce, and UserInfo-subject validation.
 
-Both changes are audited. Normal logout revokes the local session and continues to the provider logout endpoint when advertised.
+## Provisioning and session policy
 
-## Break-glass procedure
+On first successful login, WeKnora creates the local user and personal workspace. Further workspace creation is disabled by default. Corporate access and refresh tokens never reach the browser or WeKnora. MindCreek requires corporate reauthentication after the local access token expires. Suspension or unlinking is enforced at the gateway even for an otherwise unexpired local token.
 
-Maintain one local WeKnora system administrator whose password is stored outside the repository. Put its local user ID in `MINDCREEK_BREAK_GLASS_USER_IDS`. During an identity-provider outage, an authorized server operator may temporarily apply `deploy/phase5/compose.break-glass.yml`, which publishes the upstream app on host loopback only. Obtain a local token, perform the emergency action, then immediately remove the override and review the upstream and MindCreek audit records. Never expose the break-glass port to the LAN.
+Normal logout clears the local session. Plain OAuth 2.0 mode then returns to the MindCreek login page because the provider exposes no standardized logout endpoint. Retain the separately protected, loopback-only break-glass administrator described in `PHASE5_OPERATIONS.md`.
 
 ## Verification
 
-Run `make phase5-gate-b` for the synthetic security suite. After configuring the real provider and starting Phase 5, run `make phase5-gate-b-probe`. Complete one browser login with a test employee, confirm first-login provisioning, suspend that identity, and verify its existing session is denied.
+Run `make phase5-gate-b`, start the configured deployment, and run `make phase5-gate-b-probe`. Then complete one browser login with a test employee, confirm first-login provisioning, test a denied `employeeType` when an allow-list is configured, suspend that identity, and verify its existing session is rejected.

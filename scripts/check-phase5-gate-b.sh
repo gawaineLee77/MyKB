@@ -14,6 +14,7 @@ for FILE in \
   "$ROOT/services/gateway/internal/database/migrations/000010_phase5_corporate_identity.up.sql" \
   "$ROOT/services/gateway/internal/identity/broker.go" \
   "$ROOT/services/gateway/internal/identity/provider.go" \
+  "$ROOT/services/gateway/internal/identity/oauth2_provider.go" \
   "$ROOT/services/gateway/internal/identity/gate.go" \
   "$ROOT/services/gateway/internal/identity/admin.go" \
   "$ROOT/services/gateway/internal/identity/broker_test.go" \
@@ -26,7 +27,14 @@ for FILE in \
   [ -f "$FILE" ] || fail "missing ${FILE#$ROOT/}"
 done
 
-rg -q 'code_challenge_method.*S256' "$ROOT/services/gateway/internal/identity/provider.go" || fail "corporate PKCE S256 is missing"
+rg -q 'code_challenge_method.*S256' "$ROOT/services/gateway/internal/identity/oauth2_provider.go" || fail "corporate OAuth2 PKCE S256 is missing"
+rg -q 'Authorization.*Bearer' "$ROOT/services/gateway/internal/identity/oauth2_provider.go" || fail "corporate OAuth2 bearer UserInfo is missing"
+rg -q 'writeAuthorizationPost' "$ROOT/services/gateway/internal/identity/broker.go" || fail "corporate form-POST authorization is missing"
+rg -q 'transactionCookies' "$ROOT/services/gateway/internal/identity/broker.go" || fail "cookie-bound no-state callback is missing"
+rg -Fq 'query.Set("access_token"' "$ROOT/services/gateway/internal/identity/oauth2_provider.go" || fail "corporate query-token UserInfo is missing"
+for CLAIM in employeeType globalUserID tenantId uid uuid; do
+  rg -q "$CLAIM" "$ROOT/deploy/mindcreek/.env.example" || fail "$CLAIM OAuth2 mapping is missing"
+done
 rg -q 'rsa.VerifyPKCS1v15' "$ROOT/services/gateway/internal/identity/provider.go" || fail "ID-token signature verification is missing"
 for CLAIM in issuer audience nonce subject; do
   rg -qi "$CLAIM" "$ROOT/services/gateway/internal/identity/provider.go" || fail "$CLAIM validation is missing"
@@ -36,6 +44,7 @@ rg -q 'identity.closed_registration' "$ROOT/services/gateway/internal/server/ser
 rg -q 'ErrSuspended' "$ROOT/services/gateway/internal/identity/gate.go" || fail "suspended-session enforcement is missing"
 rg -q 'Sign in with your organization' "$ROOT/tools/frontend-overlay/product/mindcreek/SSOLogin.vue" || fail "SSO-only UI is missing"
 rg -q 'MINDCREEK_IDENTITY_CLIENT_SECRET' "$ROOT/deploy/phase5/compose.identity.yml" || fail "provider secret injection is missing"
+rg -q 'MINDCREEK_IDENTITY_PROTOCOL.*oauth2' "$ROOT/deploy/mindcreek/.env.example" || fail "plain OAuth2 deployment mode is missing"
 ! rg -q 'MINDCREEK_IDENTITY_CLIENT_SECRET=[^[:space:]]+' "$ROOT/deploy/mindcreek/.env.example" || fail "identity client secret has a committed value"
 
 for TASK in P5-08 P5-09 P5-10 P5-11 P5-12 P5-13; do

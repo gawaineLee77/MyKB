@@ -2,7 +2,7 @@
 
 ## 1. Scope and current safety status
 
-The repository provides a verified **Phase 5 Gate B development runtime** based on unmodified WeKnora v0.7.2. Inherited gates cover the exclusive Product Gateway path, Personal Notes, Plain RAG, sharing/subscriptions, Authorized Ask, hosted read-only MCP, and immediate revocation. Gate A adds server-managed chat, embedding, and rerank defaults; Gate B adds corporate OAuth/OIDC, first-login provisioning, closed registration, and suspension enforcement. Production provider activation and operational hardening remain Phase 5 Gates C–D work.
+The repository provides a verified **Phase 5 development runtime** based on unmodified WeKnora v0.7.2. Inherited gates cover the exclusive Product Gateway path, Personal Notes, Plain RAG, sharing/subscriptions, Authorized Ask, hosted read-only MCP, and immediate revocation. Gate A adds server-managed chat, embedding, and rerank defaults; Gate B adds corporate plain OAuth 2.0 (with optional OIDC compatibility), first-login provisioning, closed registration, and suspension enforcement. Gates C–D add production hardening and pilot evidence; real-provider activation remains an operator action.
 
 The MindCreek frontend applies branding and product modules—including Personal Notes, Plain RAG, sharing, Discover, Subscribed, and Authorized Ask—to a temporary copy of the pinned frontend. The product pages and `/mcp` call the gateway; `upstream/weknora` remains unchanged.
 
@@ -95,7 +95,7 @@ openssl rand -base64 48    # use for JWT_SECRET
 openssl rand -hex 16       # exactly 32 characters; use for SYSTEM_AES_KEY
 ```
 
-Replace all sample credentials and set every `MINDCREEK_MANAGED_*` model value in `.local/mindcreek.env`. The embedding dimension must match the provider. Staging/production rendering rejects absent, mock, non-HTTPS, and obvious placeholder values. Keep `MINDCREEK_USER_MODEL_OVERRIDES=false` unless the opt-in capability file, a new 32-byte `SYSTEM_AES_KEY`, exact host/provider allow-lists, and organization egress approval are all in place. Configure the corporate issuer, exact HTTPS origin, client credentials, callback, and optional group policy using [PHASE5_IDENTITY_PROVIDER.md](PHASE5_IDENTITY_PROVIDER.md).
+Replace all sample credentials and set every `MINDCREEK_MANAGED_*` model value in `.local/mindcreek.env`. The embedding dimension must match the provider. Staging/production rendering rejects absent, mock, non-HTTPS, and obvious placeholder values. Keep `MINDCREEK_USER_MODEL_OVERRIDES=false` unless the opt-in capability file, a new 32-byte `SYSTEM_AES_KEY`, exact host/provider allow-lists, and organization egress approval are all in place. Configure the corporate issuer, OAuth authorization/token/UserInfo endpoints, exact HTTPS origin, client credentials, five-field mapping, callback, and optional employee-type policy using [PHASE5_IDENTITY_PROVIDER.md](PHASE5_IDENTITY_PROVIDER.md).
 
 Build, start, and verify the loopback-only Phase 5 deployment:
 

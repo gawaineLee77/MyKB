@@ -16,13 +16,17 @@ import (
 
 type providerStub struct {
 	state, nonce, challenge string
+	method                  string
 	claims                  Claims
 	err                     error
 }
 
-func (p *providerStub) AuthorizationURL(_ context.Context, state, nonce, challenge string) (string, error) {
+func (p *providerStub) AuthorizationRequest(_ context.Context, state, nonce, challenge string) (AuthorizationRequest, error) {
 	p.state, p.nonce, p.challenge = state, nonce, challenge
-	return "https://identity.example/authorize?state=" + url.QueryEscape(state), nil
+	if p.method == http.MethodPost {
+		return AuthorizationRequest{Method: http.MethodPost, URL: "https://identity.example/authorize", Form: url.Values{"client_id": {"mindcreek"}}}, nil
+	}
+	return AuthorizationRequest{Method: http.MethodGet, URL: "https://identity.example/authorize?state=" + url.QueryEscape(state)}, nil
 }
 
 func (p *providerStub) Authenticate(_ context.Context, code, verifier, nonce string) (Claims, error) {
@@ -101,11 +105,58 @@ func testIdentitySettings(t *testing.T) config.IdentityConfig {
 		t.Fatal(err)
 	}
 	return config.IdentityConfig{
-		Enabled: true, ProviderName: "Example Identity", ExternalOrigin: origin,
+		Enabled: true, Protocol: config.IdentityProtocolOIDC, ProviderName: "Example Identity", ExternalOrigin: origin,
 		Issuer: "https://identity.example", ClientID: "mindcreek",
+		AuthorizationMethod: http.MethodGet, AuthorizationGrant: "authorization_code",
+		StateRequired: true, PKCEEnabled: true, UserInfoTokenTransport: "bearer",
 		BrokerIssuer:   "https://mindcreek.example/api/v1/mindcreek/oidc",
 		BrokerClientID: "mindcreek-weknora", BrokerClientSecret: "broker-secret-value-with-32-characters",
 		BrokerRedirectURI: "https://mindcreek.example/api/v1/auth/oidc/callback",
+	}
+}
+
+func TestBrokerPOSTAuthorizationAndCookieBoundCallback(t *testing.T) {
+	settings := testIdentitySettings(t)
+	settings.Protocol = config.IdentityProtocolOAuth2
+	settings.AuthorizationMethod = http.MethodPost
+	settings.StateRequired = false
+	settings.PKCEEnabled = false
+	settings.UserInfoTokenTransport = "query"
+	provider := &providerStub{method: http.MethodPost, claims: Claims{
+		Issuer: "https://identity.example", Subject: "tenant-user:employee-42", CorporateEmail: "mc-test@identity.invalid",
+		Username: "alice", DisplayName: "Alice", Groups: []string{"employee-type:employee"},
+	}}
+	broker, err := NewBroker(settings, provider, &memoryStore{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	authorize := httptest.NewRequest(http.MethodGet,
+		"https://mindcreek.example/api/v1/mindcreek/oidc/authorize?response_type=code&client_id=mindcreek-weknora&redirect_uri="+
+			url.QueryEscape("https://mindcreek.example/api/v1/auth/oidc/callback")+"&scope=openid+profile&state=upstream-state-value-1234", nil)
+	recorder := httptest.NewRecorder()
+	broker.ServeHTTP(recorder, authorize)
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), `method="post"`) ||
+		!strings.Contains(recorder.Header().Get("Content-Security-Policy"), "form-action https://identity.example") {
+		t.Fatalf("POST authorization status=%d headers=%v body=%s", recorder.Code, recorder.Header(), recorder.Body.String())
+	}
+	cookies := recorder.Result().Cookies()
+	if len(cookies) != 1 {
+		t.Fatalf("authorization cookies=%v", cookies)
+	}
+
+	missingCookie := httptest.NewRecorder()
+	broker.ServeHTTP(missingCookie, httptest.NewRequest(http.MethodGet,
+		"https://mindcreek.example/api/v1/mindcreek/oidc/callback?code=corporate-code", nil))
+	if missingCookie.Code != http.StatusBadRequest {
+		t.Fatalf("cookie-less callback status=%d", missingCookie.Code)
+	}
+	callback := httptest.NewRequest(http.MethodGet,
+		"https://mindcreek.example/api/v1/mindcreek/oidc/callback?code=corporate-code", nil)
+	callback.AddCookie(cookies[0])
+	callbackRecorder := httptest.NewRecorder()
+	broker.ServeHTTP(callbackRecorder, callback)
+	if callbackRecorder.Code != http.StatusFound {
+		t.Fatalf("cookie-bound callback status=%d body=%s", callbackRecorder.Code, callbackRecorder.Body.String())
 	}
 }
 
