@@ -5,12 +5,12 @@ Gate B implements corporate SSO, just-in-time local account provisioning, closed
 ## Delivered controls
 
 - MindCreek-owned identity broker with corporate form-POST authorization, callback-cookie binding when provider state is absent, and configurable provider state/PKCE for future upgrades.
-- Form-POST access-token exchange and server-side query-parameter UserInfo mapping for the provider's flat `employeeType`, `globalUserID`, `tenantId`, `uid`, and `uuid` object; standard Bearer UserInfo and `client_secret_basic` remain supported.
+- Browser form-POST authorization with `response_type=code` and `display=page`, JSON access-token exchange, and server-side query-parameter UserInfo mapping for the provider's flat `employeeType`, `globalUserID`, `tenantId`, `uid`, and `uuid` object; form token requests, Bearer UserInfo, and `client_secret_basic` remain supported as configurable compatibility modes.
 - Stable provider plus tenant/user mapping and generated internal email alias; absent corporate email cannot block first-login provisioning.
 - Optional OIDC corporate mode with RS256 signature, exact issuer/audience, nonce, expiry, subject, and UserInfo subject validation.
 - Optional employee-type/group eligibility and first-login personal-workspace provisioning.
 - Password login, self-registration, invitation registration, auto-setup, password changes, and new public invitations closed whenever corporate identity is enabled.
-- SSO-only web entry with automatic redirect and a retry guard for callback failures.
+- SSO-only web entry with automatic redirect, exact internal-to-public broker URL mapping, root `?code=...` callback forwarding, and a retry guard for callback failures.
 - Human bearer sessions bound to an active corporate identity; unlinked and suspended sessions fail closed, and refresh requires corporate reauthentication.
 - Audited system-administrator suspension/reactivation and a loopback-only break-glass deployment override.
 - Local logout followed by corporate logout when the provider publishes an end-session endpoint.

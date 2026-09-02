@@ -1100,7 +1100,7 @@ flowchart LR
 
 ### 15.1 身份与会话安全
 
-- 适配当前企业标准 OAuth 2.0 配置：浏览器通过受 CSP 限制的表单 POST 调用 `/authorize`，服务端以表单 POST 调用 `/accesstoken`，并由服务端 GET 调用 `/userinfo`。由于所述提供商当前不回传 `state`，Token 兑换也不接受 PKCE，因此使用 Secure、HttpOnly、SameSite 回调 Cookie 绑定登录事务；同时保留可配置的 `state` 与 PKCE，并把提供商支持它们作为首选加固方向。
+- 适配当前企业标准 OAuth 2.0 配置：浏览器通过受 CSP 限制的表单 POST 调用 `/authorize`，携带 `response_type=code` 与 `display=page`；服务端以 JSON POST 调用 `/accesstoken`，并由服务端 GET 调用 `/userinfo`。将 MindCreek 外部 Origin 注册为企业重定向 URI，并在 SPA 启动前把根路径 `?code=...` 回调转交给网关。由于所述提供商当前不回传 `state`，Token 兑换也不接受 PKCE，因此使用 Secure、HttpOnly、SameSite 回调 Cookie 绑定登录事务；同时保留可配置的 `state` 与 PKCE，并把提供商支持它们作为首选加固方向。
 - 当前 UserInfo 调用在查询参数中携带 `access_token`、`scope` 和 `client_id`。企业代理与访问日志必须脱敏查询参数，MindCreek 错误和审计不得记录出站 URL。企业 Access/Refresh Token 不进入浏览器或 WeKnora；已配置的 GET Refresh 接口不用于初始会话设计。
 - 显式映射提供商返回的扁平对象 `employeeType`、`globalUserID`、`tenantId`、`uid` 和 `uuid`。默认由提供商 Issuer 与 `tenantId + globalUserID` 生成稳定 Subject，使用 `uid` 同时作为用户名和显示名，仅将 `employeeType` 作为可选准入条件，绝不据此授予 MindCreek 管理员角色。
 - 对未修改的 WeKnora 暴露私有 RS256 OIDC 代理。仍可选用企业 OIDC 模式，并验证精确 Issuer/Audience、Nonce、过期时间、签名、稳定 Subject 与 UserInfo Subject。

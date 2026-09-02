@@ -62,11 +62,14 @@ type IdentityConfig struct {
 	ClientAuthMethod       string
 	AuthorizationMethod    string
 	AuthorizationGrant     string
+	AuthorizationDisplay   string
+	TokenRequestFormat     string
 	PKCEEnabled            bool
 	StateRequired          bool
 	UserInfoTokenTransport string
 	ExternalOrigin         *url.URL
 	CallbackURL            string
+	CorporateRedirectURI   string
 	Scopes                 []string
 	SubjectClaim           string
 	TenantClaim            string
@@ -176,6 +179,7 @@ func loadIdentityConfig() (IdentityConfig, error) {
 	defaultDisplayNameClaim := "uid"
 	defaultUUIDClaim := "uuid"
 	defaultEmployeeTypeClaim := "employeeType"
+	defaultAuthorizationMethod := http.MethodPost
 	if protocol == IdentityProtocolOIDC {
 		defaultScopes = "openid,profile,email"
 		defaultSubjectClaim = "sub"
@@ -186,6 +190,7 @@ func loadIdentityConfig() (IdentityConfig, error) {
 		defaultDisplayNameClaim = "name"
 		defaultUUIDClaim = ""
 		defaultEmployeeTypeClaim = ""
+		defaultAuthorizationMethod = http.MethodGet
 		tenantScoped = false
 		stateRequired = true
 	}
@@ -202,8 +207,10 @@ func loadIdentityConfig() (IdentityConfig, error) {
 		ClientID:               optionalValue("MINDCREEK_IDENTITY_CLIENT_ID"),
 		ClientSecret:           optionalValue("MINDCREEK_IDENTITY_CLIENT_SECRET"),
 		ClientAuthMethod:       value("MINDCREEK_IDENTITY_CLIENT_AUTH_METHOD", "client_secret_post"),
-		AuthorizationMethod:    strings.ToUpper(value("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD", http.MethodGet)),
+		AuthorizationMethod:    strings.ToUpper(value("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD", defaultAuthorizationMethod)),
 		AuthorizationGrant:     value("MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE", "authorization_code"),
+		AuthorizationDisplay:   value("MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY", "page"),
+		TokenRequestFormat:     strings.ToLower(value("MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT", "json")),
 		PKCEEnabled:            pkceEnabled,
 		StateRequired:          stateRequired,
 		UserInfoTokenTransport: strings.ToLower(value("MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT", "bearer")),
@@ -238,6 +245,7 @@ func loadIdentityConfig() (IdentityConfig, error) {
 	origin.Path = ""
 	result.ExternalOrigin = origin
 	result.CallbackURL = origin.String() + "/api/v1/mindcreek/oidc/callback"
+	result.CorporateRedirectURI = result.CallbackURL
 	result.BrokerIssuer = origin.String() + "/api/v1/mindcreek/oidc"
 	result.BrokerRedirectURI = origin.String() + "/api/v1/auth/oidc/callback"
 
@@ -262,6 +270,19 @@ func loadIdentityConfig() (IdentityConfig, error) {
 			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_SCOPES must include openid for oidc")
 		}
 	} else {
+		redirectValue := optionalValue("MINDCREEK_IDENTITY_REDIRECT_URI")
+		if redirectValue == "" {
+			redirectValue = origin.String()
+		}
+		redirectURI, redirectErr := parseIdentityURL("MINDCREEK_IDENTITY_REDIRECT_URI", redirectValue, allowHTTP)
+		if redirectErr != nil {
+			return IdentityConfig{}, redirectErr
+		}
+		if !strings.EqualFold(redirectURI.Scheme, origin.Scheme) || !strings.EqualFold(redirectURI.Host, origin.Host) ||
+			redirectURI.User != nil || redirectURI.RawQuery != "" || redirectURI.Fragment != "" {
+			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_REDIRECT_URI must be a path-only URL on MINDCREEK_EXTERNAL_ORIGIN")
+		}
+		result.CorporateRedirectURI = redirectURI.String()
 		for name, raw := range map[string]string{
 			"MINDCREEK_IDENTITY_AUTHORIZATION_URL": optionalValue("MINDCREEK_IDENTITY_AUTHORIZATION_URL"),
 			"MINDCREEK_IDENTITY_TOKEN_URL":         optionalValue("MINDCREEK_IDENTITY_TOKEN_URL"),
@@ -291,6 +312,12 @@ func loadIdentityConfig() (IdentityConfig, error) {
 		}
 		if result.AuthorizationMethod != http.MethodGet && result.AuthorizationMethod != http.MethodPost {
 			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD must be GET or POST")
+		}
+		if result.AuthorizationDisplay != "" && !validOAuthParameter(result.AuthorizationDisplay) {
+			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY is invalid")
+		}
+		if result.TokenRequestFormat != "form" && result.TokenRequestFormat != "json" {
+			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT must be form or json")
 		}
 		if result.UserInfoTokenTransport != "bearer" && result.UserInfoTokenTransport != "query" {
 			return IdentityConfig{}, fmt.Errorf("MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT must be bearer or query")

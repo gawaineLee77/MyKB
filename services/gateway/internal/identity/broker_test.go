@@ -136,6 +136,7 @@ func TestBrokerPOSTAuthorizationAndCookieBoundCallback(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	broker.ServeHTTP(recorder, authorize)
 	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), `method="post"`) ||
+		!strings.Contains(recorder.Body.String(), `enctype="application/x-www-form-urlencoded"`) ||
 		!strings.Contains(recorder.Header().Get("Content-Security-Policy"), "form-action https://identity.example") {
 		t.Fatalf("POST authorization status=%d headers=%v body=%s", recorder.Code, recorder.Header(), recorder.Body.String())
 	}

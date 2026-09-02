@@ -22,10 +22,10 @@ The vulnerability gate uses Docker Scout and may transmit runtime-image PURLs an
 
 ## Production start
 
-Install the TLS certificate/key and protected `.local/mindcreek.env`, set `MINDCREEK_DEPLOYMENT_ENV=production`, enable corporate identity, configure its HTTPS authorization/token/UserInfo endpoints and five-field mapping, and provide approved HTTPS model endpoints. Register this exact corporate callback:
+Install the TLS certificate/key and protected `.local/mindcreek.env`, set `MINDCREEK_DEPLOYMENT_ENV=production`, enable corporate identity, configure its HTTPS authorization/token/UserInfo endpoints and five-field mapping, and provide approved HTTPS model endpoints. Register the exact external origin as the corporate redirect URI:
 
 ```text
-https://<mindcreek-host>/api/v1/mindcreek/oidc/callback
+https://<mindcreek-host>
 ```
 
 Then run:

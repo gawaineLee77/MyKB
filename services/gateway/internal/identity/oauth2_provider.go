@@ -24,9 +24,10 @@ type OAuth2Provider struct {
 
 func NewOAuth2Provider(settings config.IdentityConfig, client *http.Client) (*OAuth2Provider, error) {
 	if !settings.Enabled || settings.AuthorizationURL == nil || settings.TokenURL == nil || settings.UserInfoURL == nil ||
-		settings.Issuer == "" || settings.CallbackURL == "" || settings.ClientID == "" || settings.ClientSecret == "" ||
+		settings.Issuer == "" || settings.CorporateRedirectURI == "" || settings.ClientID == "" || settings.ClientSecret == "" ||
 		(settings.ClientAuthMethod != "client_secret_post" && settings.ClientAuthMethod != "client_secret_basic") ||
 		(settings.AuthorizationMethod != http.MethodGet && settings.AuthorizationMethod != http.MethodPost) ||
+		(settings.TokenRequestFormat != "form" && settings.TokenRequestFormat != "json") ||
 		(settings.UserInfoTokenTransport != "bearer" && settings.UserInfoTokenTransport != "query") ||
 		settings.AuthorizationGrant == "" || settings.SubjectClaim == "" ||
 		(settings.SubjectTenantScoped && settings.TenantClaim == "") {
@@ -43,7 +44,10 @@ func (p *OAuth2Provider) AuthorizationRequest(_ context.Context, state, _ string
 	query := target.Query()
 	query.Set("response_type", "code")
 	query.Set("client_id", p.settings.ClientID)
-	query.Set("redirect_uri", p.settings.CallbackURL)
+	query.Set("redirect_uri", p.settings.CorporateRedirectURI)
+	if p.settings.AuthorizationDisplay != "" {
+		query.Set("display", p.settings.AuthorizationDisplay)
+	}
 	if p.settings.StateRequired {
 		query.Set("state", state)
 	}
@@ -69,7 +73,7 @@ func (p *OAuth2Provider) Authenticate(ctx context.Context, code, verifier, _ str
 	form := url.Values{
 		"grant_type":   {p.settings.AuthorizationGrant},
 		"code":         {code},
-		"redirect_uri": {p.settings.CallbackURL},
+		"redirect_uri": {p.settings.CorporateRedirectURI},
 	}
 	if p.settings.PKCEEnabled {
 		if verifier == "" {
@@ -81,11 +85,27 @@ func (p *OAuth2Provider) Authenticate(ctx context.Context, code, verifier, _ str
 		form.Set("client_id", p.settings.ClientID)
 		form.Set("client_secret", p.settings.ClientSecret)
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, p.settings.TokenURL.String(), strings.NewReader(form.Encode()))
+	var body string
+	contentType := "application/x-www-form-urlencoded"
+	if p.settings.TokenRequestFormat == "json" {
+		payload := make(map[string]string, len(form))
+		for key := range form {
+			payload[key] = form.Get(key)
+		}
+		encoded, err := json.Marshal(payload)
+		if err != nil {
+			return Claims{}, fmt.Errorf("encode corporate OAuth2 token request: %w", err)
+		}
+		body = string(encoded)
+		contentType = "application/json"
+	} else {
+		body = form.Encode()
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, p.settings.TokenURL.String(), strings.NewReader(body))
 	if err != nil {
 		return Claims{}, fmt.Errorf("create corporate OAuth2 token request: %w", err)
 	}
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Content-Type", contentType)
 	request.Header.Set("Accept", "application/json")
 	if p.settings.ClientAuthMethod == "client_secret_basic" {
 		request.SetBasicAuth(p.settings.ClientID, p.settings.ClientSecret)

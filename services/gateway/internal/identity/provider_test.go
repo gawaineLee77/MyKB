@@ -34,8 +34,9 @@ func TestOAuth2ProviderMapsCorporateUserInfo(t *testing.T) {
 		Enabled: true, Protocol: config.IdentityProtocolOAuth2, Issuer: "https://identity.example",
 		AuthorizationURL: authorizationURL, TokenURL: tokenURL, UserInfoURL: userInfoURL,
 		ClientID: "mindcreek", ClientSecret: "corporate-secret-value", ClientAuthMethod: "client_secret_post",
-		AuthorizationMethod: http.MethodPost, AuthorizationGrant: "authorization_code", StateRequired: false,
-		UserInfoTokenTransport: "query", CallbackURL: "https://mindcreek.example/api/v1/mindcreek/oidc/callback",
+		AuthorizationMethod: http.MethodPost, AuthorizationGrant: "authorization_code", AuthorizationDisplay: "page",
+		TokenRequestFormat: "json", StateRequired: false, UserInfoTokenTransport: "query",
+		CallbackURL: "https://mindcreek.example/api/v1/mindcreek/oidc/callback", CorporateRedirectURI: "https://mindcreek.example",
 		Scopes: []string{"base.profile"}, SubjectClaim: "globalUserID", TenantClaim: "tenantId", SubjectTenantScoped: true,
 		UsernameClaim: "uid", DisplayNameClaim: "uid", UUIDClaim: "uuid", EmployeeTypeClaim: "employeeType",
 		AllowedEmployeeTypes: map[string]bool{"employee": true},
@@ -45,16 +46,17 @@ func TestOAuth2ProviderMapsCorporateUserInfo(t *testing.T) {
 		requests++
 		switch request.URL.Path {
 		case "/accesstoken":
-			if request.Method != http.MethodPost || request.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
+			if request.Method != http.MethodPost || request.Header.Get("Content-Type") != "application/json" {
 				t.Fatalf("token request method=%s headers=%v", request.Method, request.Header)
 			}
-			if err := request.ParseForm(); err != nil {
+			var payload map[string]string
+			if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
 				t.Fatal(err)
 			}
-			if request.Form.Get("client_id") != "mindcreek" || request.Form.Get("client_secret") != "corporate-secret-value" ||
-				request.Form.Get("grant_type") != "authorization_code" || request.Form.Get("code") != "corporate-code" ||
-				request.Form.Get("code_verifier") != "" {
-				t.Fatalf("token form=%v", request.Form)
+			if payload["client_id"] != "mindcreek" || payload["client_secret"] != "corporate-secret-value" ||
+				payload["grant_type"] != "authorization_code" || payload["code"] != "corporate-code" ||
+				payload["redirect_uri"] != "https://mindcreek.example" || payload["code_verifier"] != "" {
+				t.Fatalf("token payload=%v", payload)
 			}
 			return jsonResponse(http.StatusOK, `{"access_token":"corporate-access","token_type":"Bearer","refresh_token":"unused","scope":"base.profile"}`), nil
 		case "/userinfo":
@@ -77,7 +79,8 @@ func TestOAuth2ProviderMapsCorporateUserInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 	if authorization.Method != http.MethodPost || authorization.URL != authorizationURL.String() ||
-		authorization.Form.Get("state") != "" || authorization.Form.Get("redirect_uri") != settings.CallbackURL ||
+		authorization.Form.Get("response_type") != "code" || authorization.Form.Get("display") != "page" ||
+		authorization.Form.Get("state") != "" || authorization.Form.Get("redirect_uri") != settings.CorporateRedirectURI ||
 		authorization.Form.Get("code_challenge") != "" || authorization.Form.Get("scope") != "base.profile" {
 		t.Fatalf("authorization request=%+v", authorization)
 	}
@@ -99,9 +102,10 @@ func TestOAuth2ProviderRejectsUnapprovedEmployeeType(t *testing.T) {
 		Enabled: true, Protocol: config.IdentityProtocolOAuth2, Issuer: "https://identity.example",
 		AuthorizationURL: endpoint, TokenURL: endpoint, UserInfoURL: endpoint,
 		ClientID: "mindcreek", ClientSecret: "corporate-secret-value", ClientAuthMethod: "client_secret_basic",
-		AuthorizationMethod: http.MethodGet, AuthorizationGrant: "authorization_code", UserInfoTokenTransport: "bearer",
-		CallbackURL:  "https://mindcreek.example/api/v1/mindcreek/oidc/callback",
-		SubjectClaim: "globalUserID", TenantClaim: "tenantId", SubjectTenantScoped: true,
+		AuthorizationMethod: http.MethodGet, AuthorizationGrant: "authorization_code", TokenRequestFormat: "form",
+		UserInfoTokenTransport: "bearer", CallbackURL: "https://mindcreek.example/api/v1/mindcreek/oidc/callback",
+		CorporateRedirectURI: "https://mindcreek.example/api/v1/mindcreek/oidc/callback",
+		SubjectClaim:         "globalUserID", TenantClaim: "tenantId", SubjectTenantScoped: true,
 		UsernameClaim: "uid", DisplayNameClaim: "uid", EmployeeTypeClaim: "employeeType",
 		AllowedEmployeeTypes: map[string]bool{"employee": true},
 	}
@@ -133,9 +137,10 @@ func TestOAuth2ProviderRejectsMissingStableUserInfo(t *testing.T) {
 		Enabled: true, Protocol: config.IdentityProtocolOAuth2, Issuer: "https://identity.example",
 		AuthorizationURL: endpoint, TokenURL: endpoint, UserInfoURL: endpoint,
 		ClientID: "mindcreek", ClientSecret: "corporate-secret-value", ClientAuthMethod: "client_secret_post",
-		AuthorizationMethod: http.MethodGet, AuthorizationGrant: "authorization_code", UserInfoTokenTransport: "bearer",
-		CallbackURL:  "https://mindcreek.example/api/v1/mindcreek/oidc/callback",
-		SubjectClaim: "globalUserID", TenantClaim: "tenantId", SubjectTenantScoped: true,
+		AuthorizationMethod: http.MethodGet, AuthorizationGrant: "authorization_code", TokenRequestFormat: "form",
+		UserInfoTokenTransport: "bearer", CallbackURL: "https://mindcreek.example/api/v1/mindcreek/oidc/callback",
+		CorporateRedirectURI: "https://mindcreek.example/api/v1/mindcreek/oidc/callback",
+		SubjectClaim:         "globalUserID", TenantClaim: "tenantId", SubjectTenantScoped: true,
 		UsernameClaim: "uid", DisplayNameClaim: "uid", UUIDClaim: "uuid", EmployeeTypeClaim: "employeeType",
 	}
 	client := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {

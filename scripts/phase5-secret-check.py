@@ -98,6 +98,13 @@ def main() -> int:
             require_https_url(values, "MINDCREEK_IDENTITY_REFRESH_URL")
         if values.get("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD", "GET").upper() not in {"GET", "POST"}:
             raise ValueError("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD must be GET or POST")
+        if values.get("MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT", "json").lower() not in {"form", "json"}:
+            raise ValueError("MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT must be form or json")
+        redirect_uri = values.get("MINDCREEK_IDENTITY_REDIRECT_URI", "") or values["MINDCREEK_EXTERNAL_ORIGIN"]
+        parsed_redirect = urlparse(redirect_uri)
+        parsed_origin = urlparse(values["MINDCREEK_EXTERNAL_ORIGIN"])
+        if parsed_redirect.scheme != "https" or parsed_redirect.netloc != parsed_origin.netloc or parsed_redirect.query or parsed_redirect.fragment:
+            raise ValueError("MINDCREEK_IDENTITY_REDIRECT_URI must be an HTTPS URL on MINDCREEK_EXTERNAL_ORIGIN")
         if values.get("MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT", "bearer").lower() not in {"bearer", "query"}:
             raise ValueError("MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT must be bearer or query")
         for name in ("MINDCREEK_IDENTITY_PKCE_ENABLED", "MINDCREEK_IDENTITY_STATE_REQUIRED"):

@@ -430,7 +430,7 @@ func (b *Broker) writeAuthorizationPost(w http.ResponseWriter, request Authoriza
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.WriteHeader(http.StatusOK)
-	_, _ = fmt.Fprintf(w, "<!doctype html><html><head><meta charset=\"utf-8\"><title>Corporate sign-in</title></head><body><form id=\"corporate-login\" method=\"post\" action=\"%s\">", html.EscapeString(request.URL))
+	_, _ = fmt.Fprintf(w, "<!doctype html><html><head><meta charset=\"utf-8\"><title>Corporate sign-in</title></head><body><form id=\"corporate-login\" method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"%s\">", html.EscapeString(request.URL))
 	keys := make([]string, 0, len(request.Form))
 	for key := range request.Form {
 		keys = append(keys, key)

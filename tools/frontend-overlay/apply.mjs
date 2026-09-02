@@ -73,6 +73,27 @@ replaceExact(
   `content="${brand.name} 是面向组织内部用户的私有知识库与智能体平台。"`,
 )
 replaceExact('index.html', './public/favicon.ico', '/mindcreek-favicon.png', 2)
+replaceExact(
+  'index.html',
+  '</head>',
+  `    <script>
+    // The corporate OAuth service returns to the registered origin root.
+    // Forward only its bounded callback fields to the private gateway route
+    // before the SPA or automatic SSO retry can start another transaction.
+    (function mindcreekOAuthRootCallback() {
+      if (window.location.pathname !== '/') return;
+      var source = new URLSearchParams(window.location.search);
+      if (!source.has('code') && !source.has('error')) return;
+      var target = new URL('/api/v1/mindcreek/oidc/callback', window.location.origin);
+      ['code', 'error', 'error_description'].forEach(function (name) {
+        var value = source.get(name);
+        if (value) target.searchParams.set(name, value);
+      });
+      window.location.replace(target.toString());
+    })();
+    </script>
+</head>`,
+)
 replaceExact('embed.html', '<title>WeKnora Embed</title>', `<title>${brand.name} Embed</title>`)
 replaceExact('embed.html', './public/favicon.ico', '/mindcreek-favicon.png')
 replaceExact(

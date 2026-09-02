@@ -52,6 +52,9 @@ MINDCREEK_IDENTITY_CLIENT_ID=synthetic-client
 MINDCREEK_IDENTITY_CLIENT_SECRET=synthetic-identity-credential-0007
 MINDCREEK_IDENTITY_AUTHORIZATION_METHOD=POST
 MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE=authorization_code
+MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY=page
+MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT=json
+MINDCREEK_IDENTITY_REDIRECT_URI=https://mindcreek.example.invalid
 MINDCREEK_IDENTITY_PKCE_ENABLED=false
 MINDCREEK_IDENTITY_STATE_REQUIRED=false
 MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT=query
@@ -94,9 +97,14 @@ assert "mindcreek-egress" in services["app"]["networks"]
 identity = services["gateway"]["environment"]
 assert identity["MINDCREEK_IDENTITY_PROTOCOL"] == "oauth2"
 assert identity["MINDCREEK_IDENTITY_AUTHORIZATION_METHOD"] == "POST"
+assert identity["MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY"] == "page"
+assert identity["MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT"] == "json"
+assert identity["MINDCREEK_IDENTITY_REDIRECT_URI"] == "https://mindcreek.example.invalid"
 assert identity["MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT"] == "query"
 assert identity["MINDCREEK_IDENTITY_AUTHORIZATION_URL"].endswith("/authorize")
 assert identity["MINDCREEK_IDENTITY_TOKEN_URL"].endswith("/accesstoken")
 assert identity["MINDCREEK_IDENTITY_USERINFO_URL"].endswith("/userinfo")
+app_identity = services["app"]["environment"]
+assert app_identity["OIDC_AUTH_AUTHORIZATION_ENDPOINT"] == "http://gateway:8080/api/v1/mindcreek/oidc/authorize"
 PY
 echo "MindCreek Phase 5 production profile verified: TLS edge only, private dependencies, controlled egress"

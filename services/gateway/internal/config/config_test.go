@@ -68,6 +68,9 @@ func TestLoadIdentityContract(t *testing.T) {
 	t.Setenv("MINDCREEK_IDENTITY_CLIENT_SECRET", "corporate-secret-value")
 	t.Setenv("MINDCREEK_IDENTITY_AUTHORIZATION_METHOD", "POST")
 	t.Setenv("MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE", "authorization_code")
+	t.Setenv("MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY", "page")
+	t.Setenv("MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT", "json")
+	t.Setenv("MINDCREEK_IDENTITY_REDIRECT_URI", "http://mindcreek.internal:18080")
 	t.Setenv("MINDCREEK_IDENTITY_PKCE_ENABLED", "false")
 	t.Setenv("MINDCREEK_IDENTITY_STATE_REQUIRED", "false")
 	t.Setenv("MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT", "query")
@@ -88,6 +91,8 @@ func TestLoadIdentityContract(t *testing.T) {
 		identity.SubjectClaim != "globalUserID" || identity.TenantClaim != "tenantId" || !identity.SubjectTenantScoped ||
 		identity.UsernameClaim != "uid" || identity.DisplayNameClaim != "uid" || identity.EmployeeTypeClaim != "employeeType" ||
 		identity.AuthorizationMethod != "POST" || identity.AuthorizationGrant != "authorization_code" ||
+		identity.AuthorizationDisplay != "page" || identity.TokenRequestFormat != "json" ||
+		identity.CorporateRedirectURI != "http://mindcreek.internal:18080" ||
 		identity.PKCEEnabled || identity.StateRequired || identity.UserInfoTokenTransport != "query" ||
 		identity.AuthorizationURL.String() != "http://identity.internal/authorize" ||
 		identity.RefreshURL.String() != "http://identity.internal/refreshtoken" {
@@ -118,6 +123,18 @@ func TestLoadIdentityFailsClosed(t *testing.T) {
 	t.Setenv("MINDCREEK_IDENTITY_TOKEN_URL", "")
 	if _, err := Load("test-version"); err == nil {
 		t.Fatal("OAuth2 identity contract accepted a missing token endpoint")
+	}
+
+	t.Setenv("MINDCREEK_IDENTITY_TOKEN_URL", base["MINDCREEK_IDENTITY_TOKEN_URL"])
+	t.Setenv("MINDCREEK_IDENTITY_REDIRECT_URI", "https://attacker.example/callback")
+	if _, err := Load("test-version"); err == nil {
+		t.Fatal("OAuth2 identity contract accepted a cross-origin redirect URI")
+	}
+
+	t.Setenv("MINDCREEK_IDENTITY_REDIRECT_URI", "https://mindcreek.internal")
+	t.Setenv("MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT", "xml")
+	if _, err := Load("test-version"); err == nil {
+		t.Fatal("OAuth2 identity contract accepted an unsupported token request format")
 	}
 }
 

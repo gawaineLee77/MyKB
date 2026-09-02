@@ -43,6 +43,7 @@ callback = urllib.parse.quote(BASE + "/api/v1/auth/oidc/callback", safe="")
 status, authorization = request("/api/v1/auth/oidc/url?redirect_uri=" + callback)
 assert status == 200 and authorization.get("success") is True, authorization
 target = urllib.parse.urlparse(authorization.get("authorization_url", ""))
+assert target.scheme == "http" and target.netloc == "gateway:8080", target.geturl()
 assert target.path == "/api/v1/mindcreek/oidc/authorize", target.geturl()
 query = urllib.parse.parse_qs(target.query)
 assert query.get("response_type") == ["code"] and query.get("state"), query

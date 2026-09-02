@@ -58,6 +58,15 @@ const statusMessage = computed(() => {
 
 const callbackURI = () => `${window.location.origin}/api/v1/auth/oidc/callback`
 
+const publicBrokerAuthorizationURL = (raw: string) => {
+  const target = new URL(raw)
+  if (target.protocol !== 'http:' || target.hostname !== 'gateway' || target.port !== '8080' ||
+      target.pathname !== '/api/v1/mindcreek/oidc/authorize') {
+    throw new Error('unexpected broker authorization URL')
+  }
+  return `${window.location.origin}${target.pathname}${target.search}${target.hash}`
+}
+
 async function startLogin(force = false) {
   if (!enabled.value || loading.value) return
   const previous = Number(sessionStorage.getItem(ATTEMPT_KEY) || 0)
@@ -68,7 +77,7 @@ async function startLogin(force = false) {
   try {
     const response = await getOIDCAuthorizationURL(callbackURI())
     if (!response.success || !response.authorization_url) throw new Error('authorization URL unavailable')
-    window.location.assign(response.authorization_url)
+    window.location.assign(publicBrokerAuthorizationURL(response.authorization_url))
   } catch {
     error.value = copy.value.failed
     loading.value = false

@@ -4,17 +4,17 @@
 
 MindCreek Gate B places a product-owned identity broker between WeKnora and the corporate provider. The corporate-facing default is OAuth 2.0 Authorization Code Flow. WeKnora continues to use the broker's private OIDC interface, so no upstream change is required.
 
-The corporate provider exposes POST authorization, POST access-token, GET UserInfo, and GET refresh-token interfaces. MindCreek renders a CSP-restricted auto-submitting browser form for authorization, sends an `application/x-www-form-urlencoded` token request, and calls UserInfo server-to-server with `access_token`, the scope returned by the token response (falling back to configured scope), and `client_id` query parameters. Refresh-token configuration is accepted but is not used by the initial login flow.
+The corporate provider exposes POST authorization, POST access-token, GET UserInfo, and GET refresh-token interfaces. MindCreek renders a CSP-restricted `application/x-www-form-urlencoded` browser form containing `client_id`, the external-origin `redirect_uri`, `response_type=code`, `scope=base.profile`, and `display=page`. After the provider returns `/?code=...`, a pre-SPA bridge forwards the code to the gateway. The gateway sends an `application/json` token request containing `client_id`, `client_secret`, the same `redirect_uri`, `grant_type=authorization_code`, and `code`, then calls UserInfo server-to-server with `access_token`, the returned scope (falling back to configured scope), and `client_id` query parameters. Refresh-token configuration is accepted but is not used by the initial login flow.
 
 This provider does not currently return `state` or accept PKCE in the described token exchange. MindCreek therefore binds the one-time login transaction to a Secure, HttpOnly, SameSite callback cookie. This is weaker than provider-returned `state` plus PKCE; request both capabilities from the provider owner when possible. Query-string access tokens can also appear in corporate proxy/access logs, so those systems must redact query values. MindCreek does not include the outbound URL in its errors or audit events.
 
-Register this exact corporate callback URI:
+Register this exact corporate redirect URI:
 
 ```text
-https://mindcreek.example/api/v1/mindcreek/oidc/callback
+https://mindcreek.example
 ```
 
-Do not register `/api/v1/auth/oidc/callback`; that is the private broker-to-WeKnora callback.
+The provider returns the browser to `https://mindcreek.example/?code=...`. Do not register `/api/v1/mindcreek/oidc/callback`, which is the product-owned internal target of the root bridge, or `/api/v1/auth/oidc/callback`, which is the private broker-to-WeKnora callback.
 
 ## UserInfo mapping
 
@@ -43,6 +43,9 @@ MINDCREEK_IDENTITY_CLIENT_SECRET=<corporate-client-secret>
 MINDCREEK_IDENTITY_CLIENT_AUTH_METHOD=client_secret_post
 MINDCREEK_IDENTITY_AUTHORIZATION_METHOD=POST
 MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE=authorization_code
+MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY=page
+MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT=json
+MINDCREEK_IDENTITY_REDIRECT_URI=https://mindcreek.example
 MINDCREEK_IDENTITY_PKCE_ENABLED=false
 MINDCREEK_IDENTITY_STATE_REQUIRED=false
 MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT=query
@@ -61,7 +64,7 @@ MINDCREEK_BROKER_CLIENT_SECRET=<random-32-plus-character-secret>
 
 Use `MINDCREEK_IDENTITY_ALLOW_INSECURE_HTTP=true` only for isolated development. Production requires HTTPS and an exact external origin. Keep the environment file mode at `0600`.
 
-The standard grant value is `authorization_code`. If the corporate service literally requires the documented misspelling `autorization_code`, set that exact value only after confirming it with a successful sanitized request from the provider owner.
+The token JSON uses the exact field and value `"grant_type": "authorization_code"`. Authorization remains a browser form POST because an HTML navigation cannot issue a JSON POST while rendering the provider's login response.
 
 ## OIDC compatibility mode
 

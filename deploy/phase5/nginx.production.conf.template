@@ -49,6 +49,14 @@ server {
         proxy_cache off;
         proxy_read_timeout 3600s;
         proxy_send_timeout 3600s;
+
+        # Defining response headers at this level prevents inheritance of the
+        # page-level `form-action 'self'` CSP. The identity broker supplies a
+        # nonce-bound CSP for its one-time cross-origin corporate POST page;
+        # adding a second edge CSP would block that form in modern browsers.
+        add_header X-Frame-Options "DENY" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "no-referrer" always;
     }
 
     location = /mcp {
