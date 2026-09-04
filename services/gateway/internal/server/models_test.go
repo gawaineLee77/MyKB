@@ -16,6 +16,7 @@ type managedModelStub struct {
 	snapshot      managedmodel.Snapshot
 	created       managedmodel.OverrideInput
 	resolvedInput [2]string
+	testedManaged string
 }
 
 func (s *managedModelStub) Snapshot(context.Context, weknora.Principal, http.Header) (managedmodel.Snapshot, error) {
@@ -37,6 +38,10 @@ func (*managedModelStub) DeleteOverride(context.Context, string, weknora.Princip
 }
 func (*managedModelStub) TestOverride(context.Context, managedmodel.OverrideInput, string, weknora.Principal, http.Header) (managedmodel.TestResult, error) {
 	return managedmodel.TestResult{Available: true}, nil
+}
+func (s *managedModelStub) TestManaged(_ context.Context, id string, _ weknora.Principal, _ http.Header) (managedmodel.TestResult, error) {
+	s.testedManaged = id
+	return managedmodel.TestResult{Available: true, ElapsedMS: 42, Message: "Managed model responded successfully"}, nil
 }
 
 func TestManagedModelFacadeReturnsOnlyRedactedContract(t *testing.T) {
@@ -80,6 +85,27 @@ func TestManagedModelOverrideBodyIsStrictAndNeverEchoesCredential(t *testing.T) 
 	recorder = httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 	assertErrorCode(t, recorder, http.StatusBadRequest, "request.invalid_json")
+}
+
+func TestManagedModelConnectionTestUsesSafeFacade(t *testing.T) {
+	models := &managedModelStub{}
+	handler := NewGateway(testConfig(t), nil, nil, Dependencies{Principals: trustedTestPrincipal, Models: models})
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/mindcreek/models/"+managedmodel.ManagedChatID+"/test", nil)
+	request.Header.Set("Authorization", "Bearer valid")
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK || models.testedManaged != managedmodel.ManagedChatID {
+		t.Fatalf("status=%d body=%s tested=%q", recorder.Code, recorder.Body.String(), models.testedManaged)
+	}
+	body := recorder.Body.String()
+	if !strings.Contains(body, `"available":true`) || !strings.Contains(body, `"elapsed_ms":42`) {
+		t.Fatalf("unexpected test response: %s", body)
+	}
+	for _, forbidden := range []string{"api_key", "base_url", "provider", "raw_response", "credential"} {
+		if strings.Contains(body, forbidden) {
+			t.Fatalf("managed test disclosed %q: %s", forbidden, body)
+		}
+	}
 }
 
 func TestKnowledgeSpaceCreationUsesServerManagedDefaults(t *testing.T) {

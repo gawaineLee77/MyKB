@@ -225,6 +225,89 @@ export function patch<T = any>(url: string, data = {}, config?: any): Promise<T>
 
 export function del<T = any>(url: string, data?: any): Promise<T> {`,
 )
+
+replaceExact(
+  'src/views/settings/ModelSettings.vue',
+  `    </div>
+
+    <t-tabs v-model="activeTypeFilter" class="model-type-tabs" data-guide="settings-models">`,
+  `    </div>
+
+    <ManagedModelSettings />
+
+    <t-tabs v-model="activeTypeFilter" class="model-type-tabs" data-guide="settings-models">`,
+)
+replaceExact(
+  'src/views/settings/ModelSettings.vue',
+  `import ModelDebugDrawer from '@/components/ModelDebugDrawer.vue'`,
+  `import ModelDebugDrawer from '@/components/ModelDebugDrawer.vue'
+import ManagedModelSettings from '@/mindcreek/ManagedModelSettings.vue'`,
+)
+replaceExact(
+  'src/views/settings/ModelSettings.vue',
+  `    const models = await listModels()
+    allModels.value = models`,
+  `    const models = await listModels()
+    const managedIDs = new Set(['builtin-mindcreek-chat', 'builtin-mindcreek-embedding', 'builtin-mindcreek-rerank'])
+    allModels.value = models.filter(model => !model.id || !managedIDs.has(model.id))`,
+)
+
+replaceExact(
+  'src/components/Input-field.vue',
+  `import type { MentionItem, MentionItemType, MentionRequestItem } from '@/types/mention';`,
+  `import type { MentionItem, MentionItemType, MentionRequestItem } from '@/types/mention';
+import { chooseChatModel } from '@/mindcreek/model-selection';`,
+)
+replaceExact(
+  'src/components/Input-field.vue',
+  `const selectedModelId = computed({
+  get: () => settingsStore.conversationModels.selectedChatModelId || '',
+  set: (val: string) => settingsStore.updateConversationModels({ selectedChatModelId: val })
+});`,
+  `const selectedModelId = computed({
+  get: () => settingsStore.conversationModels.selectedChatModelId || '',
+  set: (val: string) => settingsStore.updateConversationModels({
+    summaryModelId: val,
+    selectedChatModelId: val,
+  })
+});`,
+)
+replaceExact(
+  'src/components/Input-field.vue',
+  `const ensureModelSelection = () => {
+  if (selectedModelId.value) {
+    return;
+  }
+  const lastPick = readLastChatModelID();
+  if (lastPick) {
+    selectedModelId.value = lastPick;
+    return;
+  }
+  if (availableModels.value.length > 0) {
+    selectedModelId.value = availableModels.value[0].id || '';
+  }
+};`,
+  `const ensureModelSelection = () => {
+  // Do not clear a stored choice before the async model list arrives. Once it
+  // does, repair stale selections and prefer MindCreek's managed default.
+  if (availableModels.value.length === 0) return;
+  const choice = chooseChatModel(
+    availableModels.value,
+    readLastChatModelID(),
+    settingsStore.conversationModels.selectedChatModelId,
+  );
+  if (!choice) return;
+  if (
+    settingsStore.conversationModels.selectedChatModelId !== choice
+    || settingsStore.conversationModels.summaryModelId !== choice
+  ) {
+    settingsStore.updateConversationModels({
+      summaryModelId: choice,
+      selectedChatModelId: choice,
+    });
+  }
+};`,
+)
 const translations = {
   'src/i18n/locales/en-US.ts': [
     ['Welcome to WeKnora', `Welcome to ${brand.name}`],

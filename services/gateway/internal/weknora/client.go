@@ -274,8 +274,10 @@ type ModelTestRequest struct {
 }
 
 type ModelTestResult struct {
-	Available bool `json:"available"`
-	Dimension int  `json:"dimension,omitempty"`
+	Available bool   `json:"available"`
+	Dimension int    `json:"dimension,omitempty"`
+	ElapsedMS int64  `json:"elapsed_ms,omitempty"`
+	Message   string `json:"message,omitempty"`
 }
 
 type TenantMember struct {
@@ -504,6 +506,70 @@ func (c *Client) TestModel(ctx context.Context, input ModelTestRequest, inbound 
 		return ModelTestResult{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
 	}
 	return response.Data, nil
+}
+
+// TestSavedModel exercises an already-stored model through WeKnora's normal
+// model constructors. The gateway supplies only bounded synthetic input and
+// reduces the upstream debug response to availability, latency, and embedding
+// dimension; provider configuration, credentials, and generated content never
+// cross the product boundary.
+func (c *Client) TestSavedModel(ctx context.Context, id, modelType string, inbound http.Header) (ModelTestResult, error) {
+	if strings.TrimSpace(id) == "" {
+		return ModelTestResult{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest}
+	}
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	input := "MindCreek managed model connectivity test"
+	documents := "[]"
+	switch modelType {
+	case "KnowledgeQA":
+		input = "Reply with OK."
+	case "Embedding":
+	case "Rerank":
+		input = "MindCreek"
+		documents = `["MindCreek managed model connectivity test"]`
+	default:
+		return ModelTestResult{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest}
+	}
+	for name, value := range map[string]string{
+		"input": input, "documents": documents, "options": `{"max_tokens":8,"thinking":false}`,
+	} {
+		if err := writer.WriteField(name, value); err != nil {
+			return ModelTestResult{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusInternalServerError, Err: err}
+		}
+	}
+	if err := writer.Close(); err != nil {
+		return ModelTestResult{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusInternalServerError, Err: err}
+	}
+
+	var response struct {
+		Success bool `json:"success"`
+		Data    struct {
+			OK           bool  `json:"ok"`
+			ElapsedMS    int64 `json:"elapsed_ms"`
+			Observations struct {
+				Dimension int `json:"dimension"`
+			} `json:"observations"`
+		} `json:"data"`
+	}
+	path := "/api/v1/models/" + url.PathEscape(id) + "/debug"
+	if err := c.sendStreamWithClient(ctx, c.chatClient, http.MethodPost, path, writer.FormDataContentType(), &body, inbound, &response); err != nil {
+		return ModelTestResult{}, err
+	}
+	if !response.Success || response.Data.ElapsedMS < 0 {
+		return ModelTestResult{}, &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	message := "Managed model connection failed"
+	if response.Data.OK {
+		message = "Managed model responded successfully"
+	}
+	return ModelTestResult{
+		Available: response.Data.OK,
+		Dimension: response.Data.Observations.Dimension,
+		ElapsedMS: response.Data.ElapsedMS,
+		Message:   message,
+	}, nil
 }
 
 func (c *Client) ListTenantMembers(ctx context.Context, tenantID uint64, query string, page, pageSize int, inbound http.Header) (TenantMemberPage, error) {
@@ -982,6 +1048,10 @@ func (c *Client) sendJSON(ctx context.Context, method, path string, query url.Va
 }
 
 func (c *Client) sendStream(ctx context.Context, method, path, contentType string, body io.Reader, inbound http.Header, destination any) error {
+	return c.sendStreamWithClient(ctx, c.httpClient, method, path, contentType, body, inbound, destination)
+}
+
+func (c *Client) sendStreamWithClient(ctx context.Context, client *http.Client, method, path, contentType string, body io.Reader, inbound http.Header, destination any) error {
 	target := c.baseURL.ResolveReference(&url.URL{Path: path})
 	request, err := http.NewRequestWithContext(ctx, method, target.String(), body)
 	if err != nil {
@@ -990,7 +1060,7 @@ func (c *Client) sendStream(ctx context.Context, method, path, contentType strin
 	copyIdentityHeaders(request.Header, inbound)
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Content-Type", contentType)
-	response, err := c.httpClient.Do(request)
+	response, err := client.Do(request)
 	if err != nil {
 		code := "upstream.unavailable"
 		var netError interface{ Timeout() bool }

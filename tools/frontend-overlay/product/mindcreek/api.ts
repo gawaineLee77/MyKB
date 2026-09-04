@@ -185,6 +185,8 @@ export interface ModelOverrideInput {
 export interface ModelTestResult {
   available: boolean
   dimension?: number
+  elapsed_ms?: number
+  message?: string
 }
 
 export interface ProductProfile {
@@ -312,6 +314,14 @@ export async function testModelOverride(input: ModelOverrideInput, id = ''): Pro
   const response = await post<{ success: boolean; data: ModelTestResult }>(
     `/api/v1/mindcreek/models/overrides/test${query}`,
     input,
+  )
+  return response.data
+}
+
+export async function testManagedModel(id: string): Promise<ModelTestResult> {
+  const response = await post<{ success: boolean; data: ModelTestResult }>(
+    `/api/v1/mindcreek/models/${encodeURIComponent(id)}/test`,
+    {},
   )
   return response.data
 }

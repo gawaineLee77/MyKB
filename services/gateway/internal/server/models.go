@@ -31,6 +31,24 @@ func registerManagedModelRoutes(mux *http.ServeMux, dependencies Dependencies) {
 		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result})
 	})
 
+	mux.HandleFunc("POST /api/v1/mindcreek/models/{model_id}/test", func(w http.ResponseWriter, r *http.Request) {
+		principal, ok := resolvePrincipal(w, r, dependencies.Principals)
+		if !ok {
+			return
+		}
+		if dependencies.Models == nil {
+			apierror.Write(w, http.StatusServiceUnavailable, "models.unavailable", "Model service is unavailable", requestID(r))
+			return
+		}
+		result, err := dependencies.Models.TestManaged(r.Context(), r.PathValue("model_id"), principal, r.Header)
+		if err != nil {
+			writeManagedModelError(w, r, err)
+			return
+		}
+		w.Header().Set("Cache-Control", "no-store")
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": result})
+	})
+
 	mux.HandleFunc("POST /api/v1/mindcreek/models/overrides", func(w http.ResponseWriter, r *http.Request) {
 		principal, input, ok := decodeModelInput(w, r, dependencies)
 		if !ok {

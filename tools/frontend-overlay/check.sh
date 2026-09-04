@@ -19,8 +19,10 @@ copy_anchor nginx.conf
 copy_anchor src/views/auth/Login.vue
 copy_anchor src/components/menu.vue
 copy_anchor src/components/UserMenu.vue
+copy_anchor src/components/Input-field.vue
 copy_anchor src/router/index.ts
 copy_anchor src/utils/request.ts
+copy_anchor src/views/settings/ModelSettings.vue
 copy_anchor src/assets/theme/theme.css
 copy_anchor src/i18n/locales/en-US.ts
 copy_anchor src/i18n/locales/zh-CN.ts
@@ -43,6 +45,8 @@ grep -q 'mindcreekNotesWorkspace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekRAGWorkspace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekAskWorkspace' "$TARGET/src/router/index.ts"
 grep -q 'mindcreekAdvancedModelSettings' "$TARGET/src/router/index.ts"
+grep -q 'ManagedModelSettings' "$TARGET/src/views/settings/ModelSettings.vue"
+grep -q 'chooseChatModel' "$TARGET/src/components/Input-field.vue"
 grep -q 'mindcreek/AuthEntry.vue' "$TARGET/src/router/index.ts"
 grep -q 'mindcreek/KnowledgeLibrary.vue' "$TARGET/src/router/index.ts"
 grep -q 'export function patch' "$TARGET/src/utils/request.ts"
@@ -54,6 +58,8 @@ grep -q 'publicBrokerAuthorizationURL' "$TARGET/src/mindcreek/SSOLogin.vue"
 grep -q 'configuration/network failure must not expose' "$TARGET/src/mindcreek/AuthEntry.vue"
 grep -q '/api/v1/mindcreek/oidc/logout' "$TARGET/src/components/UserMenu.vue"
 grep -q '/api/v1/mindcreek/models' "$TARGET/src/mindcreek/api.ts"
+grep -q '/api/v1/mindcreek/models/.*test' "$TARGET/src/mindcreek/api.ts"
+grep -q 'Organization-managed defaults' "$TARGET/src/mindcreek/ManagedModelSettings.vue"
 ! grep -q "@/api/model" "$TARGET/src/mindcreek/api.ts"
 grep -q 'A quiet place for working notes' "$TARGET/src/mindcreek/NotesWorkspace.vue"
 grep -q 'Managed Plain RAG preset' "$TARGET/src/mindcreek/RAGWorkspace.vue"

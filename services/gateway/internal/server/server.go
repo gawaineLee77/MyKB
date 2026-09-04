@@ -70,6 +70,7 @@ type ManagedModelService interface {
 	UpdateOverride(context.Context, string, managedmodel.OverrideInput, weknora.Principal, http.Header) (managedmodel.Descriptor, error)
 	DeleteOverride(context.Context, string, weknora.Principal, http.Header) error
 	TestOverride(context.Context, managedmodel.OverrideInput, string, weknora.Principal, http.Header) (managedmodel.TestResult, error)
+	TestManaged(context.Context, string, weknora.Principal, http.Header) (managedmodel.TestResult, error)
 }
 
 type AgentScopeService interface {

@@ -19,6 +19,7 @@ for FILE in \
   "$ROOT/scripts/phase5-gate-a-probe.py" \
   "$ROOT/services/gateway/internal/managedmodel/service.go" \
   "$ROOT/services/gateway/internal/managedmodel/service_test.go" \
+  "$ROOT/tools/frontend-overlay/product/mindcreek/ManagedModelSettings.vue" \
   "$ROOT/tools/frontend-overlay/product/mindcreek/AdvancedModelSettings.vue" \
   "$ROOT/docs/PHASE5_GATE_A.md"; do
   [ -f "$FILE" ] || fail "missing ${FILE#$ROOT/}"
@@ -30,6 +31,7 @@ for MODEL_ID in builtin-mindcreek-chat builtin-mindcreek-embedding builtin-mindc
 done
 rg -q 'model_id: "builtin-mindcreek-chat"' "$ROOT/deploy/phase5/builtin_agents.yaml" || fail "Smart Reasoning chat default is missing"
 rg -q 'rerank_model_id: "builtin-mindcreek-rerank"' "$ROOT/deploy/phase5/builtin_agents.yaml" || fail "Smart Reasoning reranker is missing"
+rg -q 'id: "builtin-quick-answer"' "$ROOT/deploy/phase5/builtin_agents.yaml" || fail "Quick Answer managed profile is missing"
 rg -q '"user_model_overrides": false' "$ROOT/config/phase5-capabilities.json" || fail "secure override default is not false"
 rg -q '"user_model_overrides": true' "$ROOT/config/phase5-capabilities-overrides.json" || fail "explicit override opt-in registry is missing"
 rg -q 'MINDCREEK_MODEL_OVERRIDE_HOSTS' "$ROOT/services/gateway/internal/config/config.go" || fail "override host allow-list is missing"
@@ -37,6 +39,7 @@ rg -q 'SYSTEM_AES_KEY' "$ROOT/scripts/render-phase5-models.py" || fail "override
 rg -q 'Cache-Control.*no-store' "$ROOT/services/gateway/internal/server/models.go" || fail "safe model facade is cacheable"
 rg -q 'models.raw_route_disabled' "$ROOT/services/gateway/internal/server/models.go" || fail "raw upstream model mutations are not closed"
 rg -q 'getManagedModels' "$ROOT/tools/frontend-overlay/product/mindcreek/api.ts" || fail "safe frontend model facade is unused"
+rg -q 'testManagedModel' "$ROOT/tools/frontend-overlay/product/mindcreek/api.ts" || fail "managed model connection test is unavailable"
 ! rg -q "@/api/model" "$ROOT/tools/frontend-overlay/product/mindcreek/api.ts" || fail "product UI still imports the raw upstream model API"
 
 TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/mindcreek-phase5-static.XXXXXX")

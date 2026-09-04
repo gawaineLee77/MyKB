@@ -361,6 +361,16 @@ func TestManagedModelAdapterUsesNarrowContractAndWriteOnlyCredentialEndpoint(t *
 				return
 			}
 			_, _ = w.Write([]byte(`{"success":true,"data":{"available":true}}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/models/builtin-mindcreek-chat/debug":
+			if err := r.ParseMultipartForm(32 << 10); err != nil || r.FormValue("input") != "Reply with OK." {
+				http.Error(w, "invalid saved model test", http.StatusBadRequest)
+				return
+			}
+			if !strings.Contains(r.FormValue("options"), `"max_tokens":8`) {
+				http.Error(w, "unbounded saved model test", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"success":true,"data":{"ok":true,"elapsed_ms":31,"raw_response":{"content":"OK"},"observations":{"answer_characters":2}}}`))
 		case r.Method == http.MethodDelete && r.URL.Path == "/api/v1/models/override-1":
 			_, _ = w.Write([]byte(`{"success":true}`))
 		default:
@@ -395,6 +405,10 @@ func TestManagedModelAdapterUsesNarrowContractAndWriteOnlyCredentialEndpoint(t *
 	testResult, err := client.TestModel(context.Background(), ModelTestRequest{Type: "KnowledgeQA", ModelName: "chat", APIKey: secret}, headers)
 	if err != nil || !testResult.Available {
 		t.Fatalf("TestModel() = %+v, %v", testResult, err)
+	}
+	savedResult, err := client.TestSavedModel(context.Background(), "builtin-mindcreek-chat", "KnowledgeQA", headers)
+	if err != nil || !savedResult.Available || savedResult.ElapsedMS != 31 || savedResult.Message != "Managed model responded successfully" {
+		t.Fatalf("TestSavedModel() = %+v, %v", savedResult, err)
 	}
 	if err := client.DeleteModel(context.Background(), created.ID, headers); err != nil {
 		t.Fatal(err)

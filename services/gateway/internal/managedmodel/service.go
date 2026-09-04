@@ -42,6 +42,7 @@ type Upstream interface {
 	ReplaceModelCredential(context.Context, string, string, http.Header) error
 	DeleteModel(context.Context, string, http.Header) error
 	TestModel(context.Context, weknora.ModelTestRequest, http.Header) (weknora.ModelTestResult, error)
+	TestSavedModel(context.Context, string, string, http.Header) (weknora.ModelTestResult, error)
 }
 
 type Policy struct {
@@ -85,8 +86,10 @@ type OverrideInput struct {
 }
 
 type TestResult struct {
-	Available bool `json:"available"`
-	Dimension int  `json:"dimension,omitempty"`
+	Available bool   `json:"available"`
+	Dimension int    `json:"dimension,omitempty"`
+	ElapsedMS int64  `json:"elapsed_ms,omitempty"`
+	Message   string `json:"message,omitempty"`
 }
 
 type Service struct {
@@ -293,6 +296,48 @@ func (s *Service) TestOverride(ctx context.Context, input OverrideInput, modelID
 	return TestResult{Available: true, Dimension: result.Dimension}, nil
 }
 
+// TestManaged verifies one of the three deployment-owned defaults without
+// accepting provider configuration or returning model output. Testing causes
+// a real provider call, so it remains restricted to workspace administrators
+// even though the redacted model status is visible to every authenticated user.
+func (s *Service) TestManaged(ctx context.Context, id string, principal weknora.Principal, headers http.Header) (TestResult, error) {
+	if err := requireWorkspaceManager(principal); err != nil {
+		return TestResult{}, err
+	}
+	modelType, known := managedModelType(strings.TrimSpace(id))
+	if !known {
+		return TestResult{}, &Error{Code: "models.managed_not_found", Message: "Managed model not found", StatusCode: http.StatusNotFound}
+	}
+	models, err := s.upstream.ListModels(ctx, headers)
+	if err != nil {
+		return TestResult{}, unavailable(err)
+	}
+	ready := false
+	for _, model := range models {
+		if model.ID == id && model.Type == modelType && model.IsBuiltin && model.IsDefault && model.Status == "active" {
+			ready = true
+			break
+		}
+	}
+	if !ready {
+		return TestResult{}, &Error{Code: "models.managed_unavailable", Message: "Managed model is unavailable", StatusCode: http.StatusServiceUnavailable}
+	}
+
+	started := time.Now()
+	result, err := s.upstream.TestSavedModel(ctx, id, modelType, headers)
+	if err != nil || !result.Available {
+		s.record(ctx, principal, headers, "model.managed.test", agentaudit.OutcomeFailure, "models.test_failed", time.Since(started))
+		if err != nil {
+			return TestResult{}, unavailable(err)
+		}
+		return TestResult{Available: false, Dimension: result.Dimension, ElapsedMS: result.ElapsedMS, Message: "Managed model connection failed"}, nil
+	}
+	if err := s.record(ctx, principal, headers, "model.managed.test", agentaudit.OutcomeSuccess, "", time.Since(started)); err != nil {
+		return TestResult{}, &Error{Code: "audit.unavailable", Message: "Model audit is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
+	}
+	return TestResult{Available: true, Dimension: result.Dimension, ElapsedMS: result.ElapsedMS, Message: "Managed model responded successfully"}, nil
+}
+
 func (s *Service) ensureOverride(ctx context.Context, id string, headers http.Header) error {
 	if strings.TrimSpace(id) == "" || len(id) > 64 {
 		return &Error{Code: "models.override_not_found", Message: "Model override not found", StatusCode: http.StatusNotFound}
@@ -313,6 +358,10 @@ func (s *Service) requireManager(principal weknora.Principal) error {
 	if !s.policy.OverridesEnabled {
 		return &Error{Code: "models.overrides_disabled", Message: "Model overrides are disabled", StatusCode: http.StatusNotFound}
 	}
+	return requireWorkspaceManager(principal)
+}
+
+func requireWorkspaceManager(principal weknora.Principal) error {
 	if principal.User == nil || principal.Tenant == nil {
 		return &Error{Code: "auth.principal_invalid", Message: "Authenticated principal is invalid", StatusCode: http.StatusUnauthorized}
 	}
@@ -325,6 +374,19 @@ func (s *Service) requireManager(principal weknora.Principal) error {
 		}
 	}
 	return &Error{Code: "models.override_denied", Message: "Workspace model administration is required", StatusCode: http.StatusForbidden}
+}
+
+func managedModelType(id string) (string, bool) {
+	switch id {
+	case ManagedChatID:
+		return "KnowledgeQA", true
+	case ManagedEmbeddingID:
+		return "Embedding", true
+	case ManagedRerankID:
+		return "Rerank", true
+	default:
+		return "", false
+	}
 }
 
 func (s *Service) validateInput(input OverrideInput, requireKey bool) error {
@@ -362,6 +424,11 @@ func (s *Service) validateInput(input OverrideInput, requireKey bool) error {
 
 func managedDescriptor(model weknora.Model, id, name, modelType string) Descriptor {
 	available := model.ID == id && model.Type == modelType && model.IsBuiltin && model.IsDefault && model.Status == "active"
+	if available {
+		if configuredName := safeDisplayName(model); configuredName != "" {
+			name = configuredName
+		}
+	}
 	return Descriptor{ID: id, DisplayName: name, Type: modelType, Managed: true, Default: true, Available: available, Scope: "organization"}
 }
 

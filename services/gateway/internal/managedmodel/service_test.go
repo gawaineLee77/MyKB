@@ -17,6 +17,8 @@ type upstreamStub struct {
 	credential      string
 	deleted         string
 	tested          weknora.ModelTestRequest
+	testedSavedID   string
+	testedSavedType string
 	testResult      weknora.ModelTestResult
 	listErr         error
 	credentialError error
@@ -47,6 +49,11 @@ func (s *upstreamStub) TestModel(_ context.Context, request weknora.ModelTestReq
 	s.tested = request
 	return s.testResult, nil
 }
+func (s *upstreamStub) TestSavedModel(_ context.Context, id, modelType string, _ http.Header) (weknora.ModelTestResult, error) {
+	s.testedSavedID = id
+	s.testedSavedType = modelType
+	return s.testResult, nil
+}
 
 type auditStub struct{ events []agentaudit.Event }
 
@@ -65,6 +72,9 @@ func TestSnapshotIsRedactedAndRequiresExactManagedDefaults(t *testing.T) {
 	}
 	if !snapshot.Ready || len(snapshot.Defaults) != 3 || len(snapshot.Overrides) != 0 || snapshot.OverridesEnabled {
 		t.Fatalf("snapshot = %+v", snapshot)
+	}
+	if snapshot.Defaults[0].DisplayName != "production-chat" {
+		t.Fatalf("managed model name = %q", snapshot.Defaults[0].DisplayName)
 	}
 	for _, descriptor := range snapshot.Defaults {
 		if !descriptor.Managed || !descriptor.Default || !descriptor.Available || descriptor.Scope != "organization" {
@@ -182,6 +192,35 @@ func TestManagedDefaultsCannotBeMutatedThroughOverrideFacade(t *testing.T) {
 	}
 }
 
+func TestManagedDefaultConnectionTestIsAdminOnlyAndRedacted(t *testing.T) {
+	upstream := &upstreamStub{
+		models:     managedDefaults(),
+		testResult: weknora.ModelTestResult{Available: true, ElapsedMS: 37, Message: "upstream detail must not pass through"},
+	}
+	auditor := &auditStub{}
+	service := mustService(t, upstream, auditor, Policy{})
+
+	if _, err := service.TestManaged(context.Background(), ManagedChatID, principal("viewer"), requestHeaders()); err == nil {
+		t.Fatal("viewer started a cost-bearing managed model test")
+	} else {
+		assertCode(t, err, "models.override_denied", http.StatusForbidden)
+	}
+
+	result, err := service.TestManaged(context.Background(), ManagedChatID, principal("owner"), requestHeaders())
+	if err != nil || !result.Available || result.ElapsedMS != 37 || result.Message != "Managed model responded successfully" {
+		t.Fatalf("TestManaged() = %+v, %v", result, err)
+	}
+	if upstream.testedSavedID != ManagedChatID || upstream.testedSavedType != "KnowledgeQA" {
+		t.Fatalf("saved test = %q %q", upstream.testedSavedID, upstream.testedSavedType)
+	}
+	if len(auditor.events) != 1 || auditor.events[0].Operation != "model.managed.test" || auditor.events[0].Outcome != agentaudit.OutcomeSuccess {
+		t.Fatalf("audit events = %+v", auditor.events)
+	}
+
+	_, err = service.TestManaged(context.Background(), "not-managed", principal("owner"), requestHeaders())
+	assertCode(t, err, "models.managed_not_found", http.StatusNotFound)
+}
+
 func TestOverrideQuotaAndServicePolicyFailClosed(t *testing.T) {
 	if _, err := NewService(&upstreamStub{}, &auditStub{}, Policy{OverridesEnabled: true}); err == nil {
 		t.Fatal("enabled override service accepted empty allow-lists")
@@ -197,9 +236,9 @@ func TestOverrideQuotaAndServicePolicyFailClosed(t *testing.T) {
 
 func managedDefaults() []weknora.Model {
 	return []weknora.Model{
-		{ID: ManagedChatID, Type: "KnowledgeQA", IsBuiltin: true, IsDefault: true, Status: "active"},
-		{ID: ManagedEmbeddingID, Type: "Embedding", IsBuiltin: true, IsDefault: true, Status: "active"},
-		{ID: ManagedRerankID, Type: "Rerank", IsBuiltin: true, IsDefault: true, Status: "active"},
+		{ID: ManagedChatID, Name: "production-chat", Type: "KnowledgeQA", IsBuiltin: true, IsDefault: true, Status: "active"},
+		{ID: ManagedEmbeddingID, Name: "production-embedding", Type: "Embedding", IsBuiltin: true, IsDefault: true, Status: "active"},
+		{ID: ManagedRerankID, Name: "production-rerank", Type: "Rerank", IsBuiltin: true, IsDefault: true, Status: "active"},
 	}
 }
 
