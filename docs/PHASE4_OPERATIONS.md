@@ -53,6 +53,8 @@ Open `/platform/mindcreek/ask`. Default scope includes owned, explicitly shared,
 
 Quick Answer uses the model bound to each selected KB. To enable Smart Reasoning, an administrator must configure both a KnowledgeQA model and a Rerank model on WeKnora's built-in `builtin-smart-reasoning` agent. The Ask workspace keeps that mode disabled until both assignments are present.
 
+For conversation without RAG, create a custom agent, bind an available KnowledgeQA model, and set its knowledge-base selection mode to `none`. Only chat endpoints accept this empty knowledge scope. The gateway strips KB, document, tag, web-search, and per-request MCP selectors before forwarding the request, while still validating the authenticated agent and session. Empty requests without such an agent remain rejected.
+
 ## MCP clients
 
 Use `POST https://mindcreek.example/mcp` with the same Bearer token or approved API key used for MindCreek. The current protocol requires `MCP-Protocol-Version: 2026-07-28`, `Mcp-Method`, request `_meta`, and `Mcp-Name` for tool calls. MCP is read-only and rate-limited. Put TLS and the organization's authentication proxy in front of the frontend during Phase 5; do not expose the gateway container directly.

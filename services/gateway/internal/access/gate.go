@@ -293,15 +293,23 @@ func (g *Gate) resolveAuthorizedRetrievalScope(ctx context.Context, request *htt
 		return requestScope{}, &Error{Code: "agent.scope_invalid", Message: "Agent scope is invalid", StatusCode: http.StatusBadRequest}
 	}
 	selection := agentscope.SelectionExplicit
+	pureChat := false
 	if len(agentIDs) == 1 {
 		agentScope, resolveErr := g.resolver.AgentKnowledgeBases(ctx, agentIDs[0], request.Header)
 		if resolveErr != nil {
 			return requestScope{}, translateResolverError(resolveErr)
 		}
 		if len(requested) == 0 {
-			if agentScope.SelectionMode == "all" {
+			switch agentScope.SelectionMode {
+			case "all":
 				selection = agentscope.SelectionDefault
-			} else {
+			case "none":
+				// WeKnora supports a pure-chat pipeline. Permit it only when an
+				// authenticated conversation explicitly resolves an agent whose KB
+				// selection mode is none. Search and anonymous empty-scope requests
+				// remain fail-closed.
+				pureChat = isConversationStreamPath(request.URL.Path)
+			default:
 				requested = unique(agentScope.KnowledgeBaseIDs)
 			}
 		} else if agentScope.SelectionMode != "all" && !isSubset(requested, agentScope.KnowledgeBaseIDs) {
@@ -310,6 +318,27 @@ func (g *Gate) resolveAuthorizedRetrievalScope(ctx context.Context, request *htt
 		}
 	} else if len(requested) == 0 {
 		selection = agentscope.SelectionDefault
+	}
+	if pureChat {
+		delete(document, "knowledge_base_id")
+		document["knowledge_base_ids"] = []string{}
+		document["knowledge_ids"] = []string{}
+		document["tag_ids"] = []string{}
+		document["mentioned_items"] = []any{}
+		document["web_search_enabled"] = false
+		document["mcp_service_ids"] = []string{}
+		encoded, encodeErr := json.Marshal(document)
+		if encodeErr != nil {
+			return requestScope{}, &Error{Code: "request.invalid_json", Message: "Request body is not valid JSON", StatusCode: http.StatusBadRequest, Err: encodeErr}
+		}
+		request.Body = io.NopCloser(bytes.NewReader(encoded))
+		request.ContentLength = int64(len(encoded))
+		request.Header.Set("Content-Length", strconv.Itoa(len(encoded)))
+		if recordErr := g.recordAgentScope(ctx, request, identity, nil, agentaudit.OutcomeSuccess, "", time.Since(started)); recordErr != nil {
+			request.Body = io.NopCloser(bytes.NewReader(raw))
+			return requestScope{}, &Error{Code: "audit.unavailable", Message: "Agent audit is unavailable", StatusCode: http.StatusServiceUnavailable, Err: recordErr}
+		}
+		return requestScope{sessionIDs: discovered.sessionIDs}, nil
 	}
 
 	resolved, resolveErr := g.scopes.Resolve(ctx, agentscope.Request{Selection: selection, KnowledgeBaseIDs: requested},
@@ -901,6 +930,12 @@ func isUnifiedRetrievalPath(requestPath, method string) bool {
 	trimmed := strings.TrimSuffix(requestPath, "/")
 	return trimmed == "/api/v1/knowledge-search" ||
 		strings.HasPrefix(trimmed, "/api/v1/knowledge-chat/") ||
+		strings.HasPrefix(trimmed, "/api/v1/agent-chat/")
+}
+
+func isConversationStreamPath(requestPath string) bool {
+	trimmed := strings.TrimSuffix(requestPath, "/")
+	return strings.HasPrefix(trimmed, "/api/v1/knowledge-chat/") ||
 		strings.HasPrefix(trimmed, "/api/v1/agent-chat/")
 }
 

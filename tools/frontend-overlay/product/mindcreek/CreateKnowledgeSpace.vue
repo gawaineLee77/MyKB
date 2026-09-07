@@ -140,7 +140,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { createKnowledgeSpace, getCreationModels, getKnowledgeModeCapabilities, type ManagedModelDescriptor } from './api'
-import { buildKnowledgeSpaceRequest, isSelectionEnabled, type CapabilityDocument } from './contracts'
+import { buildKnowledgeSpaceRequest, createIdempotencyKey, isSelectionEnabled, type CapabilityDocument } from './contracts'
 
 const router = useRouter()
 const { locale } = useI18n()
@@ -245,7 +245,7 @@ async function submit() {
     const fingerprint = JSON.stringify(request)
     if (fingerprint !== requestFingerprint) {
       requestFingerprint = fingerprint
-      idempotencyKey = crypto.randomUUID()
+      idempotencyKey = createIdempotencyKey()
     }
     submitting.value = true
     const result = await createKnowledgeSpace(request, idempotencyKey)

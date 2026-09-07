@@ -1348,6 +1348,7 @@ Audit records contain actor, effective principal, action, target, timestamp, req
 
 - Implement the Authorized Scope Resolver.
 - Apply it to quick search, RAG, ReAct tools, Wiki tools, mentions, and citations.
+- Permit pure conversation without RAG only for an authenticated agent explicitly configured with no knowledge-base scope; such a request receives no document access or citations.
 - Expose the authenticated Streamable HTTP MCP endpoint and its initial read-only tools through the same resolver.
 - Add KB scope selection to Ask.
 - Add grounded answer and source-access tests.

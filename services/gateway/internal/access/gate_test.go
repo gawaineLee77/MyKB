@@ -2,6 +2,7 @@ package access
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -333,6 +334,104 @@ func TestPhase4FixedAgentCannotExpandConfiguredScope(t *testing.T) {
 	}
 	if len(scopeResolver.requests) != 0 || len(agentAudit.events) != 1 || agentAudit.events[0].Outcome != agentaudit.OutcomeDenied {
 		t.Fatalf("resolver requests = %+v, audit = %+v", scopeResolver.requests, agentAudit.events)
+	}
+}
+
+func TestPhase4PureChatAgentAllowsEmptyKnowledgeScope(t *testing.T) {
+	scopeResolver := &agentScopeResolverStub{}
+	agentAudit := &agentAuditRecorderStub{}
+	sessions := &sessionScopeStub{items: map[string][]string{}}
+	gate, err := NewPhase4Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}},
+		&fakeResolver{
+			agents:   map[string]weknora.AgentScope{"chat-only": {SelectionMode: "none"}},
+			sessions: map[string]bool{"session-1": true},
+		},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true }),
+		&decisionStub{roles: map[string]authorization.Role{}, errs: map[string]error{}}, sessions,
+		&auditRecorderStub{}, &revisionRecorderStub{}, &publicationLifecycleStub{}, scopeResolver, agentAudit,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodPost, "http://gateway/api/v1/knowledge-chat/session-1", `{"query":"hello","agent_id":"chat-only","summary_model_id":"builtin-mindcreek-chat","web_search_enabled":true,"mcp_service_ids":["external"]}`)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Request-ID", "request-pure-chat")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "alice", TenantID: 42}); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(request.Body)
+	var document map[string]any
+	if err := json.Unmarshal(body, &document); err != nil {
+		t.Fatal(err)
+	}
+	if document["agent_id"] != "chat-only" || document["summary_model_id"] != "builtin-mindcreek-chat" {
+		t.Fatalf("pure-chat identity/model were not preserved: %s", body)
+	}
+	for _, key := range []string{"knowledge_base_ids", "knowledge_ids", "tag_ids", "mentioned_items", "mcp_service_ids"} {
+		values, ok := document[key].([]any)
+		if !ok || len(values) != 0 {
+			t.Fatalf("%s was not forced empty: %s", key, body)
+		}
+	}
+	if enabled, ok := document["web_search_enabled"].(bool); !ok || enabled {
+		t.Fatalf("web search was not disabled: %s", body)
+	}
+	if len(scopeResolver.requests) != 0 {
+		t.Fatalf("pure chat unexpectedly invoked KB scope resolver: %+v", scopeResolver.requests)
+	}
+	if len(agentAudit.events) != 1 || agentAudit.events[0].Outcome != agentaudit.OutcomeSuccess || len(agentAudit.events[0].KnowledgeBaseIDs) != 0 {
+		t.Fatalf("pure-chat audit = %+v", agentAudit.events)
+	}
+	if len(sessions.items) != 0 {
+		t.Fatalf("pure chat recorded a KB session scope: %+v", sessions.items)
+	}
+}
+
+func TestPhase4PureChatAgentCannotInjectKnowledgeScope(t *testing.T) {
+	scopeResolver := &agentScopeResolverStub{}
+	agentAudit := &agentAuditRecorderStub{}
+	gate, err := NewPhase4Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}},
+		&fakeResolver{
+			agents:   map[string]weknora.AgentScope{"chat-only": {SelectionMode: "none"}},
+			sessions: map[string]bool{"session-1": true},
+		},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true }),
+		&decisionStub{roles: map[string]authorization.Role{}, errs: map[string]error{}}, nil,
+		&auditRecorderStub{}, &revisionRecorderStub{}, &publicationLifecycleStub{}, scopeResolver, agentAudit,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodPost, "http://gateway/api/v1/knowledge-chat/session-1", `{"query":"hello","agent_id":"chat-only","knowledge_base_ids":["private-kb"]}`)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Request-ID", "request-pure-chat-injection")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "alice", TenantID: 42}); errorCode(err) != "resource.not_found" {
+		t.Fatalf("knowledge injection error = %v", err)
+	}
+	if len(scopeResolver.requests) != 0 || len(agentAudit.events) != 1 || agentAudit.events[0].Outcome != agentaudit.OutcomeDenied {
+		t.Fatalf("resolver requests = %+v, audit = %+v", scopeResolver.requests, agentAudit.events)
+	}
+}
+
+func TestPhase4EmptyRequestWithoutPureChatAgentStillFails(t *testing.T) {
+	scopeResolver := &agentScopeResolverStub{result: agentscope.Result{Selection: agentscope.SelectionDefault}}
+	gate, err := NewPhase4Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}},
+		&fakeResolver{sessions: map[string]bool{"session-1": true}},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true }),
+		&decisionStub{roles: map[string]authorization.Role{}, errs: map[string]error{}}, nil,
+		&auditRecorderStub{}, &revisionRecorderStub{}, &publicationLifecycleStub{}, scopeResolver, &agentAuditRecorderStub{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := mustRequest(http.MethodPost, "http://gateway/api/v1/knowledge-chat/session-1", `{"query":"hello"}`)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Request-ID", "request-empty-rag")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "alice", TenantID: 42}); errorCode(err) != "agent.scope_empty" {
+		t.Fatalf("empty RAG request error = %v", err)
 	}
 }
 

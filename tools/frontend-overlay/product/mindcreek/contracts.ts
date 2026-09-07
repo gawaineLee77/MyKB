@@ -67,6 +67,49 @@ export interface KnowledgeSpaceRequest {
   storage_provider: 'local'
 }
 
+type BrowserCrypto = {
+  randomUUID?: unknown
+  getRandomValues?: unknown
+}
+
+let fallbackIdempotencySequence = 0
+
+/**
+ * Create an ASCII idempotency key on HTTPS, HTTP LAN deployments, and older
+ * browsers. randomUUID is restricted to secure contexts in some engines,
+ * while getRandomValues remains widely available.
+ */
+export function createIdempotencyKey(
+  source: BrowserCrypto | null = typeof globalThis.crypto === 'undefined' ? null : globalThis.crypto,
+  now = Date.now(),
+  random = Math.random,
+): string {
+  if (typeof source?.randomUUID === 'function') {
+    try {
+      return source.randomUUID.call(source)
+    } catch {
+      // Fall through when a browser exposes the method but blocks this origin.
+    }
+  }
+
+  if (typeof source?.getRandomValues === 'function') {
+    try {
+      const bytes = new Uint8Array(16)
+      source.getRandomValues.call(source, bytes)
+      bytes[6] = (bytes[6] & 0x0f) | 0x40
+      bytes[8] = (bytes[8] & 0x3f) | 0x80
+      const hex = Array.from(bytes, value => value.toString(16).padStart(2, '0'))
+      return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10).join('')}`
+    } catch {
+      // A non-cryptographic key is sufficient for retry deduplication.
+    }
+  }
+
+  fallbackIdempotencySequence += 1
+  const randomPart = Math.floor(random() * Number.MAX_SAFE_INTEGER).toString(36)
+  return `mc-${now.toString(36)}-${fallbackIdempotencySequence.toString(36)}-${randomPart}`
+}
+
 export function isSelectionEnabled(
   document: CapabilityDocument,
   mode: KnowledgeSpaceDraft['mode'],

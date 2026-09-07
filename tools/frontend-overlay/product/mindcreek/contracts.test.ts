@@ -3,11 +3,32 @@ import test from 'node:test'
 
 import {
   buildKnowledgeSpaceRequest,
+  createIdempotencyKey,
   isSelectionEnabled,
   permissionAffordances,
   publicationAffordances,
   type CapabilityDocument,
 } from './contracts.ts'
+
+test('creates idempotency keys when randomUUID is available', () => {
+  assert.equal(createIdempotencyKey({ randomUUID: () => 'native-uuid-value' }), 'native-uuid-value')
+})
+
+test('falls back to UUID v4 bytes when randomUUID is unavailable', () => {
+  const key = createIdempotencyKey({
+    getRandomValues: (values: Uint8Array) => {
+      values.fill(0xab)
+      return values
+    },
+  })
+  assert.match(key, /^abababab-abab-4bab-abab-abababababab$/)
+})
+
+test('creates a valid retry key without browser crypto', () => {
+  const key = createIdempotencyKey(null, 1_700_000_000_000, () => 0.5)
+  assert.match(key, /^mc-[a-z0-9]+-[a-z0-9]+-[a-z0-9]+$/)
+  assert.ok(key.length >= 8 && key.length <= 128)
+})
 
 const capabilities: CapabilityDocument = {
   schema_version: 1,

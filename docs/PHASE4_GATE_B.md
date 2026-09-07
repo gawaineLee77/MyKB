@@ -9,7 +9,7 @@
 
 ## Delivered behavior
 
-The product gateway applies the same authorized scope to cross-KB search, quick RAG, ReAct, fixed custom agents, KB/file mentions, and continued sessions. It rejects fixed-agent scope expansion, validates non-streaming search results against the resolved IDs, and requires fresh authorization whenever a source chunk is opened. WeKnora still performs retrieval and answer generation.
+The product gateway applies the same authorized scope to cross-KB search, quick RAG, ReAct, fixed custom agents, KB/file mentions, and continued sessions. It rejects fixed-agent scope expansion, validates non-streaming search results against the resolved IDs, and requires fresh authorization whenever a source chunk is opened. An authenticated chat agent explicitly configured with `kb_selection_mode: none` may instead use WeKnora's pure-chat pipeline; the gateway removes knowledge selectors and does not grant that request access to any KB. WeKnora still performs retrieval and answer generation.
 
 The product-owned Ask workspace exposes default and explicit KB selection, Quick Answer and Smart Reasoning modes, streaming state, and source links. Owned, shared, and subscribed knowledge is initially selected. Organization-public catalog items are displayed separately and never selected implicitly.
 
