@@ -99,6 +99,35 @@ func TestProductIngestionRoutesValidateAuthAndPagination(t *testing.T) {
 	assertErrorCode(t, recorder, http.StatusBadRequest, "ingestion.invalid_request")
 }
 
+func TestProductIngestionRouteReportsConfiguredSizeLimit(t *testing.T) {
+	service := &ingestionServiceStub{}
+	cfg := testConfig(t)
+	cfg.MaxFileSizeMB = 1
+	handler := NewGateway(cfg, nil, nil, Dependencies{Principals: trustedTestPrincipal, Ingestions: service})
+
+	var upload bytes.Buffer
+	writer := multipart.NewWriter(&upload)
+	part, err := writer.CreateFormFile("file", "oversized.pdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := part.Write(bytes.Repeat([]byte("x"), (1<<20)+1)); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/knowledge-bases/kb-rag/ingestions", &upload)
+	request.Header.Set("Authorization", "Bearer test")
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	assertErrorCode(t, recorder, http.StatusRequestEntityTooLarge, "ingestion.file_size_exceeded")
+	if service.lastAction != "" {
+		t.Fatalf("oversized upload reached ingestion service: %+v", service)
+	}
+}
+
 func ingestionFixture(kbID string) weknora.Knowledge {
 	return weknora.Knowledge{ID: "doc-1", KnowledgeBaseID: kbID, Type: "file", FileName: "guide.pdf", FileSize: 13, ParseStatus: "pending"}
 }

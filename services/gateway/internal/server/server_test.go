@@ -36,6 +36,7 @@ func testConfig(t *testing.T) config.Config {
 		UpstreamURL:     u,
 		UpstreamVersion: "v0.7.2",
 		UpstreamTimeout: time.Second,
+		MaxFileSizeMB:   200,
 	}
 }
 

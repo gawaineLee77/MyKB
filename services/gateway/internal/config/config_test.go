@@ -6,16 +6,33 @@ func TestLoadDefaults(t *testing.T) {
 	t.Setenv("MINDCREEK_LISTEN_ADDR", "")
 	t.Setenv("MINDCREEK_UPSTREAM_URL", "")
 	t.Setenv("MINDCREEK_UPSTREAM_TIMEOUT", "")
+	t.Setenv("MAX_FILE_SIZE_MB", "")
 
 	cfg, err := Load("test-version")
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
-	if cfg.ListenAddr != ":8080" || cfg.ProductVersion != "test-version" {
+	if cfg.ListenAddr != ":8080" || cfg.ProductVersion != "test-version" || cfg.MaxFileSizeMB != 200 {
 		t.Fatalf("unexpected defaults: %+v", cfg)
 	}
 	if got := cfg.UpstreamURL.String(); got != "http://app:8080" {
 		t.Fatalf("UpstreamURL = %q", got)
+	}
+}
+
+func TestLoadValidatesMaxFileSize(t *testing.T) {
+	t.Setenv("MAX_FILE_SIZE_MB", "128")
+	cfg, err := Load("test-version")
+	if err != nil || cfg.MaxFileSizeMB != 128 {
+		t.Fatalf("MAX_FILE_SIZE_MB config = %+v, %v", cfg, err)
+	}
+	for _, invalid := range []string{"0", "201", "not-a-number"} {
+		t.Run(invalid, func(t *testing.T) {
+			t.Setenv("MAX_FILE_SIZE_MB", invalid)
+			if _, err := Load("test-version"); err == nil {
+				t.Fatalf("Load() accepted MAX_FILE_SIZE_MB=%q", invalid)
+			}
+		})
 	}
 }
 

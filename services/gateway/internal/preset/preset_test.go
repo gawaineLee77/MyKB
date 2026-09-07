@@ -16,7 +16,8 @@ func TestPlainRAGPresetIsReproducibleAndFutureProfilesAreOff(t *testing.T) {
 	if definition.Config.ProfileID != "plain" || definition.Config.ProfileVersion != 1 ||
 		!request.IndexingStrategy.VectorEnabled || !request.IndexingStrategy.KeywordEnabled ||
 		request.IndexingStrategy.GraphEnabled || request.IndexingStrategy.WikiEnabled ||
-		definition.Config.Retrieval.RerankEnabled || request.StorageProviderConfig.Provider != "local" {
+		definition.Config.Retrieval.RerankEnabled || request.StorageProviderConfig.Provider != "local" ||
+		definition.Config.Limits.MaxFileBytes != MaxRAGFileBytes {
 		t.Fatalf("unexpected preset: %+v request=%+v", definition, request)
 	}
 	first, _ := definition.JSON()
@@ -28,7 +29,7 @@ func TestPlainRAGPresetIsReproducibleAndFutureProfilesAreOff(t *testing.T) {
 
 func TestPersonalNotesUsesSmallerApprovedBudget(t *testing.T) {
 	definition, err := Build(profile.ModePersonalNotes, "embedding-1", "")
-	if err != nil || definition.Config.ProfileID != "notes_plain" || definition.Config.Limits.MaxFileBytes != 64<<10 {
+	if err != nil || definition.Config.ProfileID != "notes_plain" || definition.Config.Limits.MaxFileBytes != MaxNoteFileBytes {
 		t.Fatalf("Build() = %+v, %v", definition, err)
 	}
 }

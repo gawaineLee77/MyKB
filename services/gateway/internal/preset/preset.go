@@ -9,7 +9,13 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
 )
 
-const Version = 1
+const (
+	Version          = 1
+	MaxRAGFileBytes  = int64(200 << 20)
+	MaxRAGFiles      = 1000
+	MaxNoteFileBytes = int64(64 << 10)
+	MaxPersonalNotes = 500
+)
 
 type Models struct {
 	EmbeddingModelID string `json:"embedding_model_id"`
@@ -67,7 +73,7 @@ func BuildWithRerank(mode profile.ProductMode, embeddingModelID, summaryModelID,
 			Storage:        weknora.StorageProviderConfig{Provider: "local"},
 			Indexing:       weknora.IndexingStrategy{VectorEnabled: true, KeywordEnabled: true},
 			Models:         Models{EmbeddingModelID: embeddingModelID, SummaryModelID: summaryModelID, RerankModelID: rerankModelID},
-			Limits:         Limits{MaxFileBytes: 50 << 20, MaxFiles: 1000},
+			Limits:         Limits{MaxFileBytes: MaxRAGFileBytes, MaxFiles: MaxRAGFiles},
 		},
 	}
 	definition.Config.Chunking.Separators = []string{"\n\n", "\n", "。", ". "}
@@ -79,7 +85,7 @@ func BuildWithRerank(mode profile.ProductMode, embeddingModelID, summaryModelID,
 		definition.Config.Chunking.ChunkOverlap = 80
 		definition.Config.Chunking.Strategy = "heading"
 		definition.Config.Retrieval = Retrieval{Mode: "hybrid", VectorTopK: 12, KeywordTopK: 12, FinalTopK: 8, RerankEnabled: rerankModelID != "", RerankModelID: rerankModelID}
-		definition.Config.Limits = Limits{MaxFileBytes: 64 << 10, MaxFiles: 500}
+		definition.Config.Limits = Limits{MaxFileBytes: MaxNoteFileBytes, MaxFiles: MaxPersonalNotes}
 	case profile.ModeRAG:
 		definition.AccessPolicy = profile.PolicyUpstream
 		definition.Config.ProfileID = "plain"

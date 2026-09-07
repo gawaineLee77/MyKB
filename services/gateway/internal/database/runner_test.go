@@ -37,8 +37,8 @@ func TestEmbeddedMigrationsIncludeCurrentProductSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(migrations) != 10 {
-		t.Fatalf("embedded migration count = %d, want 10", len(migrations))
+	if len(migrations) != 11 {
+		t.Fatalf("embedded migration count = %d, want 11", len(migrations))
 	}
 	grantMigration := migrations[5]
 	if grantMigration.Version != 6 || grantMigration.Name != "kb_access_grants" {
@@ -89,5 +89,11 @@ func TestEmbeddedMigrationsIncludeCurrentProductSchema(t *testing.T) {
 		if !strings.Contains(identityMigration.UpSQL, required) {
 			t.Errorf("Phase 5 identity migration is missing %q", required)
 		}
+	}
+	uploadLimitMigration := migrations[10]
+	if uploadLimitMigration.Version != 11 || uploadLimitMigration.Name != "rag_upload_limit" ||
+		!strings.Contains(uploadLimitMigration.UpSQL, "209715200") ||
+		!strings.Contains(uploadLimitMigration.DownSQL, "52428800") {
+		t.Fatalf("RAG upload-limit migration = %+v", uploadLimitMigration)
 	}
 }

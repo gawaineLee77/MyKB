@@ -18,6 +18,8 @@ const (
 	defaultRoutePolicyFile  = "config/phase1-route-policy.json"
 	defaultRouteActionsFile = "config/phase2-route-actions.json"
 	defaultCapabilitiesFile = "config/phase4-capabilities.json"
+	defaultMaxFileSizeMB    = int64(200)
+	maxAllowedFileSizeMB    = int64(200)
 )
 
 // Config contains only process and upstream-connection settings.
@@ -31,6 +33,7 @@ type Config struct {
 	RouteActionsFile       string
 	CapabilitiesFile       string
 	DatabaseURL            string
+	MaxFileSizeMB          int64
 	ModelOverrideProviders map[string]bool
 	ModelOverrideHosts     map[string]bool
 	ModelOverrideAllowHTTP bool
@@ -119,6 +122,12 @@ func Load(buildVersion string) (Config, error) {
 		return Config{}, fmt.Errorf("MINDCREEK_UPSTREAM_TIMEOUT must be a positive duration")
 	}
 	cfg.UpstreamTimeout = timeout
+
+	maxFileSizeMB, err := strconv.ParseInt(value("MAX_FILE_SIZE_MB", strconv.FormatInt(defaultMaxFileSizeMB, 10)), 10, 64)
+	if err != nil || maxFileSizeMB < 1 || maxFileSizeMB > maxAllowedFileSizeMB {
+		return Config{}, fmt.Errorf("MAX_FILE_SIZE_MB must be an integer between 1 and %d", maxAllowedFileSizeMB)
+	}
+	cfg.MaxFileSizeMB = maxFileSizeMB
 
 	cfg.ModelOverrideProviders = csvSet(value("MINDCREEK_MODEL_OVERRIDE_PROVIDERS", "generic,openai"))
 	cfg.ModelOverrideHosts = csvSet(optionalValue("MINDCREEK_MODEL_OVERRIDE_HOSTS"))

@@ -205,7 +205,7 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 		})
 	}
 	registerNoteRoutes(mux, dependencies)
-	registerIngestionRoutes(mux, dependencies)
+	registerIngestionRoutes(mux, dependencies, cfg.MaxFileSizeMB)
 	registerSharingRoutes(mux, dependencies)
 	registerPublicationRoutes(mux, dependencies)
 	registerAgentRoutes(mux, dependencies)

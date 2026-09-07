@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
@@ -9,16 +10,23 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ingestion"
 )
 
-const maxIngestionRequestBytes = (50 << 20) + (1 << 20)
+const multipartRequestOverheadBytes = 1 << 20
 
-func registerIngestionRoutes(mux *http.ServeMux, dependencies Dependencies) {
+func registerIngestionRoutes(mux *http.ServeMux, dependencies Dependencies, maxFileSizeMB int64) {
+	maxFileBytes := maxFileSizeMB << 20
+	maxRequestBytes := maxFileBytes + multipartRequestOverheadBytes
 	mux.HandleFunc("POST /api/v1/knowledge-bases/{kb_id}/ingestions", func(w http.ResponseWriter, r *http.Request) {
 		identity, ok := resolveIngestionIdentity(w, r, dependencies)
 		if !ok {
 			return
 		}
-		r.Body = http.MaxBytesReader(w, r.Body, maxIngestionRequestBytes)
+		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBytes)
 		if err := r.ParseMultipartForm(2 << 20); err != nil {
+			var maxBytesError *http.MaxBytesError
+			if errors.As(err, &maxBytesError) {
+				writeIngestionUploadTooLarge(w, r, maxFileSizeMB)
+				return
+			}
 			apierror.Write(w, http.StatusBadRequest, "ingestion.upload_invalid", "A valid document file is required", requestID(r))
 			return
 		}
@@ -31,6 +39,10 @@ func registerIngestionRoutes(mux *http.ServeMux, dependencies Dependencies) {
 			return
 		}
 		defer file.Close()
+		if header.Size > maxFileBytes {
+			writeIngestionUploadTooLarge(w, r, maxFileSizeMB)
+			return
+		}
 		result, err := dependencies.Ingestions.Upload(r.Context(), r.PathValue("kb_id"), header.Filename, header.Size, file, identity, r.Header)
 		if err != nil {
 			writeIngestionError(w, r, err)
@@ -81,6 +93,11 @@ func registerIngestionRoutes(mux *http.ServeMux, dependencies Dependencies) {
 	registerIngestionMutation(mux, dependencies, "cancel", func(r *http.Request, identity access.Identity) (any, error) {
 		return dependencies.Ingestions.Cancel(r.Context(), r.PathValue("kb_id"), r.PathValue("ingestion_id"), identity, r.Header)
 	})
+}
+
+func writeIngestionUploadTooLarge(w http.ResponseWriter, r *http.Request, maxFileSizeMB int64) {
+	apierror.Write(w, http.StatusRequestEntityTooLarge, "ingestion.file_size_exceeded",
+		fmt.Sprintf("File exceeds the configured upload limit of %d MiB", maxFileSizeMB), requestID(r))
 }
 
 func registerIngestionMutation(mux *http.ServeMux, dependencies Dependencies, action string, operation func(*http.Request, access.Identity) (any, error)) {
