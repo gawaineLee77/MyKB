@@ -38,6 +38,6 @@ COPY upstream/weknora/frontend/docker-entrypoint.sh /docker-entrypoint.sh
 COPY upstream/weknora/LICENSE /usr/share/licenses/MindCreek/WeKnora-LICENSE
 RUN chmod +x /docker-entrypoint.sh
 
-ENV MAX_FILE_SIZE_MB=50
+ENV MAX_FILE_SIZE_MB=200
 EXPOSE 80
 ENTRYPOINT ["/docker-entrypoint.sh"]

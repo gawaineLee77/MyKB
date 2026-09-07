@@ -55,6 +55,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_MB } from '@/utils'
 
 import { cancelRAGDocument, getKnowledgeAccess, listRAGDocuments, retryRAGDocument, uploadRAGDocument, type KnowledgeAccess, type RAGDocument, type RAGDocumentPage } from './api'
 
@@ -75,8 +76,8 @@ const page = reactive<RAGDocumentPage>({ items: [], total: 0, page: 1, page_size
 let pollTimer: number | undefined
 
 const words = {
-  en: { back: 'Knowledge bases', title: 'Document knowledge base', subtitle: 'Upload documents and let WeKnora parse, chunk, and index them for hybrid retrieval.', details: 'Advanced view', ask: 'Ask this KB', upload: 'Drop documents here', formats: 'Markdown, text, PDF, Office, CSV, HTML, JSON or XML · up to 50 MiB each', choose: 'Choose files', uploading: 'Uploading…', documents: 'Documents', files: 'files', refresh: 'Refresh', loading: 'Loading documents…', retry: 'Retry', empty: 'No documents yet', emptyHint: 'An owner or editor can upload a file to start building this knowledge base.', document: 'Document', size: 'Size', status: 'Status', updated: 'Updated', actions: 'Actions', cancel: 'Cancel', preset: 'Managed Plain RAG preset', presetHint: 'Vector + keyword indexing, local storage, GraphRAG and Wiki generation disabled.', viewOnly: 'Viewer access', viewOnlyHint: 'You can read documents, search, chat, and open citations. Content and configuration controls are hidden.', owner: 'Owner', editor: 'Editor', viewer: 'Viewer' },
-  zh: { back: '知识库', title: '文档知识库', subtitle: '上传文档，由 WeKnora 完成解析、切分与索引，用于混合检索。', details: '高级视图', ask: '向知识库提问', upload: '拖放文档到这里', formats: '支持 Markdown、文本、PDF、Office、CSV、HTML、JSON 或 XML · 单文件不超过 50 MiB', choose: '选择文件', uploading: '正在上传…', documents: '文档', files: '个文件', refresh: '刷新', loading: '正在加载文档…', retry: '重试', empty: '暂无文档', emptyHint: '所有者或编辑者可以上传文件以开始构建知识库。', document: '文档', size: '大小', status: '状态', updated: '更新时间', actions: '操作', cancel: '取消', preset: '受管控的 Plain RAG 预设', presetHint: '向量 + 关键词索引、本地存储；GraphRAG 与 Wiki 生成功能保持关闭。', viewOnly: '查看者权限', viewOnlyHint: '你可以读取文档、检索、聊天并打开引用；内容与配置控件已隐藏。', owner: '所有者', editor: '编辑者', viewer: '查看者' },
+  en: { back: 'Knowledge bases', title: 'Document knowledge base', subtitle: 'Upload documents and let WeKnora parse, chunk, and index them for hybrid retrieval.', details: 'Advanced view', ask: 'Ask this KB', upload: 'Drop documents here', formats: `Markdown, text, PDF, Office, CSV, HTML, JSON or XML · up to ${MAX_FILE_SIZE_MB} MiB each`, tooLarge: `File must not exceed ${MAX_FILE_SIZE_MB} MiB`, choose: 'Choose files', uploading: 'Uploading…', documents: 'Documents', files: 'files', refresh: 'Refresh', loading: 'Loading documents…', retry: 'Retry', empty: 'No documents yet', emptyHint: 'An owner or editor can upload a file to start building this knowledge base.', document: 'Document', size: 'Size', status: 'Status', updated: 'Updated', actions: 'Actions', cancel: 'Cancel', preset: 'Managed Plain RAG preset', presetHint: 'Vector + keyword indexing, local storage, GraphRAG and Wiki generation disabled.', viewOnly: 'Viewer access', viewOnlyHint: 'You can read documents, search, chat, and open citations. Content and configuration controls are hidden.', owner: 'Owner', editor: 'Editor', viewer: 'Viewer' },
+  zh: { back: '知识库', title: '文档知识库', subtitle: '上传文档，由 WeKnora 完成解析、切分与索引，用于混合检索。', details: '高级视图', ask: '向知识库提问', upload: '拖放文档到这里', formats: `支持 Markdown、文本、PDF、Office、CSV、HTML、JSON 或 XML · 单文件不超过 ${MAX_FILE_SIZE_MB} MiB`, tooLarge: `文件不得超过 ${MAX_FILE_SIZE_MB} MiB`, choose: '选择文件', uploading: '正在上传…', documents: '文档', files: '个文件', refresh: '刷新', loading: '正在加载文档…', retry: '重试', empty: '暂无文档', emptyHint: '所有者或编辑者可以上传文件以开始构建知识库。', document: '文档', size: '大小', status: '状态', updated: '更新时间', actions: '操作', cancel: '取消', preset: '受管控的 Plain RAG 预设', presetHint: '向量 + 关键词索引、本地存储；GraphRAG 与 Wiki 生成功能保持关闭。', viewOnly: '查看者权限', viewOnlyHint: '你可以读取文档、检索、聊天并打开引用；内容与配置控件已隐藏。', owner: '所有者', editor: '编辑者', viewer: '查看者' },
 }
 const text = computed(() => locale.value.startsWith('zh') ? words.zh : words.en)
 
@@ -113,6 +114,10 @@ async function uploadFiles(files: FileList | File[]) {
   operationError.value = ''
   const failures: string[] = []
   for (const file of Array.from(files)) {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      failures.push(`${file.name}: ${text.value.tooLarge}`)
+      continue
+    }
     try { await uploadRAGDocument(kbId.value, file) }
     catch (error) { failures.push(`${file.name}: ${messageOf(error)}`) }
   }

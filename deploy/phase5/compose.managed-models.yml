@@ -1,6 +1,8 @@
 services:
   frontend:
     image: ${MINDCREEK_PHASE5_UI_IMAGE:-mindcreek-ui:phase5}
+    environment:
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-200}
     build:
       args:
         MINDCREEK_UI_VERSION: ${MINDCREEK_UI_VERSION:-0.6.0}
@@ -25,6 +27,7 @@ services:
 
   app:
     environment:
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-200}
       BUILTIN_MODELS_CONFIG: /app/config/builtin_models.yaml
       MINDCREEK_MANAGED_LLM_NAME: ${MINDCREEK_MANAGED_LLM_NAME:-mindcreek-test-chat}
       MINDCREEK_MANAGED_LLM_BASE_URL: ${MINDCREEK_MANAGED_LLM_BASE_URL:-http://mock-embedding:19090/v1}
@@ -41,3 +44,8 @@ services:
     volumes:
       - ../../.local/phase5/builtin_models.yaml:/app/config/builtin_models.yaml:ro
       - ../../deploy/phase5/builtin_agents.yaml:/app/config/builtin_agents.yaml:ro
+
+  docreader:
+    environment:
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-200}
+      DOCREADER_GRPC_MAX_FILE_SIZE_MB: ${DOCREADER_GRPC_MAX_FILE_SIZE_MB:-${MAX_FILE_SIZE_MB:-200}}

@@ -24,6 +24,8 @@ The vulnerability gate uses Docker Scout and may transmit runtime-image PURLs an
 
 Install the TLS certificate/key and protected `.local/mindcreek.env`, set `MINDCREEK_DEPLOYMENT_ENV=production`, enable corporate identity, configure its HTTPS authorization/token/UserInfo endpoints and five-field mapping, and provide approved HTTPS model endpoints. Register the exact external origin as the corporate redirect URI:
 
+MindCreek permits knowledge files up to 200 MiB by default. Set `MAX_FILE_SIZE_MB=200` in `.local/mindcreek.env` (or choose a smaller organization limit); Compose applies it consistently to the browser, edge Nginx, App, and Docreader. Leave `DOCREADER_GRPC_MAX_FILE_SIZE_MB` blank to inherit the same value.
+
 ```text
 https://<mindcreek-host>
 ```

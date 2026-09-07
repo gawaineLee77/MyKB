@@ -11,7 +11,7 @@
 
 MindCreek owns the mode, policy, preset, limits, and UI; it does not fork or replace WeKnora's RAG engine. A stored `plain` profile deterministically reproduces chunking, local storage, model selection, indexing, and retrieval settings. The gateway validates this profile before accepting a document and then delegates parsing, chunking, indexing, retry, and cancellation upstream.
 
-The Stage 2 RAG workspace supports Markdown, text, PDF, Word, spreadsheet, presentation, CSV, HTML, JSON, and XML files up to 50 MiB. It displays queue/processing/final states, failure details, retry, cancel, native advanced view, and normal chat.
+The Stage 2 RAG workspace supports Markdown, text, PDF, Word, spreadsheet, presentation, CSV, HTML, JSON, and XML files. MindCreek defaults to 200 MiB per file; operators can change `MAX_FILE_SIZE_MB` at deployment time. The shared value configures the browser, edge Nginx, WeKnora App, and Docreader. The workspace displays queue/processing/final states, failure details, retry, cancel, native advanced view, and normal chat.
 
 The live Gate D probe generates synthetic Markdown, PDF, DOCX, and XLSX fixtures. All reach `completed`; retry and cancel are exercised. Exact English and Chinese sentinel queries pass hybrid retrieval and normal chat. Returned references are authorized and open successfully through both document and chunk APIs.
 
