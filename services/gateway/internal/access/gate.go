@@ -231,10 +231,18 @@ func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, iden
 		}
 	}
 	resolvedKBIDs := unique(kbIDs)
+	kbAction := action
+	if isAgentMutationPath(request.Method, request.URL.Path) {
+		// Binding knowledge to an agent consumes that knowledge; it does not
+		// configure the KB itself. The upstream agent endpoint remains
+		// responsible for agent ownership, while MindCreek verifies that every
+		// explicitly selected KB is readable by the caller.
+		kbAction = authorization.ActionRead
+	}
 	for _, kbID := range resolvedKBIDs {
 		var err error
 		if g.decisions != nil {
-			err = g.authorizeKBAction(ctx, kbID, identity, action, request)
+			err = g.authorizeKBAction(ctx, kbID, identity, kbAction, request)
 		} else {
 			err = g.authorizeKB(ctx, kbID, identity, operation)
 		}
@@ -557,7 +565,7 @@ func (g *Gate) resolvePathKBIDs(ctx context.Context, request *http.Request) ([]s
 			return one(kbID), translateResolverError(err)
 		}
 	case "agents":
-		if len(segments) >= 4 && !isAgentCollectionPath(segments[3]) {
+		if len(segments) >= 4 && !isAgentCollectionPath(segments[3]) && !isAgentMutationPath(request.Method, request.URL.Path) {
 			scope, err := g.resolver.AgentKnowledgeBases(ctx, segments[3], request.Header)
 			return scope.KnowledgeBaseIDs, translateResolverError(err)
 		}
@@ -577,6 +585,23 @@ func (g *Gate) resolvePathKBIDs(ctx context.Context, request *http.Request) ([]s
 		}
 	}
 	return nil, nil
+}
+
+func isAgentMutationPath(method, requestPath string) bool {
+	segments := splitPath(requestPath)
+	if len(segments) < 3 || segments[0] != "api" || segments[1] != "v1" || segments[2] != "agents" {
+		return false
+	}
+	switch {
+	case method == http.MethodPost && len(segments) == 3:
+		return true
+	case (method == http.MethodPut || method == http.MethodDelete) && len(segments) == 4:
+		return !isAgentCollectionPath(segments[3])
+	case method == http.MethodPost && len(segments) == 5 && segments[4] == "copy":
+		return !isAgentCollectionPath(segments[3])
+	default:
+		return false
+	}
 }
 
 func (g *Gate) authorizeKB(ctx context.Context, kbID string, identity Identity, operation notespolicy.Operation) error {

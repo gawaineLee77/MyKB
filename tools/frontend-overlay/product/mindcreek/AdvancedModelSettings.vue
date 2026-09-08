@@ -47,7 +47,7 @@
         <form class="form" @submit.prevent="save">
           <label><span>{{ text.displayName }}</span><input v-model.trim="form.display_name" maxlength="128" required /></label>
           <label><span>{{ text.modelName }}</span><input v-model.trim="form.name" maxlength="128" required autocomplete="off" /></label>
-          <label><span>{{ text.type }}</span><select v-model="form.type" :disabled="Boolean(editingId)"><option value="KnowledgeQA">KnowledgeQA</option><option value="Embedding">Embedding</option><option value="Rerank">Rerank</option></select></label>
+          <label><span>{{ text.type }}</span><select v-model="form.type" :disabled="Boolean(editingId)"><option value="KnowledgeQA">KnowledgeQA</option><option value="Embedding">Embedding</option><option value="Rerank">Rerank</option><option value="VLLM">VLLM (Vision / OCR)</option></select></label>
           <label><span>{{ text.provider }}</span><select v-model="form.provider"><option value="generic">generic</option><option value="openai">openai</option></select></label>
           <label class="wide"><span>{{ text.endpoint }}</span><input v-model.trim="form.base_url" type="url" placeholder="https://provider.example/v1" required autocomplete="off" /></label>
           <label class="wide"><span>{{ editingId ? text.newKey : text.key }}</span><input v-model="form.api_key" type="password" :required="!editingId" autocomplete="new-password" /></label>

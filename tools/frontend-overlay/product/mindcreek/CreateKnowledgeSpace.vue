@@ -87,6 +87,9 @@
         <div v-else class="mc-inline-warning">
           <t-icon name="info-circle" /> {{ text.managedUnavailable }}
         </div>
+        <div v-if="draft.mode === 'rag' && !models.vlm.length" class="mc-inline-warning">
+          <t-icon name="image" /> {{ text.scannedPdfUnavailable }}
+        </div>
         <div v-if="models.overridesEnabled" class="mc-advanced">
           <button type="button" @click="advancedOpen = !advancedOpen"><t-icon name="setting" /> {{ text.advanced }} <t-icon :name="advancedOpen ? 'chevron-up' : 'chevron-down'" /></button>
           <div v-if="advancedOpen" class="mc-advanced-fields">
@@ -151,8 +154,8 @@ const loadError = ref('')
 const submitError = ref('')
 const advancedOpen = ref(false)
 const capabilities = ref<CapabilityDocument | null>(null)
-const models = reactive<{ ready: boolean; overridesEnabled: boolean; embedding: ManagedModelDescriptor[]; summary: ManagedModelDescriptor[] }>({
-  ready: false, overridesEnabled: false, embedding: [], summary: [],
+const models = reactive<{ ready: boolean; overridesEnabled: boolean; embedding: ManagedModelDescriptor[]; summary: ManagedModelDescriptor[]; vlm: ManagedModelDescriptor[] }>({
+  ready: false, overridesEnabled: false, embedding: [], summary: [], vlm: [],
 })
 const draft = reactive({
   mode: 'personal_notes' as 'personal_notes' | 'rag',
@@ -173,6 +176,7 @@ const copy = {
     available: 'Available', coming: 'Coming later', futureProfiles: 'Future profiles', configure: 'Configure your space', name: 'Name', description: 'Description',
     namePlaceholder: 'For example: Research notes', embedding: 'Embedding model', summary: 'Chat and summary model',
     managedReady: 'Managed AI is ready', managedHint: 'MindCreek will use organization defaults. No API key or model setup is required.', managedUnavailable: 'Managed models are not ready. Contact your administrator.',
+    scannedPdfUnavailable: 'Scanned or image-only PDFs require an administrator-configured Vision / OCR model. Text-based PDFs remain available.',
     advanced: 'Advanced model selection', manageOverrides: 'Manage workspace model overrides', review: 'Review and create', models: 'Models',
     reviewHint: 'MindCreek will apply the approved server-side profile.', mode: 'Mode', indexProfile: 'Index profile', access: 'Access', storage: 'Storage',
     ownerOnly: 'Owner only', workspacePolicy: 'Workspace policy', localStorage: 'Managed local storage', previous: 'Previous', continue: 'Continue', create: 'Create space',
@@ -185,6 +189,7 @@ const copy = {
     available: '可使用', coming: '后续开放', futureProfiles: '未来能力', configure: '配置知识空间', name: '名称', description: '描述',
     namePlaceholder: '例如：研究笔记', embedding: '向量模型', summary: '对话与摘要模型',
     managedReady: '托管 AI 已就绪', managedHint: 'MindCreek 将自动使用组织默认模型，无需填写 API 密钥或配置模型。', managedUnavailable: '托管模型尚未就绪，请联系管理员。',
+    scannedPdfUnavailable: '扫描版或纯图片 PDF 需要管理员配置“视觉 / OCR”模型；文本型 PDF 不受影响。',
     advanced: '高级模型选择', manageOverrides: '管理工作空间模型覆盖', review: '确认并创建', reviewHint: 'MindCreek 将在服务端应用已批准的配置。', models: '模型',
     mode: '模式', indexProfile: '索引配置', access: '访问策略', storage: '存储', ownerOnly: '仅创建者', workspacePolicy: '工作空间策略',
     localStorage: '受管本地存储', previous: '上一步', continue: '继续', create: '创建空间',
@@ -201,7 +206,8 @@ const selectedModeHint = computed(() => draft.mode === 'personal_notes' ? text.v
 const selectedModelSummary = computed(() => {
   const embedding = models.embedding.find(model => model.id === draft.embeddingModelId)?.display_name || '—'
   const chat = models.summary.find(model => model.id === draft.summaryModelId)?.display_name || '—'
-  return `${embedding} · ${chat}`
+  const vision = draft.mode === 'rag' ? models.vlm[0]?.display_name : ''
+  return [embedding, chat, vision].filter(Boolean).join(' · ')
 })
 const futureModes = computed(() => [
   { name: 'GraphRAG', detail: locale.value.startsWith('zh') ? '图谱增强检索' : 'Graph-enhanced retrieval', icon: 'relation' },
@@ -227,6 +233,7 @@ async function load() {
     models.overridesEnabled = availableModels.overridesEnabled
     models.embedding = availableModels.embedding
     models.summary = availableModels.summary
+    models.vlm = availableModels.vlm
     draft.embeddingModelId = availableModels.embedding.find(model => model.default)?.id || availableModels.embedding[0]?.id || ''
     draft.summaryModelId = availableModels.summary.find(model => model.default)?.id || availableModels.summary[0]?.id || ''
     if (!notesEnabled.value && ragEnabled.value) draft.mode = 'rag'

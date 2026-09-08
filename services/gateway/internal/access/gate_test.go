@@ -236,6 +236,41 @@ func TestPhase2RoleActionEnforcement(t *testing.T) {
 	}
 }
 
+func TestAgentMutationRequiresReadAccessToNewScopeOnly(t *testing.T) {
+	gate, err := NewPhase2Gate(
+		&fakeProfiles{items: map[string]profile.Profile{}},
+		&fakeResolver{agents: map[string]weknora.AgentScope{
+			"agent-1": {SelectionMode: "selected", KnowledgeBaseIDs: []string{"old-kb"}},
+		}},
+		actionMatcherFunc(func(string, string) (authorization.Action, bool) {
+			return authorization.ActionConfigure, true
+		}),
+		&decisionStub{
+			roles: map[string]authorization.Role{
+				"old-kb": authorization.RoleNone,
+				"new-kb": authorization.RoleViewer,
+			},
+			errs: map[string]error{},
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	request := mustRequest(http.MethodPut, "http://gateway/api/v1/agents/agent-1", `{"config":{"kb_selection_mode":"selected","knowledge_bases":["new-kb"]}}`)
+	request.Header.Set("Content-Type", "application/json")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "viewer", TenantID: 42}); err != nil {
+		t.Fatalf("readable agent scope was denied: %v", err)
+	}
+
+	request = mustRequest(http.MethodPut, "http://gateway/api/v1/agents/agent-1", `{"config":{"kb_selection_mode":"selected","knowledge_bases":["denied-kb"]}}`)
+	request.Header.Set("Content-Type", "application/json")
+	if err := gate.AuthorizeRequest(context.Background(), request, Identity{UserID: "viewer", TenantID: 42}); errorCode(err) != "resource.not_found" {
+		t.Fatalf("unreadable agent scope error = %v", err)
+	}
+}
+
 func TestPhase3PublicationReadCannotDownloadOriginalSource(t *testing.T) {
 	actions := actionMatcherFunc(func(string, string) (authorization.Action, bool) { return authorization.ActionRead, true })
 	gate, err := NewPhase3Gate(&fakeProfiles{items: map[string]profile.Profile{}}, &fakeResolver{knowledge: map[string]string{"doc-1": "kb-1"}}, actions,

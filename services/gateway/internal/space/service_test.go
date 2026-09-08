@@ -93,6 +93,7 @@ func (f *fakeUpstream) CreateKnowledgeBase(_ context.Context, input weknora.Crea
 	item := weknora.KnowledgeBase{
 		ID: input.ID, Name: input.Name, Type: input.Type, Description: input.Description,
 		TenantID: 42, CreatorID: "alice", EmbeddingModelID: input.EmbeddingModelID,
+		VLMConfig: input.VLMConfig,
 	}
 	f.items[item.ID] = item
 	return item, nil
@@ -118,6 +119,27 @@ func TestPlainRAGProfileReproducesEffectiveUpstreamConfiguration(t *testing.T) {
 		effective.Models.EmbeddingModelID != upstream.lastCreate.EmbeddingModelID ||
 		effective.Models.SummaryModelID != upstream.lastCreate.SummaryModelID {
 		t.Fatalf("stored=%+v effective=%+v upstream=%+v", stored, effective, upstream.lastCreate)
+	}
+}
+
+func TestPlainRAGPassesManagedVLMToUpstream(t *testing.T) {
+	profiles := &fakeProfileStore{items: map[string]profile.Profile{}}
+	upstream := &fakeUpstream{items: map[string]weknora.KnowledgeBase{}}
+	service, _ := NewService(&fakeRequests{}, profiles, upstream)
+	input := CreateInput{
+		Mode: "rag", Name: "Scanned books", EmbeddingModelID: "embedding-1",
+		SummaryModelID: "summary-1", RerankModelID: "rerank-1", VLMModelID: "vlm-1",
+	}
+	result, err := service.Create(context.Background(), input, "create-rag-vlm-0001", access.Identity{UserID: "alice", TenantID: 42}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var effective preset.EffectiveConfig
+	if err := json.Unmarshal(profiles.items[result.KnowledgeBaseID].EffectiveConfig, &effective); err != nil {
+		t.Fatal(err)
+	}
+	if !upstream.lastCreate.VLMConfig.Enabled || upstream.lastCreate.VLMConfig.ModelID != "vlm-1" || effective.Models.VLMModelID != "vlm-1" {
+		t.Fatalf("effective=%+v upstream=%+v", effective.Models, upstream.lastCreate.VLMConfig)
 	}
 }
 

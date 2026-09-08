@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -249,6 +250,7 @@ func writePublicationError(w http.ResponseWriter, r *http.Request, err error) {
 	case errors.Is(err, publication.ErrNotFound), errors.Is(err, publication.ErrNotOwner), errors.Is(err, ownership.ErrNotFound):
 		writeAPIError(w, r, http.StatusNotFound, "resource.not_found", "Resource not found")
 	default:
+		log.Printf("publication request failed request_id=%q method=%s path=%q error=%v", requestID(r), r.Method, r.URL.Path, err)
 		writeUnavailable(w, r, "publication.unavailable", "Publication service is unavailable")
 	}
 }

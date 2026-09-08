@@ -237,6 +237,14 @@ replaceExact(
 
     <t-tabs v-model="activeTypeFilter" class="model-type-tabs" data-guide="settings-models">`,
 )
+
+replaceExact(
+  'src/views/agent/AgentEditorModal.vue',
+  '      chatResources.ensureKnowledgeBases(),',
+  `      // A knowledge space may have been created after the shell cache was populated.
+      // Agent scope selection must always show the current authorized list.
+      chatResources.ensureKnowledgeBases(true),`,
+)
 replaceExact(
   'src/views/settings/ModelSettings.vue',
   `import ModelDebugDrawer from '@/components/ModelDebugDrawer.vue'`,
@@ -248,7 +256,7 @@ replaceExact(
   `    const models = await listModels()
     allModels.value = models`,
   `    const models = await listModels()
-    const managedIDs = new Set(['builtin-mindcreek-chat', 'builtin-mindcreek-embedding', 'builtin-mindcreek-rerank'])
+    const managedIDs = new Set(['builtin-mindcreek-chat', 'builtin-mindcreek-embedding', 'builtin-mindcreek-rerank', 'builtin-mindcreek-vlm'])
     allModels.value = models.filter(model => !model.id || !managedIDs.has(model.id))`,
 )
 

@@ -99,6 +99,35 @@ func TestResolveCreationModelsInjectsManagedDefaultsAndRejectsWrongTypes(t *test
 	assertCode(t, err, "models.selection_invalid", http.StatusUnprocessableEntity)
 }
 
+func TestResolveCreationVLMIsOptional(t *testing.T) {
+	upstream := &upstreamStub{models: managedDefaults()}
+	service := mustService(t, upstream, &auditStub{}, Policy{})
+	modelID, err := service.ResolveCreationVLM(context.Background(), principal("viewer"), nil)
+	if err != nil || modelID != "" {
+		t.Fatalf("ResolveCreationVLM() = %q, %v", modelID, err)
+	}
+
+	upstream.models = append(upstream.models, weknora.Model{
+		ID: ManagedVLMID, Name: "production-vision", Type: "VLLM",
+		IsBuiltin: true, IsDefault: true, Status: "active",
+	})
+	modelID, err = service.ResolveCreationVLM(context.Background(), principal("viewer"), nil)
+	if err != nil || modelID != ManagedVLMID {
+		t.Fatalf("ResolveCreationVLM() = %q, %v", modelID, err)
+	}
+	snapshot, err := service.Snapshot(context.Background(), principal("viewer"), nil)
+	if err != nil || !snapshot.Ready || len(snapshot.Defaults) != 4 || snapshot.Defaults[3].Type != "VLLM" {
+		t.Fatalf("snapshot = %+v, %v", snapshot, err)
+	}
+
+	upstream.models[len(upstream.models)-1].Status = "inactive"
+	modelID, err = service.ResolveCreationVLM(context.Background(), principal("viewer"), nil)
+	snapshot, snapshotErr := service.Snapshot(context.Background(), principal("viewer"), nil)
+	if err != nil || snapshotErr != nil || modelID != "" || !snapshot.Ready || snapshot.Defaults[3].Available {
+		t.Fatalf("inactive VLM resolution=%q err=%v snapshot=%+v snapshotErr=%v", modelID, err, snapshot, snapshotErr)
+	}
+}
+
 func TestOverridesAreCapabilityGatedAndWorkspaceAdminOnly(t *testing.T) {
 	input := validInput()
 	service := mustService(t, &upstreamStub{models: managedDefaults()}, &auditStub{}, Policy{})

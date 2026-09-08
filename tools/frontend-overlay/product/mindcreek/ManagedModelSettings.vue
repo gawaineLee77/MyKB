@@ -74,14 +74,14 @@ const copy = {
     loading: 'Loading managed models…', retry: 'Retry', ready: 'Ready', unavailable: 'Unavailable', available: 'Available',
     organizationDefault: 'Organization default · read only', test: 'Test connection', adminHint: 'Workspace administrators can run connection tests.',
     success: 'Connection successful', failure: 'Connection failed', dimension: 'dimension', latency: 'ms',
-    types: { KnowledgeQA: 'Chat / LLM', Embedding: 'Embedding', Rerank: 'Rerank' },
+    types: { KnowledgeQA: 'Chat / LLM', Embedding: 'Embedding', Rerank: 'Rerank', VLLM: 'Vision / OCR' },
   },
   zh: {
     title: '组织托管默认模型', hint: '所有用户均可使用；服务地址和凭据仅保存在服务端。',
     loading: '正在载入托管模型…', retry: '重试', ready: '已就绪', unavailable: '不可用', available: '可用',
     organizationDefault: '组织默认 · 只读', test: '测试连接', adminHint: '工作空间管理员可以执行连接测试。',
     success: '连接成功', failure: '连接失败', dimension: '维度', latency: '毫秒',
-    types: { KnowledgeQA: '对话 / LLM', Embedding: '向量模型', Rerank: '重排模型' },
+    types: { KnowledgeQA: '对话 / LLM', Embedding: '向量模型', Rerank: '重排模型', VLLM: '视觉 / OCR' },
   },
 }
 const text = computed(() => locale.value.startsWith('zh') ? copy.zh : copy.en)

@@ -1,9 +1,11 @@
 package weknora
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -91,6 +93,16 @@ func TestDocumentIngestionContracts(t *testing.T) {
 			_, _ = w.Write([]byte(`{"success":true,"data":` + documentJSON + `}`))
 		case r.Method == http.MethodPost && (r.URL.Path == "/api/v1/knowledge/doc-1/reparse" || r.URL.Path == "/api/v1/knowledge/doc-1/cancel-parse"):
 			_, _ = w.Write([]byte(`{"success":true,"data":` + documentJSON + `}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/knowledge/batch-delete":
+			var input struct {
+				KBID string   `json:"kb_id"`
+				IDs  []string `json:"ids"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&input); err != nil || input.KBID != "kb-rag" || len(input.IDs) != 1 || input.IDs[0] != "doc-1" {
+				http.Error(w, "invalid delete scope", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"success":true,"data":{"task_id":"delete-1","deleted_count":1}}`))
 		default:
 			http.NotFound(w, r)
 		}
@@ -112,6 +124,9 @@ func TestDocumentIngestionContracts(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := client.CancelKnowledge(context.Background(), "kb-rag", "doc-1", nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := client.DeleteKnowledge(context.Background(), "kb-rag", "doc-1", nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -414,6 +429,40 @@ func TestManagedModelAdapterUsesNarrowContractAndWriteOnlyCredentialEndpoint(t *
 		t.Fatal(err)
 	}
 }
+
+func TestManagedVisionModelTestSendsSyntheticImage(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/models/builtin-mindcreek-vlm/debug" {
+			http.NotFound(w, r)
+			return
+		}
+		if err := r.ParseMultipartForm(1 << 20); err != nil {
+			http.Error(w, "invalid multipart body", http.StatusBadRequest)
+			return
+		}
+		file, header, err := r.FormFile("file")
+		if err != nil || header.Filename != "mindcreek-vision-test.png" {
+			http.Error(w, "synthetic image missing", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+		prefix := make([]byte, 8)
+		if _, err := io.ReadFull(file, prefix); err != nil || !bytes.Equal(prefix, []byte("\x89PNG\r\n\x1a\n")) {
+			http.Error(w, "invalid PNG", http.StatusBadRequest)
+			return
+		}
+		_, _ = w.Write([]byte(`{"success":true,"data":{"ok":true,"elapsed_ms":18,"observations":{"answer_characters":2}}}`))
+	}))
+	defer upstream.Close()
+
+	client := newTestClient(t, upstream.URL, 2*time.Second)
+	result, err := client.TestSavedModel(context.Background(), ManagedVLMIDForTest, "VLLM", http.Header{"Authorization": {"Bearer model-admin"}})
+	if err != nil || !result.Available || result.ElapsedMS != 18 {
+		t.Fatalf("TestSavedModel(VLLM) = %+v, %v", result, err)
+	}
+}
+
+const ManagedVLMIDForTest = "builtin-mindcreek-vlm"
 
 func newTestClient(t *testing.T, rawURL string, timeout time.Duration) *Client {
 	t.Helper()

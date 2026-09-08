@@ -21,6 +21,7 @@ type Models struct {
 	EmbeddingModelID string `json:"embedding_model_id"`
 	SummaryModelID   string `json:"summary_model_id,omitempty"`
 	RerankModelID    string `json:"rerank_model_id,omitempty"`
+	VLMModelID       string `json:"vlm_model_id,omitempty"`
 }
 
 type Retrieval struct {
@@ -63,6 +64,13 @@ func Build(mode profile.ProductMode, embeddingModelID, summaryModelID string) (D
 // available default reranker; this field makes that product decision explicit
 // for diagnostics and future migrations.
 func BuildWithRerank(mode profile.ProductMode, embeddingModelID, summaryModelID, rerankModelID string) (Definition, error) {
+	return BuildWithManagedModels(mode, embeddingModelID, summaryModelID, rerankModelID, "")
+}
+
+// BuildWithManagedModels records the full organization-managed model set. A
+// VLM is optional so existing three-model deployments remain upgrade-safe.
+// When present, only Document RAG enables it; Personal Notes remain text-only.
+func BuildWithManagedModels(mode profile.ProductMode, embeddingModelID, summaryModelID, rerankModelID, vlmModelID string) (Definition, error) {
 	if embeddingModelID == "" {
 		return Definition{}, fmt.Errorf("embedding model is required")
 	}
@@ -72,7 +80,7 @@ func BuildWithRerank(mode profile.ProductMode, embeddingModelID, summaryModelID,
 			ProfileVersion: Version,
 			Storage:        weknora.StorageProviderConfig{Provider: "local"},
 			Indexing:       weknora.IndexingStrategy{VectorEnabled: true, KeywordEnabled: true},
-			Models:         Models{EmbeddingModelID: embeddingModelID, SummaryModelID: summaryModelID, RerankModelID: rerankModelID},
+			Models:         Models{EmbeddingModelID: embeddingModelID, SummaryModelID: summaryModelID, RerankModelID: rerankModelID, VLMModelID: vlmModelID},
 			Limits:         Limits{MaxFileBytes: MaxRAGFileBytes, MaxFiles: MaxRAGFiles},
 		},
 	}
@@ -108,10 +116,19 @@ func (d Definition) JSON() (json.RawMessage, error) {
 }
 
 func (d Definition) UpstreamRequest(id, name, description string) weknora.CreateKnowledgeBaseRequest {
+	vlmEnabled := d.Mode == profile.ModeRAG && d.Config.Models.VLMModelID != ""
 	return weknora.CreateKnowledgeBaseRequest{
 		ID: id, Name: name, Description: description, Type: "document",
 		EmbeddingModelID: d.Config.Models.EmbeddingModelID, SummaryModelID: d.Config.Models.SummaryModelID,
+		VLMConfig:             weknora.VLMConfig{Enabled: vlmEnabled, ModelID: enabledModelID(vlmEnabled, d.Config.Models.VLMModelID)},
 		StorageProviderConfig: d.Config.Storage, ChunkingConfig: d.Config.Chunking, IndexingStrategy: d.Config.Indexing,
 		QuestionGenerationConfig: weknora.QuestionGenerationConfig{Enabled: false, QuestionCount: 0},
 	}
+}
+
+func enabledModelID(enabled bool, id string) string {
+	if !enabled {
+		return ""
+	}
+	return id
 }

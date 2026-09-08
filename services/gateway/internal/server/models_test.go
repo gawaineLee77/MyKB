@@ -17,6 +17,11 @@ type managedModelStub struct {
 	created       managedmodel.OverrideInput
 	resolvedInput [2]string
 	testedManaged string
+	vlmID         string
+}
+
+func (s *managedModelStub) ResolveCreationVLM(_ context.Context, _ weknora.Principal, _ http.Header) (string, error) {
+	return s.vlmID, nil
 }
 
 func (s *managedModelStub) Snapshot(context.Context, weknora.Principal, http.Header) (managedmodel.Snapshot, error) {
@@ -110,7 +115,7 @@ func TestManagedModelConnectionTestUsesSafeFacade(t *testing.T) {
 
 func TestKnowledgeSpaceCreationUsesServerManagedDefaults(t *testing.T) {
 	spaces := &fakeKnowledgeSpaces{}
-	models := &managedModelStub{}
+	models := &managedModelStub{vlmID: managedmodel.ManagedVLMID}
 	principals := principalResolverFunc(func(context.Context, http.Header) (weknora.Principal, error) {
 		return testPrincipal("alice", 42), nil
 	})
@@ -125,7 +130,7 @@ func TestKnowledgeSpaceCreationUsesServerManagedDefaults(t *testing.T) {
 		_ = json.Unmarshal(recorder.Body.Bytes(), &response)
 		t.Fatalf("status=%d body=%v", recorder.Code, response)
 	}
-	if models.resolvedInput != [2]string{"", ""} || spaces.createInput.EmbeddingModelID != managedmodel.ManagedEmbeddingID || spaces.createInput.SummaryModelID != managedmodel.ManagedChatID || spaces.createInput.RerankModelID != managedmodel.ManagedRerankID {
+	if models.resolvedInput != [2]string{"", ""} || spaces.createInput.EmbeddingModelID != managedmodel.ManagedEmbeddingID || spaces.createInput.SummaryModelID != managedmodel.ManagedChatID || spaces.createInput.RerankModelID != managedmodel.ManagedRerankID || spaces.createInput.VLMModelID != managedmodel.ManagedVLMID {
 		t.Fatalf("resolved=%v create=%+v", models.resolvedInput, spaces.createInput)
 	}
 }

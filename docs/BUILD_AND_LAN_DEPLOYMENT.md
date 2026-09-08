@@ -2,7 +2,7 @@
 
 ## 1. Scope and current safety status
 
-The repository provides a verified **Phase 5 development runtime** based on unmodified WeKnora v0.7.2. Inherited gates cover the exclusive Product Gateway path, Personal Notes, Plain RAG, sharing/subscriptions, Authorized Ask, hosted read-only MCP, and immediate revocation. Gate A adds server-managed chat, embedding, and rerank defaults; Gate B adds corporate plain OAuth 2.0 (with optional OIDC compatibility), first-login provisioning, closed registration, and suspension enforcement. Gates C–D add production hardening and pilot evidence; real-provider activation remains an operator action.
+The repository provides a verified **Phase 5 development runtime** based on unmodified WeKnora v0.7.2. Inherited gates cover the exclusive Product Gateway path, Personal Notes, Plain RAG, sharing/subscriptions, Authorized Ask, hosted read-only MCP, and immediate revocation. Gate A adds server-managed chat, embedding, and rerank defaults plus an optional vision/OCR default for scanned PDFs; Gate B adds corporate plain OAuth 2.0 (with optional OIDC compatibility), first-login provisioning, closed registration, and suspension enforcement. Gates C–D add production hardening and pilot evidence; real-provider activation remains an operator action.
 
 The MindCreek frontend applies branding and product modules—including Personal Notes, Plain RAG, sharing, Discover, Subscribed, and Authorized Ask—to a temporary copy of the pinned frontend. The product pages and `/mcp` call the gateway; `upstream/weknora` remains unchanged.
 

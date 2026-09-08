@@ -151,7 +151,7 @@ export interface KnowledgeSpaceResult {
   reconciled: boolean
 }
 
-export type ManagedModelType = 'KnowledgeQA' | 'Embedding' | 'Rerank'
+export type ManagedModelType = 'KnowledgeQA' | 'Embedding' | 'Rerank' | 'VLLM'
 
 // This deliberately mirrors the redacted MindCreek facade. Provider URLs,
 // credentials, and provider-specific parameters must never be added here.
@@ -270,6 +270,7 @@ export async function getCreationModels(): Promise<{
   embedding: ManagedModelDescriptor[]
   summary: ManagedModelDescriptor[]
   rerank: ManagedModelDescriptor[]
+  vlm: ManagedModelDescriptor[]
 }> {
   const snapshot = await getManagedModels()
   const models = [...snapshot.defaults, ...snapshot.overrides].filter(model => model.available)
@@ -279,6 +280,7 @@ export async function getCreationModels(): Promise<{
     embedding: models.filter(model => model.type === 'Embedding'),
     summary: models.filter(model => model.type === 'KnowledgeQA'),
     rerank: models.filter(model => model.type === 'Rerank'),
+    vlm: models.filter(model => model.type === 'VLLM'),
   }
 }
 
@@ -536,4 +538,8 @@ export async function retryRAGDocument(kbId: string, documentId: string): Promis
 export async function cancelRAGDocument(kbId: string, documentId: string): Promise<RAGDocument> {
   const response = await post<{ success: boolean; data: RAGDocument }>(`/api/v1/knowledge-bases/${kbId}/ingestions/${documentId}/cancel`)
   return response.data
+}
+
+export async function deleteRAGDocument(kbId: string, documentId: string): Promise<void> {
+  await del(`/api/v1/knowledge-bases/${kbId}/ingestions/${documentId}`)
 }

@@ -40,6 +40,11 @@ MINDCREEK_MANAGED_RERANK_NAME=pilot-rerank
 MINDCREEK_MANAGED_RERANK_BASE_URL=https://rerank.example.invalid/v1
 MINDCREEK_MANAGED_RERANK_API_KEY=synthetic-rerank-credential-000006
 MINDCREEK_MANAGED_RERANK_PROVIDER=generic
+MINDCREEK_MANAGED_VLM_ENABLED=true
+MINDCREEK_MANAGED_VLM_NAME=pilot-vision
+MINDCREEK_MANAGED_VLM_BASE_URL=https://vision.example.invalid/v1
+MINDCREEK_MANAGED_VLM_API_KEY=synthetic-vlm-credential-00000009
+MINDCREEK_MANAGED_VLM_PROVIDER=generic
 MINDCREEK_IDENTITY_ENABLED=true
 MINDCREEK_IDENTITY_PROTOCOL=oauth2
 MINDCREEK_EXTERNAL_ORIGIN=https://mindcreek.example.invalid
@@ -106,5 +111,7 @@ assert identity["MINDCREEK_IDENTITY_TOKEN_URL"].endswith("/accesstoken")
 assert identity["MINDCREEK_IDENTITY_USERINFO_URL"].endswith("/userinfo")
 app_identity = services["app"]["environment"]
 assert app_identity["OIDC_AUTH_AUTHORIZATION_ENDPOINT"] == "http://gateway:8080/api/v1/mindcreek/oidc/authorize"
+assert app_identity["MINDCREEK_MANAGED_VLM_ENABLED"] == "true"
+assert app_identity["MINDCREEK_MANAGED_VLM_NAME"] == "pilot-vision"
 PY
 echo "MindCreek Phase 5 production profile verified: TLS edge only, private dependencies, controlled egress"

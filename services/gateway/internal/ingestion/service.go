@@ -33,6 +33,7 @@ type Upstream interface {
 	GetKnowledge(context.Context, string, string, http.Header) (weknora.Knowledge, error)
 	ReparseKnowledge(context.Context, string, string, http.Header) (weknora.Knowledge, error)
 	CancelKnowledge(context.Context, string, string, http.Header) (weknora.Knowledge, error)
+	DeleteKnowledge(context.Context, string, string, http.Header) error
 }
 
 type ProfileStore interface {
@@ -182,6 +183,19 @@ func (s *Service) Cancel(ctx context.Context, kbID, knowledgeID string, identity
 		return weknora.Knowledge{}, translateUpstream(err)
 	}
 	return result, nil
+}
+
+func (s *Service) Delete(ctx context.Context, kbID, knowledgeID string, identity access.Identity, headers http.Header) error {
+	if _, err := s.authorize(ctx, kbID, identity, authorization.ActionEditContent, headers); err != nil {
+		return err
+	}
+	if _, err := s.upstream.GetKnowledge(ctx, kbID, knowledgeID, headers); err != nil {
+		return translateUpstream(err)
+	}
+	if err := s.upstream.DeleteKnowledge(ctx, kbID, knowledgeID, headers); err != nil {
+		return translateUpstream(err)
+	}
+	return s.recordRevision(ctx, kbID, identity, "kb.content_updated", headers)
 }
 
 func (s *Service) authorize(ctx context.Context, kbID string, identity access.Identity, action authorization.Action, headers http.Header) (preset.EffectiveConfig, error) {

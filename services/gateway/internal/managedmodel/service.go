@@ -20,6 +20,7 @@ const (
 	ManagedChatID      = "builtin-mindcreek-chat"
 	ManagedEmbeddingID = "builtin-mindcreek-embedding"
 	ManagedRerankID    = "builtin-mindcreek-rerank"
+	ManagedVLMID       = "builtin-mindcreek-vlm"
 	maxOverrides       = 12
 )
 
@@ -122,8 +123,14 @@ func (s *Service) Snapshot(ctx context.Context, principal weknora.Principal, hea
 		managedDescriptor(byID[ManagedEmbeddingID], ManagedEmbeddingID, "MindCreek Embedding", "Embedding"),
 		managedDescriptor(byID[ManagedRerankID], ManagedRerankID, "MindCreek Rerank", "Rerank"),
 	}
+	// VLM is an optional fourth managed default. Do not make the three-model
+	// readiness contract fail for existing deployments that have not enabled
+	// scanned-document OCR yet.
+	if model, exists := byID[ManagedVLMID]; exists {
+		defaults = append(defaults, managedDescriptor(model, ManagedVLMID, "MindCreek Vision / OCR", "VLLM"))
+	}
 	ready := true
-	for _, descriptor := range defaults {
+	for _, descriptor := range defaults[:3] {
 		ready = ready && descriptor.Available
 	}
 	overrides := make([]Descriptor, 0)
@@ -186,6 +193,22 @@ func (s *Service) ResolveCreationModels(ctx context.Context, embeddingID, chatID
 		return "", "", &Error{Code: "models.selection_invalid", Message: "Selected model is unavailable", StatusCode: http.StatusUnprocessableEntity, Err: ErrInvalid}
 	}
 	return embeddingID, chatID, nil
+}
+
+// ResolveCreationVLM returns the optional organization-managed VLM used to
+// enrich scanned PDF pages. Absence is not an error because legacy deployments
+// intentionally support the original chat/embedding/rerank model set.
+func (s *Service) ResolveCreationVLM(ctx context.Context, _ weknora.Principal, headers http.Header) (string, error) {
+	models, err := s.upstream.ListModels(ctx, headers)
+	if err != nil {
+		return "", unavailable(err)
+	}
+	for _, model := range models {
+		if model.ID == ManagedVLMID && model.Type == "VLLM" && model.IsBuiltin && model.IsDefault && model.Status == "active" {
+			return ManagedVLMID, nil
+		}
+	}
+	return "", nil
 }
 
 func (s *Service) CreateOverride(ctx context.Context, input OverrideInput, principal weknora.Principal, headers http.Header) (Descriptor, error) {
@@ -296,7 +319,7 @@ func (s *Service) TestOverride(ctx context.Context, input OverrideInput, modelID
 	return TestResult{Available: true, Dimension: result.Dimension}, nil
 }
 
-// TestManaged verifies one of the three deployment-owned defaults without
+// TestManaged verifies one of the deployment-owned defaults without
 // accepting provider configuration or returning model output. Testing causes
 // a real provider call, so it remains restricted to workspace administrators
 // even though the redacted model status is visible to every authenticated user.
@@ -384,6 +407,8 @@ func managedModelType(id string) (string, bool) {
 		return "Embedding", true
 	case ManagedRerankID:
 		return "Rerank", true
+	case ManagedVLMID:
+		return "VLLM", true
 	default:
 		return "", false
 	}
@@ -444,7 +469,7 @@ func safeDisplayName(model weknora.Model) string {
 }
 
 func supportedType(value string) bool {
-	return value == "KnowledgeQA" || value == "Embedding" || value == "Rerank"
+	return value == "KnowledgeQA" || value == "Embedding" || value == "Rerank" || value == "VLLM"
 }
 
 func writeRequest(input OverrideInput) weknora.ModelWriteRequest {

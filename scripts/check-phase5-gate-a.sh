@@ -29,6 +29,8 @@ for MODEL_ID in builtin-mindcreek-chat builtin-mindcreek-embedding builtin-mindc
   rg -q "$MODEL_ID" "$ROOT/services/gateway/internal/managedmodel/service.go" || fail "$MODEL_ID is absent from the product contract"
   rg -q "$MODEL_ID" "$ROOT/deploy/phase5/builtin_models.yaml.tmpl" || fail "$MODEL_ID is absent from the deployment template"
 done
+rg -q 'builtin-mindcreek-vlm' "$ROOT/services/gateway/internal/managedmodel/service.go" || fail "builtin-mindcreek-vlm is absent from the product contract"
+rg -q 'builtin-mindcreek-vlm' "$ROOT/scripts/render-phase5-models.py" || fail "builtin-mindcreek-vlm is absent from the optional deployment renderer"
 rg -q 'model_id: "builtin-mindcreek-chat"' "$ROOT/deploy/phase5/builtin_agents.yaml" || fail "Smart Reasoning chat default is missing"
 rg -q 'rerank_model_id: "builtin-mindcreek-rerank"' "$ROOT/deploy/phase5/builtin_agents.yaml" || fail "Smart Reasoning reranker is missing"
 rg -q 'id: "builtin-quick-answer"' "$ROOT/deploy/phase5/builtin_agents.yaml" || fail "Quick Answer managed profile is missing"
@@ -47,7 +49,18 @@ trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
 python3 "$ROOT/scripts/render-phase5-models.py" --env-file /dev/null --output "$TMP_DIR/builtin_models.yaml" >/dev/null
 [ "$(stat -f '%Lp' "$TMP_DIR/builtin_models.yaml")" = "600" ] || fail "rendered model declaration permissions are not 0600"
 rg -q '\$\{MINDCREEK_MANAGED_LLM_API_KEY\}' "$TMP_DIR/builtin_models.yaml" || fail "rendered declaration does not retain secret environment references"
+! rg -q 'builtin-mindcreek-vlm' "$TMP_DIR/builtin_models.yaml" || fail "optional managed VLM was rendered while disabled"
 ! rg -q 'development-only|mock-embedding' "$TMP_DIR/builtin_models.yaml" || fail "rendered declaration contains a development credential or endpoint"
+MINDCREEK_MANAGED_VLM_ENABLED=true \
+MINDCREEK_MANAGED_VLM_NAME=synthetic-vision \
+MINDCREEK_MANAGED_VLM_BASE_URL=http://mock-embedding:19090/v1 \
+MINDCREEK_MANAGED_VLM_API_KEY=synthetic-vlm-key \
+MINDCREEK_MANAGED_VLM_PROVIDER=generic \
+  python3 "$ROOT/scripts/render-phase5-models.py" --env-file /dev/null --output "$TMP_DIR/vlm.yaml" >/dev/null
+rg -q 'builtin-mindcreek-vlm' "$TMP_DIR/vlm.yaml" || fail "enabled managed VLM declaration is missing"
+rg -q 'type: VLLM' "$TMP_DIR/vlm.yaml" || fail "managed VLM has the wrong upstream model type"
+rg -q '\$\{MINDCREEK_MANAGED_VLM_API_KEY\}' "$TMP_DIR/vlm.yaml" || fail "managed VLM declaration does not retain its secret environment reference"
+! rg -q 'synthetic-vlm-key' "$TMP_DIR/vlm.yaml" || fail "managed VLM credential was written to the rendered declaration"
 if MINDCREEK_DEPLOYMENT_ENV=production python3 "$ROOT/scripts/render-phase5-models.py" --env-file /dev/null --output "$TMP_DIR/production.yaml" >/dev/null 2>&1; then
   fail "production rendering accepted missing managed provider settings"
 fi

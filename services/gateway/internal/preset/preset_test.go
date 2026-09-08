@@ -43,3 +43,25 @@ func TestPhase5PresetRecordsManagedReranker(t *testing.T) {
 		t.Fatalf("Phase 5 model set = %+v", definition.Config)
 	}
 }
+
+func TestPlainRAGEnablesOptionalManagedVLM(t *testing.T) {
+	definition, err := BuildWithManagedModels(profile.ModeRAG, "embedding-1", "chat-1", "rerank-1", "vlm-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := definition.UpstreamRequest("kb-1", "Scanned books", "Synthetic")
+	if definition.Config.Models.VLMModelID != "vlm-1" || !request.VLMConfig.Enabled || request.VLMConfig.ModelID != "vlm-1" || request.VLMConfig.DescriptionLanguage != "" {
+		t.Fatalf("VLM preset = %+v request=%+v", definition.Config.Models, request.VLMConfig)
+	}
+}
+
+func TestPersonalNotesNeverEnablesManagedVLM(t *testing.T) {
+	definition, err := BuildWithManagedModels(profile.ModePersonalNotes, "embedding-1", "chat-1", "rerank-1", "vlm-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := definition.UpstreamRequest("kb-1", "Notes", "Synthetic")
+	if request.VLMConfig.Enabled || request.VLMConfig.ModelID != "" {
+		t.Fatalf("personal notes unexpectedly enabled VLM: %+v", request.VLMConfig)
+	}
+}

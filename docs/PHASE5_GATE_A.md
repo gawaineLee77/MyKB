@@ -9,7 +9,7 @@
 
 ## Delivered contract
 
-MindCreek declares three organization-managed built-ins with stable IDs: `builtin-mindcreek-chat`, `builtin-mindcreek-embedding`, and `builtin-mindcreek-rerank`. WeKnora remains the model runtime and encrypted credential store. A product-owned template contains environment references, never values, and is mounted read-only. The renderer requires all production inputs, validates provider identifiers and URLs, rejects test endpoints/placeholders outside development, and writes mode `0600`.
+MindCreek declares three required organization-managed built-ins with stable IDs: `builtin-mindcreek-chat`, `builtin-mindcreek-embedding`, and `builtin-mindcreek-rerank`. An optional `builtin-mindcreek-vlm` provides scanned-document OCR without changing the core readiness contract. WeKnora remains the model runtime and encrypted credential store. A product-owned template contains environment references, never values, and is mounted read-only. The renderer requires every enabled production input, validates provider identifiers and URLs, rejects test endpoints/placeholders outside development, and writes mode `0600`.
 
 `GET /api/v1/mindcreek/models` is the browser-facing model contract. It returns only ID, configured model name, type, managed/default flags, scope, and availability with `Cache-Control: no-store`. Settings > Model Configuration always shows these redacted organization defaults, including readiness, without exposing provider endpoints or credentials. Workspace Owners/Admins may run a bounded synthetic connection test through `POST /api/v1/mindcreek/models/{model_id}/test`; the response contains only availability, latency, and an embedding dimension when applicable.
 

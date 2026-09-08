@@ -202,7 +202,7 @@ The creation wizard first asks for product mode, then shows only relevant config
 2. User selects a primary retrieval profile. Only Plain RAG is generally available in the MVP.
 3. User uploads supported multi-format files, imports allowed URLs, or creates entries.
 4. WeKnora parses the sources and builds the plain vector/keyword indexes; the selected embedding model, chunking preset, reranker, and limits are recorded as a reproducible index profile.
-5. Background processing exposes progress, failure reason, retry, cancellation, and estimated/actual model cost.
+5. Background processing exposes progress, failure reason, retry, cancellation, document deletion, and estimated/actual model cost. Deletion removes the source and all derived chunks and indexes through the upstream lifecycle.
 6. When future GraphRAG or PixelRAG is enabled, its adapter creates additional derived indexes while preserving Plain RAG as the evidence and fallback path.
 
 “Plain RAG” means text/structured parsing followed by chunk-based vector plus keyword retrieval, optional reranking, and cited generation. It does not mean vector-only search.
@@ -348,13 +348,14 @@ This mode follows “human in command”: an LLM accelerates bootstrapping, but 
 **Implementation status (2026-09-01):** Phase 5 Gates A–D are implemented with stable managed IDs, a plain corporate OAuth 2.0 adapter behind MindCreek's private OIDC broker, a secret-free deployment renderer, TLS/network hardening, recovery and redacted observability, and controlled-pilot evidence. Production provider activation and selected-team sign-off remain operator actions.
 
 - Every pilot or production deployment must configure one healthy default `KnowledgeQA`, `Embedding`, and `Rerank` model before it is marked ready for users.
+- Deployments ingesting scanned or image-only PDFs may additionally configure the stable optional `builtin-mindcreek-vlm` default. When healthy, new Document RAG spaces enable WeKnora's existing page OCR/caption pipeline automatically; Personal Notes remain text-only and core three-model readiness remains backward compatible.
 - Reuse WeKnora's declarative built-in model catalog with stable IDs. Product-owned YAML contains only `${ENV_VAR}` references; real base URLs and API keys come from a secret manager, container secrets, or a root-readable untracked environment file.
 - Ordinary workflows automatically select managed defaults. KB creation must not require model knowledge, and Quick Ask, Smart Reasoning, ingestion, embedding, and reranking must work without a user API key.
 - Browser and ordinary-user APIs expose only safe descriptors such as model ID, display name, type, availability, and `managed=true`. They never return a managed API key or sensitive endpoint details.
 - Managed model administration is deployment/system-admin only and is absent from routine settings. Stable managed IDs cannot be overwritten or deleted through ordinary user routes.
 - Optional user-supplied providers live behind a disabled-by-default `user_model_overrides` capability in Advanced Settings. An override is private to its owning user or workspace, encrypted at rest, auditable, quota-limited, and never promoted to the organization default implicitly.
 - Resolution order is an explicitly permitted override followed by the managed default. There is no silent fallback to a test model. Changing an embedding model on an existing KB requires an explicit rebuild; changing chat or rerank selection must not widen knowledge scope.
-- Readiness probes test all three managed models without exposing secrets. Rotation preserves stable model IDs, validates replacements in staging, and retains the existing `SYSTEM_AES_KEY` unless an explicit credential re-encryption procedure is performed.
+- Readiness probes test the three required managed models and any configured optional VLM without exposing secrets. Rotation preserves stable model IDs, validates replacements in staging, and retains the existing `SYSTEM_AES_KEY` unless an explicit credential re-encryption procedure is performed.
 
 ## 8. Logical architecture
 
@@ -1536,7 +1537,7 @@ The MVP is complete when:
 
 ### ADR-014: Provide managed model defaults and optional private overrides
 
-**Decision:** Reuse WeKnora's declarative built-in model mechanism for one deployment-managed default chat, embedding, and rerank model. Secrets are injected only at runtime. Ordinary users use these defaults automatically and see no credential or sensitive endpoint value. User-supplied providers are a disabled-by-default Advanced Settings capability with private ownership and separate policy controls.
+**Decision:** Reuse WeKnora's declarative built-in model mechanism for one deployment-managed default chat, embedding, and rerank model, plus an optional vision/OCR model for scanned Plain RAG sources. Secrets are injected only at runtime. Ordinary users use these defaults automatically and see no credential or sensitive endpoint value. User-supplied providers are a disabled-by-default Advanced Settings capability with private ownership and separate policy controls.
 
 **Reason:** A knowledge product should work without requiring every user to understand model providers or possess organization credentials. Reusing upstream built-in models minimizes upgrade cost, while runtime secret injection, redaction, and tightly scoped overrides prevent convenience from becoming credential or data-egress exposure.
 

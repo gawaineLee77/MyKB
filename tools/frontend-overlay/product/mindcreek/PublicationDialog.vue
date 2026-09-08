@@ -26,6 +26,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getKnowledgePublication, publishKnowledgeBase, unpublishKnowledgeBase, updateKnowledgePublication, type Publication, type PublicationAccessMode } from './api'
+import { apiProblem } from './api-problem'
 
 const props = defineProps<{ visible: boolean; knowledgeBaseId: string; knowledgeBaseName: string }>()
 const emit = defineEmits<{ 'update:visible': [value: boolean]; changed: [] }>()
@@ -38,7 +39,7 @@ const words = {
 }
 const text = computed(() => locale.value.startsWith('zh') ? words.zh : words.en)
 function close() { emit('update:visible', false) }
-function failure(value: unknown) { const body = value && typeof value === 'object' && 'response' in value ? (value as any).response?.data : undefined; conflict.value = body?.error?.code === 'publication.revision_conflict'; return { code: body?.error?.code, message: body?.error?.message || String((value as any)?.message || value) } }
+function failure(value: unknown) { const problem = apiProblem(value); conflict.value = problem.code === 'publication.revision_conflict'; return problem }
 function reset() { current.value = null; draft.title = props.knowledgeBaseName; draft.description = ''; draft.usage_guidance = ''; draft.access_mode = 'subscriber'; tagsText.value = ''; audienceType.value = 'organization'; workspaceIDs.value = '' }
 async function load() { loading.value = true; error.value = ''; conflict.value = false; reset(); try { const value = await getKnowledgePublication(props.knowledgeBaseId); current.value = value; draft.title = value.title; draft.description = value.description; draft.usage_guidance = value.usage_guidance; draft.access_mode = value.access_mode; tagsText.value = value.tags.join(', '); audienceType.value = value.audience.type; workspaceIDs.value = value.audience.type === 'workspace_set' ? value.audience.workspace_ids.join(', ') : '' } catch (value) { const problem = failure(value); if (problem.code !== 'resource.not_found') error.value = problem.message } finally { loading.value = false } }
 function input() { const tags = tagsText.value.split(',').map(value => value.trim()).filter(Boolean); const ids = workspaceIDs.value.split(',').map(value => Number(value.trim())).filter(value => Number.isInteger(value) && value > 0); if (audienceType.value === 'workspace_set' && !ids.length) throw new Error(locale.value.startsWith('zh') ? '至少需要一个工作区 ID。' : 'At least one workspace ID is required.'); return { title: draft.title, description: draft.description, tags, usage_guidance: draft.usage_guidance, access_mode: draft.access_mode, audience: audienceType.value === 'organization' ? { type: 'organization' as const } : { type: 'workspace_set' as const, workspace_ids: [...new Set(ids)] } } }

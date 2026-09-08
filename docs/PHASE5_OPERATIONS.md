@@ -26,6 +26,22 @@ Install the TLS certificate/key and protected `.local/mindcreek.env`, set `MINDC
 
 MindCreek permits knowledge files up to 200 MiB by default. Set `MAX_FILE_SIZE_MB=200` in `.local/mindcreek.env` (or choose a smaller organization limit from 1 through 200); Compose applies it consistently to the browser, edge Nginx, Gateway, App, and Docreader. Leave `DOCREADER_GRPC_MAX_FILE_SIZE_MB` blank to inherit the same value. Migration 11 raises existing Plain RAG profiles from the former 50 MiB ceiling while leaving Personal Notes unchanged.
 
+### Scanned and image-only PDFs
+
+The built-in PDF parser intentionally renders scanned pages as images. Plain RAG can turn those pages into searchable OCR text when an approved vision-language model is configured:
+
+```dotenv
+MINDCREEK_MANAGED_VLM_ENABLED=true
+MINDCREEK_MANAGED_VLM_NAME=<vision-capable-model-name>
+MINDCREEK_MANAGED_VLM_BASE_URL=https://<approved-provider>/v1
+MINDCREEK_MANAGED_VLM_API_KEY=<secret>
+MINDCREEK_MANAGED_VLM_PROVIDER=generic
+```
+
+The endpoint must accept image input; a text-only chat model is not sufficient. Run `make phase5-models-render`, recreate the `app` and `gateway` services, and use Settings → Model configuration to test the read-only `Vision / OCR` default. New Document RAG spaces then enable multimodal OCR automatically. For an existing knowledge base, open its settings, enable Image processing with `builtin-mindcreek-vlm`, save, then reparse each affected document. Reparse is required because previously indexed image-only chunks are not enriched retroactively. Personal Notes remain text-only, and this OCR enrichment does not enable the future PixelRAG profile.
+
+For a PDF with a healthy selectable text layer, prefer reparsing with the MarkItDown parser instead of paying for page-by-page VLM OCR. For a large scanned-book corpus, benchmark a dedicated MinerU or PaddleOCR-VL parser before production rollout.
+
 ```text
 https://<mindcreek-host>
 ```

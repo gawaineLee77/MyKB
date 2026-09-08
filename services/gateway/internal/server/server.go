@@ -73,6 +73,10 @@ type ManagedModelService interface {
 	TestManaged(context.Context, string, weknora.Principal, http.Header) (managedmodel.TestResult, error)
 }
 
+type ManagedVisionModelService interface {
+	ResolveCreationVLM(context.Context, weknora.Principal, http.Header) (string, error)
+}
+
 type AgentScopeService interface {
 	Resolve(context.Context, agentscope.Request, authorization.Principal, http.Header) (agentscope.Result, error)
 }
@@ -121,6 +125,7 @@ type IngestionService interface {
 	Get(context.Context, string, string, access.Identity, http.Header) (weknora.Knowledge, error)
 	Retry(context.Context, string, string, access.Identity, http.Header) (weknora.Knowledge, error)
 	Cancel(context.Context, string, string, access.Identity, http.Header) (weknora.Knowledge, error)
+	Delete(context.Context, string, string, access.Identity, http.Header) error
 }
 
 type NoteService interface {
@@ -251,6 +256,14 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 			input.EmbeddingModelID = embeddingID
 			input.SummaryModelID = chatID
 			input.RerankModelID = managedmodel.ManagedRerankID
+			if visionModels, ok := dependencies.Models.(ManagedVisionModelService); ok {
+				vlmID, err := visionModels.ResolveCreationVLM(r.Context(), principal, r.Header)
+				if err != nil {
+					writeManagedModelError(w, r, err)
+					return
+				}
+				input.VLMModelID = vlmID
+			}
 		}
 		identity := access.Identity{UserID: principal.User.ID, TenantID: principal.Tenant.ID}
 		result, err := dependencies.Spaces.Create(r.Context(), input, r.Header.Get("Idempotency-Key"), identity, r.Header)

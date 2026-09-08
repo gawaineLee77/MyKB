@@ -66,11 +66,18 @@ def main() -> int:
     if not production and not args.allow_development:
         raise ValueError("MINDCREEK_DEPLOYMENT_ENV must be production")
 
+    vlm_enabled = values.get("MINDCREEK_MANAGED_VLM_ENABLED", "false").lower() == "true"
     secrets = [require_secret(values, name) for name in SECRET_FIELDS]
     if len(values.get("SYSTEM_AES_KEY", "").encode("utf-8")) != 32:
         raise ValueError("SYSTEM_AES_KEY must contain exactly 32 UTF-8 bytes")
     if len(set(secrets)) != len(secrets):
         raise ValueError("database, Redis, JWT, AES, and model credentials must be distinct")
+    if vlm_enabled:
+        vlm_secret = require_secret(values, "MINDCREEK_MANAGED_VLM_API_KEY")
+        # A single approved provider credential may legitimately serve its chat
+        # and vision models, but it must never reuse an infrastructure secret.
+        if vlm_secret in secrets[:4]:
+            raise ValueError("VLM and infrastructure credentials must be distinct")
 
     for name in (
         "MINDCREEK_MANAGED_LLM_BASE_URL",
@@ -78,6 +85,8 @@ def main() -> int:
         "MINDCREEK_MANAGED_RERANK_BASE_URL",
     ):
         require_https_url(values, name)
+    if vlm_enabled:
+        require_https_url(values, "MINDCREEK_MANAGED_VLM_BASE_URL")
 
     if values.get("MINDCREEK_IDENTITY_ENABLED", "false").lower() != "true":
         raise ValueError("corporate identity must be enabled in the production pilot")

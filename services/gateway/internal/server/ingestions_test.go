@@ -41,6 +41,10 @@ func (s *ingestionServiceStub) Cancel(_ context.Context, kbID, _ string, _ acces
 	s.lastAction = "cancel"
 	return ingestionFixture(kbID), nil
 }
+func (s *ingestionServiceStub) Delete(_ context.Context, _, _ string, _ access.Identity, _ http.Header) error {
+	s.lastAction = "delete"
+	return nil
+}
 
 func TestProductIngestionLifecycleRoutes(t *testing.T) {
 	service := &ingestionServiceStub{}
@@ -75,6 +79,7 @@ func TestProductIngestionLifecycleRoutes(t *testing.T) {
 		{http.MethodGet, "/api/v1/knowledge-bases/kb-rag/ingestions/doc-1", "get", http.StatusOK},
 		{http.MethodPost, "/api/v1/knowledge-bases/kb-rag/ingestions/doc-1/retry", "retry", http.StatusAccepted},
 		{http.MethodPost, "/api/v1/knowledge-bases/kb-rag/ingestions/doc-1/cancel", "cancel", http.StatusAccepted},
+		{http.MethodDelete, "/api/v1/knowledge-bases/kb-rag/ingestions/doc-1", "delete", http.StatusAccepted},
 	} {
 		request = httptest.NewRequest(testCase.method, testCase.path, nil)
 		request.Header.Set("Authorization", "Bearer test")

@@ -22,6 +22,7 @@ type upstreamStub struct {
 	uploadCalls int
 	retryCalls  int
 	cancelCalls int
+	deleteCalls int
 }
 
 type roleAuthorizer struct {
@@ -60,6 +61,10 @@ func (s *upstreamStub) CancelKnowledge(context.Context, string, string, http.Hea
 	s.cancelCalls++
 	return documentFixture(), nil
 }
+func (s *upstreamStub) DeleteKnowledge(context.Context, string, string, http.Header) error {
+	s.deleteCalls++
+	return nil
+}
 
 func TestApprovedPlainRAGLifecycle(t *testing.T) {
 	upstream := &upstreamStub{}
@@ -81,7 +86,10 @@ func TestApprovedPlainRAGLifecycle(t *testing.T) {
 	if _, err := service.Cancel(context.Background(), "kb-rag", "doc-1", identity, nil); err != nil {
 		t.Fatal(err)
 	}
-	if upstream.uploadCalls != 4 || upstream.retryCalls != 1 || upstream.cancelCalls != 1 {
+	if err := service.Delete(context.Background(), "kb-rag", "doc-1", identity, nil); err != nil {
+		t.Fatal(err)
+	}
+	if upstream.uploadCalls != 4 || upstream.retryCalls != 1 || upstream.cancelCalls != 1 || upstream.deleteCalls != 1 {
 		t.Fatalf("calls = %+v", upstream)
 	}
 }
@@ -136,7 +144,10 @@ func TestViewerAndEditorPlainRAGBoundaries(t *testing.T) {
 		if _, err := service.Upload(context.Background(), "kb-rag", "guide.md", 4, strings.NewReader("body"), identity, nil); errorCode(err) != "resource.not_found" {
 			t.Fatalf("viewer Upload() error = %v", err)
 		}
-		if upstream.uploadCalls != 0 {
+		if err := service.Delete(context.Background(), "kb-rag", "doc-1", identity, nil); errorCode(err) != "resource.not_found" {
+			t.Fatalf("viewer Delete() error = %v", err)
+		}
+		if upstream.uploadCalls != 0 || upstream.deleteCalls != 0 {
 			t.Fatal("viewer mutation reached upstream")
 		}
 	})
@@ -153,7 +164,10 @@ func TestViewerAndEditorPlainRAGBoundaries(t *testing.T) {
 		if _, err := service.Retry(context.Background(), "kb-rag", "doc-1", identity, nil); err != nil {
 			t.Fatal(err)
 		}
-		if upstream.uploadCalls != 1 || upstream.retryCalls != 1 {
+		if err := service.Delete(context.Background(), "kb-rag", "doc-1", identity, nil); err != nil {
+			t.Fatal(err)
+		}
+		if upstream.uploadCalls != 1 || upstream.retryCalls != 1 || upstream.deleteCalls != 1 {
 			t.Fatalf("editor calls = %+v", upstream)
 		}
 	})

@@ -49,6 +49,7 @@ type CreateInput struct {
 	EmbeddingModelID string `json:"embedding_model_id"`
 	SummaryModelID   string `json:"summary_model_id,omitempty"`
 	RerankModelID    string `json:"-"`
+	VLMModelID       string `json:"-"`
 	StorageProvider  string `json:"storage_provider,omitempty"`
 }
 
@@ -97,7 +98,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput, idempotencyKey 
 	if err != nil {
 		return CreateResult{}, err
 	}
-	definition, err := preset.BuildWithRerank(productMode, normalized.EmbeddingModelID, normalized.SummaryModelID, normalized.RerankModelID)
+	definition, err := preset.BuildWithManagedModels(productMode, normalized.EmbeddingModelID, normalized.SummaryModelID, normalized.RerankModelID, normalized.VLMModelID)
 	if err != nil || definition.Config.ProfileID != indexProfile || definition.AccessPolicy != accessPolicy {
 		return CreateResult{}, &Error{Code: "space.preset_invalid", Message: "Approved knowledge-space preset is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
 	}
@@ -212,6 +213,7 @@ func normalizeCreateInput(input CreateInput) (CreateInput, profile.ProductMode, 
 	input.EmbeddingModelID = strings.TrimSpace(input.EmbeddingModelID)
 	input.SummaryModelID = strings.TrimSpace(input.SummaryModelID)
 	input.RerankModelID = strings.TrimSpace(input.RerankModelID)
+	input.VLMModelID = strings.TrimSpace(input.VLMModelID)
 	input.StorageProvider = strings.ToLower(strings.TrimSpace(input.StorageProvider))
 	if input.StorageProvider == "" {
 		input.StorageProvider = "local"
@@ -260,6 +262,9 @@ func verifyUpstreamOwnership(kb weknora.KnowledgeBase, request CreationRequest, 
 	if kb.ID != request.UpstreamKBID || kb.TenantID != request.TenantID || kb.CreatorID != request.OwnerUserID || kb.Name != input.Name || kb.Type != "document" {
 		return &Error{Code: "space.reconciliation_conflict", Message: "The allocated upstream resource does not match this creation request", StatusCode: http.StatusConflict}
 	}
+	if input.VLMModelID != "" && (!kb.VLMConfig.Enabled || kb.VLMConfig.ModelID != input.VLMModelID) {
+		return &Error{Code: "space.reconciliation_conflict", Message: "The allocated upstream resource does not match the managed vision profile", StatusCode: http.StatusConflict}
+	}
 	return nil
 }
 
@@ -301,7 +306,14 @@ func (s *Service) recordFailure(ctx context.Context, request CreationRequest, er
 }
 
 func hashCreateInput(input CreateInput) (string, error) {
-	encoded, err := json.Marshal(input)
+	// Server-selected models participate in idempotency even though clients
+	// cannot set them. This prevents a retry from silently changing the OCR
+	// profile if the optional managed VLM becomes available between attempts.
+	encoded, err := json.Marshal(struct {
+		CreateInput
+		RerankModelID string `json:"rerank_model_id,omitempty"`
+		VLMModelID    string `json:"vlm_model_id,omitempty"`
+	}{CreateInput: input, RerankModelID: input.RerankModelID, VLMModelID: input.VLMModelID})
 	if err != nil {
 		return "", err
 	}

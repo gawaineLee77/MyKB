@@ -72,6 +72,7 @@ Do not send production secrets through chat or commit them. During P5-02, the op
 MINDCREEK_MANAGED_LLM_NAME / BASE_URL / API_KEY / PROVIDER
 MINDCREEK_MANAGED_EMBEDDING_NAME / BASE_URL / API_KEY / PROVIDER / DIMENSION
 MINDCREEK_MANAGED_RERANK_NAME / BASE_URL / API_KEY / PROVIDER
+MINDCREEK_MANAGED_VLM_ENABLED / NAME / BASE_URL / API_KEY / PROVIDER (optional scanned-document OCR)
 ```
 
 The exact provider protocols and embedding dimension must be confirmed before live configuration. The implementation will include a redacted verification command that reports success or a typed failure without echoing any supplied value.

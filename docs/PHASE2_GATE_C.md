@@ -13,7 +13,7 @@ The standard `/platform/knowledge-bases` route now loads the product-owned `Know
 
 Owned RAG cards expose a product sharing dialog. Personal Notes display an owner-only lock and never render sharing controls. The dialog supports internal-user lookup, Viewer/Editor selection, optional expiry, active grant listing, permission changes, revocation, and stale-revision recovery. Only an owner can load or mutate its server APIs.
 
-RAG workspaces load `/api/v1/mindcreek/knowledge-bases/{id}/access` before rendering controls. Viewer receives a read-only banner and no upload, retry, or cancel controls. Editor and Owner receive content controls; the role badge makes the active decision visible. The gateway, not the UI, remains authoritative.
+RAG workspaces load `/api/v1/mindcreek/knowledge-bases/{id}/access` before rendering controls. Viewer receives a read-only banner and no upload, retry, cancel, or document-delete controls. Editor and Owner receive content controls; deletion is confirmed and delegated to WeKnora so the source, chunks, and indexes share one cleanup lifecycle. The gateway, not the UI, remains authoritative.
 
 ## Verification
 

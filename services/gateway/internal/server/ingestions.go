@@ -93,6 +93,17 @@ func registerIngestionRoutes(mux *http.ServeMux, dependencies Dependencies, maxF
 	registerIngestionMutation(mux, dependencies, "cancel", func(r *http.Request, identity access.Identity) (any, error) {
 		return dependencies.Ingestions.Cancel(r.Context(), r.PathValue("kb_id"), r.PathValue("ingestion_id"), identity, r.Header)
 	})
+	mux.HandleFunc("DELETE /api/v1/knowledge-bases/{kb_id}/ingestions/{ingestion_id}", func(w http.ResponseWriter, r *http.Request) {
+		identity, ok := resolveIngestionIdentity(w, r, dependencies)
+		if !ok {
+			return
+		}
+		if err := dependencies.Ingestions.Delete(r.Context(), r.PathValue("kb_id"), r.PathValue("ingestion_id"), identity, r.Header); err != nil {
+			writeIngestionError(w, r, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, map[string]any{"success": true})
+	})
 }
 
 func writeIngestionUploadTooLarge(w http.ResponseWriter, r *http.Request, maxFileSizeMB int64) {

@@ -8,6 +8,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -216,13 +219,14 @@ type AgentAnswer struct {
 }
 
 type KnowledgeBase struct {
-	ID               string `json:"id"`
-	Name             string `json:"name"`
-	Type             string `json:"type"`
-	Description      string `json:"description"`
-	TenantID         uint64 `json:"tenant_id"`
-	CreatorID        string `json:"creator_id"`
-	EmbeddingModelID string `json:"embedding_model_id"`
+	ID               string    `json:"id"`
+	Name             string    `json:"name"`
+	Type             string    `json:"type"`
+	Description      string    `json:"description"`
+	TenantID         uint64    `json:"tenant_id"`
+	CreatorID        string    `json:"creator_id"`
+	EmbeddingModelID string    `json:"embedding_model_id"`
+	VLMConfig        VLMConfig `json:"vlm_config"`
 }
 
 // Model is the deliberately narrow model descriptor used by MindCreek.
@@ -303,10 +307,17 @@ type CreateKnowledgeBaseRequest struct {
 	Type                     string                   `json:"type"`
 	EmbeddingModelID         string                   `json:"embedding_model_id"`
 	SummaryModelID           string                   `json:"summary_model_id,omitempty"`
+	VLMConfig                VLMConfig                `json:"vlm_config"`
 	StorageProviderConfig    StorageProviderConfig    `json:"storage_provider_config"`
 	ChunkingConfig           ChunkingConfig           `json:"chunking_config"`
 	IndexingStrategy         IndexingStrategy         `json:"indexing_strategy"`
 	QuestionGenerationConfig QuestionGenerationConfig `json:"question_generation_config"`
+}
+
+type VLMConfig struct {
+	Enabled             bool   `json:"enabled"`
+	ModelID             string `json:"model_id"`
+	DescriptionLanguage string `json:"description_language,omitempty"`
 }
 
 type StorageProviderConfig struct {
@@ -486,7 +497,7 @@ func (c *Client) DeleteModel(ctx context.Context, id string, inbound http.Header
 func (c *Client) TestModel(ctx context.Context, input ModelTestRequest, inbound http.Header) (ModelTestResult, error) {
 	path := ""
 	switch input.Type {
-	case "KnowledgeQA":
+	case "KnowledgeQA", "VLLM":
 		path = "/api/v1/initialization/remote/check"
 	case "Embedding":
 		path = "/api/v1/initialization/embedding/test"
@@ -529,6 +540,8 @@ func (c *Client) TestSavedModel(ctx context.Context, id, modelType string, inbou
 	case "Rerank":
 		input = "MindCreek"
 		documents = `["MindCreek managed model connectivity test"]`
+	case "VLLM":
+		input = "Reply with OK after inspecting this synthetic image."
 	default:
 		return ModelTestResult{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest}
 	}
@@ -536,6 +549,21 @@ func (c *Client) TestSavedModel(ctx context.Context, id, modelType string, inbou
 		"input": input, "documents": documents, "options": `{"max_tokens":8,"thinking":false}`,
 	} {
 		if err := writer.WriteField(name, value); err != nil {
+			return ModelTestResult{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusInternalServerError, Err: err}
+		}
+	}
+	if modelType == "VLLM" {
+		part, err := writer.CreateFormFile("file", "mindcreek-vision-test.png")
+		if err != nil {
+			return ModelTestResult{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusInternalServerError, Err: err}
+		}
+		probe := image.NewRGBA(image.Rect(0, 0, 64, 64))
+		for y := 0; y < 64; y++ {
+			for x := 0; x < 64; x++ {
+				probe.Set(x, y, color.RGBA{R: 29, G: 128, B: 99, A: 255})
+			}
+		}
+		if err := png.Encode(part, probe); err != nil {
 			return ModelTestResult{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusInternalServerError, Err: err}
 		}
 	}
@@ -784,6 +812,26 @@ func (c *Client) ReparseKnowledge(ctx context.Context, kbID, knowledgeID string,
 
 func (c *Client) CancelKnowledge(ctx context.Context, kbID, knowledgeID string, inbound http.Header) (Knowledge, error) {
 	return c.mutateKnowledge(ctx, kbID, knowledgeID, "cancel-parse", inbound)
+}
+
+// DeleteKnowledge enqueues deletion through WeKnora's KB-scoped batch endpoint.
+// The upstream handler validates that every document belongs to kbID before it
+// accepts the asynchronous cleanup task.
+func (c *Client) DeleteKnowledge(ctx context.Context, kbID, knowledgeID string, inbound http.Header) error {
+	var response struct {
+		Success bool `json:"success"`
+	}
+	input := struct {
+		KnowledgeBaseID string   `json:"kb_id"`
+		IDs             []string `json:"ids"`
+	}{KnowledgeBaseID: kbID, IDs: []string{knowledgeID}}
+	if err := c.sendJSON(ctx, http.MethodPost, "/api/v1/knowledge/batch-delete", nil, inbound, input, &response); err != nil {
+		return err
+	}
+	if !response.Success {
+		return &Error{Code: "upstream.invalid_response", StatusCode: http.StatusBadGateway}
+	}
+	return nil
 }
 
 func (c *Client) mutateKnowledge(ctx context.Context, kbID, knowledgeID, action string, inbound http.Header) (Knowledge, error) {

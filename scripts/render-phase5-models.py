@@ -29,6 +29,26 @@ DEV_DEFAULTS = {
     "MINDCREEK_MANAGED_RERANK_PROVIDER": "generic",
 }
 
+VLM_SETTINGS = (
+    "MINDCREEK_MANAGED_VLM_NAME",
+    "MINDCREEK_MANAGED_VLM_BASE_URL",
+    "MINDCREEK_MANAGED_VLM_API_KEY",
+    "MINDCREEK_MANAGED_VLM_PROVIDER",
+)
+
+VLM_DECLARATION = """  - id: builtin-mindcreek-vlm
+    name: ${MINDCREEK_MANAGED_VLM_NAME}
+    type: VLLM
+    source: remote
+    description: MindCreek managed vision and scanned-document OCR model
+    is_default: true
+    status: active
+    parameters:
+      base_url: ${MINDCREEK_MANAGED_VLM_BASE_URL}
+      api_key: ${MINDCREEK_MANAGED_VLM_API_KEY}
+      provider: ${MINDCREEK_MANAGED_VLM_PROVIDER}
+"""
+
 
 def load_env(path: Path) -> dict[str, str]:
     values: dict[str, str] = {}
@@ -84,11 +104,23 @@ def main() -> int:
     production_like = not development
     allow_http = optional_setting(values, "MINDCREEK_MANAGED_ALLOW_HTTP", "false").lower() == "true"
 
+    vlm_enabled_raw = optional_setting(values, "MINDCREEK_MANAGED_VLM_ENABLED", "false").lower()
+    if vlm_enabled_raw not in {"true", "false"}:
+        raise ValueError("MINDCREEK_MANAGED_VLM_ENABLED must be true or false")
+    vlm_enabled = vlm_enabled_raw == "true"
+
     required = {name: setting(values, name, development) for name in DEV_DEFAULTS}
+    # VLM stays opt-in even in development so existing three-model environments
+    # remain reproducible. Once enabled, all four connection settings are required.
+    if vlm_enabled:
+        required.update({name: setting(values, name, False) for name in VLM_SETTINGS})
     dimension = int(required["MINDCREEK_MANAGED_EMBEDDING_DIMENSION"])
     if dimension < 1 or dimension > 65536:
         raise ValueError("MINDCREEK_MANAGED_EMBEDDING_DIMENSION must be between 1 and 65536")
-    for prefix in ("LLM", "EMBEDDING", "RERANK"):
+    prefixes = ["LLM", "EMBEDDING", "RERANK"]
+    if vlm_enabled:
+        prefixes.append("VLM")
+    for prefix in prefixes:
         model_name = required[f"MINDCREEK_MANAGED_{prefix}_NAME"]
         provider = required[f"MINDCREEK_MANAGED_{prefix}_PROVIDER"]
         if not model_name.strip() or any(character in model_name for character in "\r\n"):
@@ -118,10 +150,12 @@ def main() -> int:
             raise ValueError("user model overrides require MINDCREEK_MODEL_OVERRIDE_HOSTS")
 
     rendered = TEMPLATE.read_text(encoding="utf-8").replace("__MINDCREEK_EMBEDDING_DIMENSION__", str(dimension))
+    rendered = rendered.replace("__MINDCREEK_VLM_DECLARATION__", VLM_DECLARATION.rstrip() if vlm_enabled else "")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(rendered, encoding="utf-8")
     os.chmod(args.output, stat.S_IRUSR | stat.S_IWUSR)
-    print(f"Rendered 3 managed model declarations for {deployment}; credentials were not written or printed.")
+    count = 4 if vlm_enabled else 3
+    print(f"Rendered {count} managed model declarations for {deployment}; credentials were not written or printed.")
     return 0
 
 
