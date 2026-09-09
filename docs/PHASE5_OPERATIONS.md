@@ -24,7 +24,7 @@ The vulnerability gate uses Docker Scout and may transmit runtime-image PURLs an
 
 Install the TLS certificate/key and protected `.local/mindcreek.env`, set `MINDCREEK_DEPLOYMENT_ENV=production`, enable corporate identity, configure its HTTPS authorization/token/UserInfo endpoints and five-field mapping, and provide approved HTTPS model endpoints. Register the exact external origin as the corporate redirect URI:
 
-MindCreek permits knowledge files up to 200 MiB by default. Set `MAX_FILE_SIZE_MB=200` in `.local/mindcreek.env` (or choose a smaller organization limit from 1 through 200); Compose applies it consistently to the browser, edge Nginx, Gateway, App, and Docreader. Leave `DOCREADER_GRPC_MAX_FILE_SIZE_MB` blank to inherit the same value. Migration 11 raises existing Plain RAG profiles from the former 50 MiB ceiling while leaving Personal Notes unchanged.
+MindCreek permits knowledge files up to 500 MiB by default. Set `MAX_FILE_SIZE_MB=500` in `.local/mindcreek.env` (or choose a smaller organization limit from 1 through 500); Compose applies it consistently to the browser, edge Nginx, Gateway, App, and Docreader. Leave `DOCREADER_GRPC_MAX_FILE_SIZE_MB` blank to inherit the same value. Migration 11 retains the historical 50-to-200 MiB transition, while migration 12 raises existing 200 MiB Plain RAG profiles to 500 MiB. Personal Notes remain unchanged.
 
 ### Scanned and image-only PDFs
 
@@ -76,6 +76,6 @@ For an intentionally empty replacement that discards all old accounts, documents
 
 ## Backup, rollback, and incident response
 
-Run `make phase5-backup` before changes and `make phase5-recovery-drill` on schedule. For application rollback, stop Phase 5 and restart the previous images against preserved volumes; older releases ignore migrations 10 and 11. Do not roll back the schema unless the isolated migration test and backup retention explicitly require it.
+Run `make phase5-backup` before changes and `make phase5-recovery-drill` on schedule. For application rollback, stop Phase 5 and restart the previous images against preserved volumes; older releases ignore migrations 10 through 12. Do not roll back the schema unless the isolated migration test and backup retention explicitly require it.
 
 For an incident, restrict access, preserve correlation IDs and redacted audit records, revoke exposed provider credentials, suspend affected identities, and restore the last verified bundle. Do not copy prompts, documents, answers, or secrets into tickets. Reopen access only after runtime, identity, authorization, retrieval, MCP, and observability probes pass.

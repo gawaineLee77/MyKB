@@ -2,7 +2,7 @@ services:
   frontend:
     image: ${MINDCREEK_PHASE5_UI_IMAGE:-mindcreek-ui:phase5}
     environment:
-      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-200}
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
     build:
       args:
         MINDCREEK_UI_VERSION: ${MINDCREEK_UI_VERSION:-0.6.0}
@@ -15,7 +15,7 @@ services:
         MINDCREEK_VERSION: ${MINDCREEK_VERSION:-0.6.0-phase5}
     environment:
       MINDCREEK_VERSION: ${MINDCREEK_VERSION:-0.6.0-phase5}
-      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-200}
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
       MINDCREEK_CAPABILITIES_FILE: /etc/mindcreek/phase5-capabilities.json
       MINDCREEK_MODEL_OVERRIDE_PROVIDERS: ${MINDCREEK_MODEL_OVERRIDE_PROVIDERS:-generic,openai}
       MINDCREEK_MODEL_OVERRIDE_HOSTS: ${MINDCREEK_MODEL_OVERRIDE_HOSTS:-}
@@ -28,7 +28,7 @@ services:
 
   app:
     environment:
-      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-200}
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
       BUILTIN_MODELS_CONFIG: /app/config/builtin_models.yaml
       MINDCREEK_MANAGED_LLM_NAME: ${MINDCREEK_MANAGED_LLM_NAME:-mindcreek-test-chat}
       MINDCREEK_MANAGED_LLM_BASE_URL: ${MINDCREEK_MANAGED_LLM_BASE_URL:-http://mock-embedding:19090/v1}
@@ -53,5 +53,5 @@ services:
 
   docreader:
     environment:
-      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-200}
-      DOCREADER_GRPC_MAX_FILE_SIZE_MB: ${DOCREADER_GRPC_MAX_FILE_SIZE_MB:-${MAX_FILE_SIZE_MB:-200}}
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
+      DOCREADER_GRPC_MAX_FILE_SIZE_MB: ${DOCREADER_GRPC_MAX_FILE_SIZE_MB:-${MAX_FILE_SIZE_MB:-500}}

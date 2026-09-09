@@ -12,7 +12,7 @@ func TestLoadDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
-	if cfg.ListenAddr != ":8080" || cfg.ProductVersion != "test-version" || cfg.MaxFileSizeMB != 200 {
+	if cfg.ListenAddr != ":8080" || cfg.ProductVersion != "test-version" || cfg.MaxFileSizeMB != 500 {
 		t.Fatalf("unexpected defaults: %+v", cfg)
 	}
 	if got := cfg.UpstreamURL.String(); got != "http://app:8080" {
@@ -21,12 +21,12 @@ func TestLoadDefaults(t *testing.T) {
 }
 
 func TestLoadValidatesMaxFileSize(t *testing.T) {
-	t.Setenv("MAX_FILE_SIZE_MB", "128")
+	t.Setenv("MAX_FILE_SIZE_MB", "500")
 	cfg, err := Load("test-version")
-	if err != nil || cfg.MaxFileSizeMB != 128 {
+	if err != nil || cfg.MaxFileSizeMB != 500 {
 		t.Fatalf("MAX_FILE_SIZE_MB config = %+v, %v", cfg, err)
 	}
-	for _, invalid := range []string{"0", "201", "not-a-number"} {
+	for _, invalid := range []string{"0", "501", "not-a-number"} {
 		t.Run(invalid, func(t *testing.T) {
 			t.Setenv("MAX_FILE_SIZE_MB", invalid)
 			if _, err := Load("test-version"); err == nil {

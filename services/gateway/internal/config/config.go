@@ -18,8 +18,8 @@ const (
 	defaultRoutePolicyFile  = "config/phase1-route-policy.json"
 	defaultRouteActionsFile = "config/phase2-route-actions.json"
 	defaultCapabilitiesFile = "config/phase4-capabilities.json"
-	defaultMaxFileSizeMB    = int64(200)
-	maxAllowedFileSizeMB    = int64(200)
+	defaultMaxFileSizeMB    = int64(500)
+	maxAllowedFileSizeMB    = int64(500)
 )
 
 // Config contains only process and upstream-connection settings.

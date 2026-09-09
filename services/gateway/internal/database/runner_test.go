@@ -37,8 +37,8 @@ func TestEmbeddedMigrationsIncludeCurrentProductSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(migrations) != 11 {
-		t.Fatalf("embedded migration count = %d, want 11", len(migrations))
+	if len(migrations) != 12 {
+		t.Fatalf("embedded migration count = %d, want 12", len(migrations))
 	}
 	grantMigration := migrations[5]
 	if grantMigration.Version != 6 || grantMigration.Name != "kb_access_grants" {
@@ -95,5 +95,11 @@ func TestEmbeddedMigrationsIncludeCurrentProductSchema(t *testing.T) {
 		!strings.Contains(uploadLimitMigration.UpSQL, "209715200") ||
 		!strings.Contains(uploadLimitMigration.DownSQL, "52428800") {
 		t.Fatalf("RAG upload-limit migration = %+v", uploadLimitMigration)
+	}
+	uploadLimit500Migration := migrations[11]
+	if uploadLimit500Migration.Version != 12 || uploadLimit500Migration.Name != "rag_upload_limit_500" ||
+		!strings.Contains(uploadLimit500Migration.UpSQL, "524288000") ||
+		!strings.Contains(uploadLimit500Migration.DownSQL, "209715200") {
+		t.Fatalf("500 MiB RAG upload-limit migration = %+v", uploadLimit500Migration)
 	}
 }

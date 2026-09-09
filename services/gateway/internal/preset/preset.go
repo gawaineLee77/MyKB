@@ -11,7 +11,7 @@ import (
 
 const (
 	Version          = 1
-	MaxRAGFileBytes  = int64(200 << 20)
+	MaxRAGFileBytes  = int64(500 << 20)
 	MaxRAGFiles      = 1000
 	MaxNoteFileBytes = int64(64 << 10)
 	MaxPersonalNotes = 500

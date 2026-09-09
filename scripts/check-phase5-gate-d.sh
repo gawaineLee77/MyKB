@@ -12,6 +12,8 @@ for file in \
   deploy/phase5/compose.managed-models.yml \
   services/gateway/internal/database/migrations/000011_rag_upload_limit.up.sql \
   services/gateway/internal/database/migrations/000011_rag_upload_limit.down.sql \
+  services/gateway/internal/database/migrations/000012_rag_upload_limit_500.up.sql \
+  services/gateway/internal/database/migrations/000012_rag_upload_limit_500.down.sql \
   images/manifests/phase5-runtime.txt \
   testdata/phase5/pilot-benchmark.json \
   scripts/phase5-pilot-probe.py \
@@ -33,11 +35,12 @@ for image in mindcreek-ui:phase5 mindcreek-ui:0.6.0 mindcreek-gateway:phase5 min
   rg -q "^$image$" "$ROOT/images/manifests/phase5-runtime.txt" || fail "release image tag is missing: $image"
 done
 rg -q '"phase": "phase5"' "$ROOT/config/phase5-capabilities.json" || fail "Phase 5 capability registry is not selected"
-rg -q '^MAX_FILE_SIZE_MB=200$' "$ROOT/deploy/mindcreek/.env.example" || fail "the product upload limit does not default to 200 MiB"
-[ "$(grep -cF 'MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-200}' "$ROOT/deploy/phase5/compose.managed-models.yml")" -eq 4 ] || fail "the upload limit is not shared by frontend, gateway, app, and docreader"
+rg -q '^MAX_FILE_SIZE_MB=500$' "$ROOT/deploy/mindcreek/.env.example" || fail "the product upload limit does not default to 500 MiB"
+[ "$(grep -cF 'MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}' "$ROOT/deploy/phase5/compose.managed-models.yml")" -eq 4 ] || fail "the upload limit is not shared by frontend, gateway, app, and docreader"
 rg -q 'DOCREADER_GRPC_MAX_FILE_SIZE_MB.*MAX_FILE_SIZE_MB' "$ROOT/deploy/phase5/compose.managed-models.yml" || fail "the Docreader gRPC limit does not follow the upload limit"
 rg -q 'MAX_FILE_SIZE_BYTES' "$ROOT/tools/frontend-overlay/product/mindcreek/RAGWorkspace.vue" || fail "the RAG workspace does not reject oversized files before upload"
 rg -q '209715200' "$ROOT/services/gateway/internal/database/migrations/000011_rag_upload_limit.up.sql" || fail "existing Plain RAG profiles are not raised to 200 MiB"
+rg -q '524288000' "$ROOT/services/gateway/internal/database/migrations/000012_rag_upload_limit_500.up.sql" || fail "existing Plain RAG profiles are not raised to 500 MiB"
 rg -q -- '--confirm-destroy-all-mindcreek-data' "$ROOT/scripts/phase5-server-reset.sh" || fail "fresh server reset lacks destructive confirmation"
 rg -q '^\| Ledger status \| No downstream patches \|' "$LEDGER" || fail "upstream patch ledger is not empty"
 [ -z "$(git -C "$ROOT/upstream/weknora" status --porcelain --untracked-files=all)" ] || fail "upstream submodule is dirty"
