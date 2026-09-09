@@ -24,7 +24,7 @@
           <div v-if="!question && !answer" class="welcome"><span><t-icon name="chat" /></span><h2>{{ text.welcome }}</h2><p>{{ text.welcomeHint }}</p></div>
           <article v-if="question" class="question"><small>{{ text.you }}</small><p>{{ question }}</p></article>
           <article v-if="answer || streaming" class="assistant"><small>MindCreek</small><p>{{ answer }}<i v-if="streaming" /></p></article>
-          <div v-if="references.length" class="references"><h3>{{ text.sources }}</h3><button v-for="reference in references" :key="reference.id" type="button" @click="openSource(reference.id)"><t-icon name="file" /><span><b>{{ reference.knowledge_title || reference.knowledge_filename || text.source }}</b><small>{{ reference.knowledge_base_id }}</small></span></button></div>
+          <div v-if="references.length" class="references"><h3>{{ text.sources }}</h3><button v-for="reference in references" :key="reference.knowledge_id || reference.id" type="button" @click="openSource(reference.id)"><t-icon name="file" /><span><b>{{ reference.knowledge_title || reference.knowledge_filename || text.source }}</b><small>{{ reference.knowledge_base_id }} · {{ text.matches.replace('{count}', String(reference.match_count || 1)) }}</small></span></button></div>
           <p v-if="streamError" class="stream-error" role="alert">{{ streamError }}</p>
         </div>
         <form class="composer" @submit.prevent="ask"><textarea v-model="draft" :placeholder="text.placeholder" maxlength="8000" @keydown.meta.enter.prevent="ask" @keydown.ctrl.enter.prevent="ask" /><footer><span>{{ text.selected.replace('{count}', String(selected.length)) }}</span><button type="submit" :disabled="streaming || !draft.trim() || !selected.length"><t-icon name="send" /> {{ streaming ? text.thinking : text.send }}</button></footer></form>
@@ -36,19 +36,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { createSessions } from '@/api/chat'
 import { useStream } from '@/api/chat/streame'
-import { getDefaultAgentScope, getSmartReasoningModelId, listCatalog, listKnowledgeLibrary, resolveAgentScope, type KnowledgeLibraryItem } from './api'
+import { getDefaultAgentScope, getSmartReasoningModelId, listCatalog, listKnowledgeLibrary, resolveAgentScope, type CatalogPage, type KnowledgeLibraryItem } from './api'
+import { mergeDocumentReferences, type KnowledgeReference } from './knowledge-scope'
 
-type Reference = { id: string; knowledge_base_id?: string; knowledge_title?: string; knowledge_filename?: string }
-const router = useRouter(), { locale } = useI18n()
+const route = useRoute(), router = useRouter(), { locale } = useI18n()
 const loading = ref(true), loadError = ref(''), defaultItems = ref<KnowledgeLibraryItem[]>([]), publicItems = ref<KnowledgeLibraryItem[]>([])
-const selected = ref<string[]>([]), draft = ref(''), question = ref(''), answer = ref(''), references = ref<Reference[]>([]), sessionId = ref(''), mode = ref<'quick' | 'reasoning'>('quick'), queryError = ref(''), reasoningModelId = ref('')
+const selected = ref<string[]>([]), draft = ref(''), question = ref(''), answer = ref(''), references = ref<KnowledgeReference[]>([]), sessionId = ref(''), mode = ref<'quick' | 'reasoning'>('quick'), queryError = ref(''), reasoningModelId = ref('')
 const { isStreaming: streaming, error, onChunk, startStream } = useStream()
 const words = {
-  en: { library: 'Knowledge library', eyebrow: 'Authorized Ask', title: 'Ask across the knowledge you choose', subtitle: 'MindCreek resolves access before retrieval and checks sources again when opened.', scope: 'Knowledge scope', scopeHint: 'Owned, shared, and subscribed KBs are selected by default. Public KBs require explicit selection.', loading: 'Loading authorized knowledge…', retry: 'Retry', defaultKnowledge: 'Default scope', publicKnowledge: 'Organization public', explicitPublic: 'Explicit selection', empty: 'No readable knowledge is available.', selectDefault: 'Select default', clear: 'Clear', quick: 'Quick answer', reasoning: 'Smart reasoning', reasoningNeedsModel: 'Configure a KnowledgeQA model to enable smart reasoning.', liveAuth: 'Live authorization', welcome: 'Start with a grounded question', welcomeHint: 'Choose one or more knowledge bases. Answers stay inside that effective scope.', you: 'You', sources: 'Authorized sources', source: 'Source excerpt', placeholder: 'Ask a question about the selected knowledge…', selected: '{count} knowledge bases selected', send: 'Ask', thinking: 'Thinking…' },
-  zh: { library: '知识库目录', eyebrow: '授权问答', title: '向你选择的知识提问', subtitle: 'MindCreek 在检索前解析访问权限，并在打开来源时再次校验。', scope: '知识范围', scopeHint: '默认选择自有、共享及已订阅知识库；组织公共知识库必须明确选择。', loading: '正在加载已授权知识…', retry: '重试', defaultKnowledge: '默认范围', publicKnowledge: '组织公共知识', explicitPublic: '明确选择', empty: '暂无可读取的知识。', selectDefault: '选择默认范围', clear: '清空', quick: '快速回答', reasoning: '智能推理', reasoningNeedsModel: '请先配置 KnowledgeQA 模型以启用智能推理。', liveAuth: '实时授权', welcome: '从一个有依据的问题开始', welcomeHint: '选择一个或多个知识库，回答只会使用最终授权范围。', you: '你', sources: '已授权来源', source: '来源片段', placeholder: '针对所选知识提出问题…', selected: '已选择 {count} 个知识库', send: '提问', thinking: '思考中…' },
+  en: { library: 'Knowledge library', eyebrow: 'Authorized Ask', title: 'Ask across the knowledge you choose', subtitle: 'MindCreek resolves access before retrieval and checks sources again when opened.', scope: 'Knowledge scope', scopeHint: 'Owned, shared, and subscribed KBs are selected by default. Public KBs require explicit selection.', loading: 'Loading authorized knowledge…', retry: 'Retry', defaultKnowledge: 'Default scope', publicKnowledge: 'Organization public', explicitPublic: 'Explicit selection', empty: 'No readable knowledge is available.', selectDefault: 'Select default', clear: 'Clear', quick: 'Quick answer', reasoning: 'Smart reasoning', reasoningNeedsModel: 'Configure a KnowledgeQA model to enable smart reasoning.', liveAuth: 'Live authorization', welcome: 'Start with a grounded question', welcomeHint: 'Choose one or more knowledge bases. Answers stay inside that effective scope.', you: 'You', sources: 'Authorized sources', source: 'Source excerpt', matches: '{count} matching excerpts', placeholder: 'Ask a question about the selected knowledge…', selected: '{count} knowledge bases selected', send: 'Ask', thinking: 'Thinking…' },
+  zh: { library: '知识库目录', eyebrow: '授权问答', title: '向你选择的知识提问', subtitle: 'MindCreek 在检索前解析访问权限，并在打开来源时再次校验。', scope: '知识范围', scopeHint: '默认选择自有、共享及已订阅知识库；组织公共知识库必须明确选择。', loading: '正在加载已授权知识…', retry: '重试', defaultKnowledge: '默认范围', publicKnowledge: '组织公共知识', explicitPublic: '明确选择', empty: '暂无可读取的知识。', selectDefault: '选择默认范围', clear: '清空', quick: '快速回答', reasoning: '智能推理', reasoningNeedsModel: '请先配置 KnowledgeQA 模型以启用智能推理。', liveAuth: '实时授权', welcome: '从一个有依据的问题开始', welcomeHint: '选择一个或多个知识库，回答只会使用最终授权范围。', you: '你', sources: '已授权来源', source: '来源片段', matches: '命中 {count} 个分块', placeholder: '针对所选知识提出问题…', selected: '已选择 {count} 个知识库', send: '提问', thinking: '思考中…' },
 }
 const text = computed(() => locale.value.startsWith('zh') ? words.zh : words.en)
 const streamError = computed(() => queryError.value || error.value || '')
@@ -56,8 +56,32 @@ function messageOf(value: unknown) { const response = value && typeof value === 
 function sourceLabel(source: string) { const labels: Record<string, [string,string]> = { owner: ['Owned','自有'], user_grant: ['Shared','共享'], subscription: ['Subscribed','已订阅'] }; return (labels[source] || ['Authorized','已授权'])[locale.value.startsWith('zh') ? 1 : 0] }
 function toggle(id: string) { selected.value = selected.value.includes(id) ? selected.value.filter(value => value !== id) : selected.value.length < 64 ? [...selected.value, id] : selected.value }
 function selectDefault() { selected.value = defaultItems.value.map(item => item.id) }
-async function loadScopes() { loading.value = true; loadError.value = ''; try { const [scope, library, catalog, modelId] = await Promise.all([getDefaultAgentScope(), listKnowledgeLibrary('all', 1, 64), listCatalog({ accessMode: 'organization_public', pageSize: 100 }), getSmartReasoningModelId().catch(() => '')]); reasoningModelId.value = modelId; defaultItems.value = library.items.filter(item => scope.knowledge_base_ids.includes(item.id)); const existing = new Set(defaultItems.value.map(item => item.id)); publicItems.value = catalog.items.filter(item => item.can_read && !existing.has(item.publication.knowledge_base_id)).map(item => ({ id: item.publication.knowledge_base_id, name: item.publication.title, description: item.publication.description, type: 'document', creator_id: item.publication.publisher_id, role: 'viewer', product_mode: 'rag', access_source: 'organization_public', publication_id: item.publication.id })); selected.value = scope.knowledge_base_ids } catch (value) { loadError.value = messageOf(value) } finally { loading.value = false } }
-onChunk((event: any) => { const kind = event?.response_type || event?.type; if (kind === 'answer') answer.value += event.content || ''; if (kind === 'references') references.value = event.knowledge_references || event.data?.references || [] })
+async function loadScopes() {
+  loading.value = true
+  loadError.value = ''
+  try {
+    const [scope, library, catalog, modelId] = await Promise.all([
+      getDefaultAgentScope(),
+      listKnowledgeLibrary('all', 1, 64),
+      listCatalog({ accessMode: 'organization_public', pageSize: 100 }).catch((): CatalogPage => ({ items: [], total: 0, page: 1, page_size: 100 })),
+      getSmartReasoningModelId().catch(() => ''),
+    ])
+    reasoningModelId.value = modelId
+    defaultItems.value = library.items.filter(item => scope.knowledge_base_ids.includes(item.id))
+    const existing = new Set(defaultItems.value.map(item => item.id))
+    publicItems.value = catalog.items
+      .filter(item => item.can_read && !existing.has(item.publication.knowledge_base_id))
+      .map(item => ({ id: item.publication.knowledge_base_id, name: item.publication.title, description: item.publication.description, type: 'document', creator_id: item.publication.publisher_id, role: 'viewer', product_mode: 'rag', access_source: 'organization_public', publication_id: item.publication.id }))
+    const requested = typeof route.query.kb_id === 'string' ? route.query.kb_id : ''
+    selected.value = requested ? (await resolveAgentScope([requested])).knowledge_base_ids : scope.knowledge_base_ids
+  } catch (value) {
+    selected.value = []
+    loadError.value = messageOf(value)
+  } finally {
+    loading.value = false
+  }
+}
+onChunk((event: any) => { const kind = event?.response_type || event?.type; if (kind === 'answer') answer.value += event.content || ''; if (kind === 'references') references.value = mergeDocumentReferences(event.knowledge_references || event.data?.references || []) })
 async function ask() { const value = draft.value.trim(); if (!value || !selected.value.length || streaming.value) return; queryError.value = ''; try { const reasoning = mode.value === 'reasoning'; if (reasoning && !reasoningModelId.value) throw new Error(text.value.reasoningNeedsModel); const scope = await resolveAgentScope(selected.value); if (!sessionId.value) { const session: any = await createSessions({ title: value.slice(0, 80), description: 'MindCreek authorized Ask' }); sessionId.value = session?.data?.id || '' } if (!sessionId.value) throw new Error('Unable to create a conversation session'); question.value = value; draft.value = ''; answer.value = ''; references.value = []; await startStream({ session_id: sessionId.value, query: value, knowledge_base_ids: scope.knowledge_base_ids, agent_enabled: reasoning, agent_id: reasoning ? 'builtin-smart-reasoning' : undefined, summary_model_id: reasoning ? reasoningModelId.value : undefined, web_search_enabled: false, mcp_service_ids: [], method: 'POST', url: reasoning ? '/api/v1/agent-chat' : '/api/v1/knowledge-chat' }) } catch (value) { answer.value = ''; queryError.value = messageOf(value) } }
 function openSource(id: string) { window.open(`/api/v1/chunks/by-id/${encodeURIComponent(id)}`, '_blank', 'noopener,noreferrer') }
 onMounted(loadScopes)

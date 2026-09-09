@@ -240,10 +240,27 @@ replaceExact(
 
 replaceExact(
   'src/views/agent/AgentEditorModal.vue',
-  '      chatResources.ensureKnowledgeBases(),',
-  `      // A knowledge space may have been created after the shell cache was populated.
+  `    await Promise.all([
+      chatResources.ensureModels(),
+      chatResources.ensureKnowledgeBases(),
+      chatResources.ensureWebSearchProviders(),
+      editorResources.prefetchAgentEditorDeps(),
+    ]);`,
+  `    // Knowledge-base selection is essential; optional editor dependencies
+    // must not blank the list when one auxiliary endpoint is unavailable.
+    const dependencyResults = await Promise.allSettled([
+      chatResources.ensureModels(),
+      // A knowledge space may have been created after the shell cache was populated.
       // Agent scope selection must always show the current authorized list.
-      chatResources.ensureKnowledgeBases(true),`,
+      chatResources.ensureKnowledgeBases(true),
+      chatResources.ensureWebSearchProviders(),
+      editorResources.prefetchAgentEditorDeps(),
+    ]);
+    dependencyResults.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.warn('[AgentEditor] dependency unavailable', { index, error: result.reason });
+      }
+    });`,
 )
 replaceExact(
   'src/views/settings/ModelSettings.vue',
@@ -315,6 +332,51 @@ replaceExact(
     });
   }
 };`,
+)
+replaceExact(
+  'src/components/Input-field.vue',
+  `  if (settingsStore.selectedAgentSourceTenantId) return
+  const currentId = settingsStore.selectedAgentId || BUILTIN_QUICK_ANSWER_ID
+  if (!disabledOwnAgentIds.value.includes(currentId)) return
+
+  const isEnabled = (id: string) =>
+    agents.value.some(a => a.id === id) && !disabledOwnAgentIds.value.includes(id)
+
+  let fallback: CustomAgent | undefined
+  if (isEnabled(BUILTIN_SMART_REASONING_ID)) {`,
+  `  if (settingsStore.selectedAgentSourceTenantId) return
+  const currentId = settingsStore.selectedAgentId || BUILTIN_QUICK_ANSWER_ID
+  const currentExists = agents.value.some(a => a.id === currentId)
+  if (currentExists && !disabledOwnAgentIds.value.includes(currentId)) return
+
+  const isEnabled = (id: string) =>
+    agents.value.some(a => a.id === id) && !disabledOwnAgentIds.value.includes(id)
+
+  let fallback: CustomAgent | undefined
+  if (!currentExists && isEnabled(BUILTIN_QUICK_ANSWER_ID)) {
+    // The UI used to render a quick-answer fallback while retaining a deleted
+    // agent ID in the request, which made otherwise valid KB chats return 404.
+    fallback = agents.value.find(a => a.id === BUILTIN_QUICK_ANSWER_ID)
+  } else if (isEnabled(BUILTIN_SMART_REASONING_ID)) {`,
+)
+replaceExact(
+  'src/components/Input-field.vue',
+  `  if (kbId && !selectedKbIds.value.includes(kbId)) {
+    settingsStore.addKnowledgeBase(kbId);
+  }`,
+  `  if (kbId) {
+    // A KB-specific route is an exact scope, not an addition to stale global state.
+    settingsStore.selectKnowledgeBases([kbId]);
+  }`,
+)
+replaceExact(
+  'src/components/Input-field.vue',
+  `  if (newKbId && typeof newKbId === 'string' && !selectedKbIds.value.includes(newKbId)) {
+    settingsStore.addKnowledgeBase(newKbId);
+  }`,
+  `  if (newKbId && typeof newKbId === 'string') {
+    settingsStore.selectKnowledgeBases([newKbId]);
+  }`,
 )
 const translations = {
   'src/i18n/locales/en-US.ts': [

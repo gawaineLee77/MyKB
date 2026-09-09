@@ -5,7 +5,7 @@
       <div class="mc-title"><span>MindCreek · Plain RAG</span><h1>{{ text.title }}</h1><p>{{ text.subtitle }}</p><em v-if="access" class="mc-role" :class="access.role">{{ roleLabel(access.role) }}</em></div>
       <div class="mc-header-actions">
         <button type="button" @click="router.push(`/platform/knowledge-bases/${kbId}`)">{{ text.details }}</button>
-        <button class="primary" type="button" @click="router.push(`/platform/knowledge-bases/${kbId}/creatChat`)"><t-icon name="chat" /> {{ text.ask }}</button>
+        <button class="primary" type="button" @click="askKnowledgeBase"><t-icon name="chat" /> {{ text.ask }}</button>
       </div>
     </header>
 
@@ -101,6 +101,7 @@ function formatBytes(bytes: number) {
 }
 function formatDate(value: string) { return value ? new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '—' }
 function extension(document: RAGDocument) { return (document.file_type || document.file_name.split('.').pop() || 'file').replace('.', '').slice(0, 5).toUpperCase() }
+function askKnowledgeBase() { router.push({ path: '/platform/mindcreek/ask', query: { kb_id: kbId.value } }) }
 
 async function loadList() {
   if (loading.value) return
