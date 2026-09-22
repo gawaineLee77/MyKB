@@ -1,0 +1,8 @@
+{
+  "path": "/Users/gawaine/Desktop/KnowledgeBase/images/archives/mindcreek-r4-20260916-graph1-amd64-addon.tar.gz",
+  "bytes": 412541407,
+  "sha256": "973c34319a6356efcd08803c1a08aa1ff0c67012ac8b9d197e5c31ed33aa12e9",
+  "status": "passed",
+  "payload_files": 19,
+  "validation": "Archive SHA256 and every packaged file verified; both image archives are locked linux/amd64. No deployment performed."
+}

@@ -104,7 +104,7 @@ func loadMindCreekPhase2ActionPolicy(t *testing.T) mindCreekPhase2ActionPolicy {
 	if err := json.Unmarshal(data, &policy); err != nil {
 		t.Fatalf("parse Phase 2 route actions: %v", err)
 	}
-	if policy.SchemaVersion != 1 || policy.UpstreamTag != "v0.7.2" || policy.UpstreamCommit != "3d5d8bfcdfeeea266b292b71cea616847af28d0f" {
+	if policy.SchemaVersion != 1 || policy.UpstreamTag != "v0.8.0" || policy.UpstreamCommit != "1edcd54b43606d9079bb36650efe3f68707a79ea" {
 		t.Fatalf("Phase 2 route actions target an unexpected upstream baseline: %#v", policy)
 	}
 	validActions := map[string]bool{
@@ -160,6 +160,8 @@ func assertMindCreekPhase2Samples(t *testing.T, rules []mindCreekPhase2ActionRul
 		{"POST", "/api/v1/knowledge-search", "read"},
 		{"POST", "/api/v1/knowledge-chat/:session_id", "read"},
 		{"POST", "/api/v1/sessions", "read"},
+		{"GET", "/api/v1/sessions/:id/artifacts", "read"},
+		{"GET", "/api/v1/sessions/:id/messages/:message_id/files", "read"},
 		{"PUT", "/api/v1/knowledge-bases/:id/pin", "read"},
 		{"POST", "/api/v1/knowledge-bases/:id/knowledge/manual", "edit_content"},
 		{"DELETE", "/api/v1/knowledge/:id", "edit_content"},

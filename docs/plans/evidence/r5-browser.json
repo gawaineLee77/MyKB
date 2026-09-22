@@ -1,0 +1,144 @@
+{
+  "scope": "Real native API + nginx + Vue UI + loopback synthetic OAuth provider. Independent localhost portal and mindcreek.localhost product origins; no production IdP/models.",
+  "status": "passed",
+  "ui_source_sha256": "e31d4f2a3ffd6bcce3c964fe41c7ecdde6f6fd4f335532650c3b250a7cf3b517",
+  "bundle_sha256": "de78d062a628d3578ab5f5db4d1928abbbf41f1c493947968900de6106bf75a2",
+  "checks": [
+    {
+      "name": "before.r4_has_no_employee_publish_button",
+      "passed": true
+    },
+    {
+      "name": "manager.native_channels_edit_and_secret_free_code",
+      "passed": true
+    },
+    {
+      "name": "nginx.dynamic_csp_and_no_xframe_conflict",
+      "passed": true
+    },
+    {
+      "name": "nginx.main_site_retains_frame_protection",
+      "passed": true
+    },
+    {
+      "name": "nginx.malformed_frame_origin_denied",
+      "passed": true
+    },
+    {
+      "name": "popup.alice.synthetic_oauth_real_callback",
+      "passed": true
+    },
+    {
+      "name": "popup.alice.credential_not_posted_to_host",
+      "passed": true
+    },
+    {
+      "name": "popup.alice.iframe_did_not_persist_token",
+      "passed": true
+    },
+    {
+      "name": "employee.sse_answer",
+      "passed": true
+    },
+    {
+      "name": "employee.history_reload",
+      "passed": true
+    },
+    {
+      "name": "employee.persisted_image_reauthorized_and_displayed",
+      "passed": true
+    },
+    {
+      "name": "employee.native_reference_drawer",
+      "passed": true
+    },
+    {
+      "name": "popup.bob.synthetic_oauth_real_callback",
+      "passed": true
+    },
+    {
+      "name": "popup.bob.credential_not_posted_to_host",
+      "passed": true
+    },
+    {
+      "name": "popup.bob.iframe_did_not_persist_token",
+      "passed": true
+    },
+    {
+      "name": "employee.second_user_history_isolated",
+      "passed": true
+    },
+    {
+      "name": "employee.disabled_channel_invalidates_next_request",
+      "passed": true
+    },
+    {
+      "name": "browser.no_unhandled_errors",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    "docs/assets/r5/before-agent-list.png",
+    "docs/assets/r5/after-channel-publishing.png",
+    "docs/assets/r5/after-embed-code.png",
+    "docs/assets/r5/after-synthetic-login-popup.png",
+    "docs/assets/r5/after-employee-login.png",
+    "docs/assets/r5/after-employee-answer.png",
+    "docs/assets/r5/after-history-image.png",
+    "docs/assets/r5/after-knowledge-references.png",
+    "docs/assets/r5/after-channel-revoked.png"
+  ],
+  "requests": [
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/config",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/sessions",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/sessions",
+      "status": 201,
+      "method": "POST"
+    },
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/sessions",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/proxy/api/v1/knowledge-chat/d2a06ad4-8c43-498f-ac35-4fba39bcbe64",
+      "status": 200,
+      "method": "POST"
+    },
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/proxy/api/v1/messages/d2a06ad4-8c43-498f-ac35-4fba39bcbe64/load",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/proxy/api/v1/sessions/d2a06ad4-8c43-498f-ac35-4fba39bcbe64/messages/12a5d32e-9a0d-4c21-a0c3-cab51c55ad42/files",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/config",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/sessions",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/mindcreek/assistant/10000/73acb34e-1398-4091-b0ca-067b81490ff4/proxy/api/v1/knowledge-chat/d2a06ad4-8c43-498f-ac35-4fba39bcbe64",
+      "status": 403,
+      "method": "POST"
+    }
+  ],
+  "probe_sha256": "7a8bcd5f391435ecb966aae860b3c383fdab1b462416d6d69a2a7c19c03f994b"
+}

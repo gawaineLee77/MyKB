@@ -2,8 +2,8 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE2_IMPLEMENTATION_PLAN.md"
-EVIDENCE="$ROOT/docs/PHASE2_GATE_B.md"
+PLAN="$ROOT/docs/archive/phase2/PHASE2_IMPLEMENTATION_PLAN.md"
+EVIDENCE="$ROOT/docs/archive/phase2/PHASE2_GATE_B.md"
 
 fail() {
   echo "Phase 2 Gate B check failed: $*" >&2

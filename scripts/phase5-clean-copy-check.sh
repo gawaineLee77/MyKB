@@ -10,6 +10,7 @@ git clone --quiet --no-hardlinks "$ROOT" "$COPY"
 git -C "$COPY" config submodule.upstream/weknora.url "$ROOT/upstream/weknora"
 git -C "$COPY" -c protocol.file.allow=always submodule update --init --recursive upstream/weknora
 git -C "$ROOT" diff --binary HEAD | git -C "$COPY" apply --index
+git -C "$COPY" -c protocol.file.allow=always submodule update --init --recursive upstream/weknora
 git -C "$ROOT" ls-files --others --exclude-standard | while IFS= read -r file; do
   [ -n "$file" ] || continue
   mkdir -p "$COPY/$(dirname -- "$file")"

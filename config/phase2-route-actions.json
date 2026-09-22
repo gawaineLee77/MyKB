@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "upstream_tag": "v0.7.2",
-  "upstream_commit": "3d5d8bfcdfeeea266b292b71cea616847af28d0f",
-  "expected_kb_route_count": 166,
+  "upstream_tag": "v0.8.0",
+  "upstream_commit": "1edcd54b43606d9079bb36650efe3f68707a79ea",
+  "expected_kb_route_count": 170,
   "rules": [
     {
       "id": "delete-knowledge-base",

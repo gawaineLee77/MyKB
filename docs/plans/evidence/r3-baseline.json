@@ -1,0 +1,18 @@
+{
+  "recorded_at": "2026-09-15T09:04:20.075232+00:00",
+  "head": "f09e46457d60c9bf5b5555f02feac720c5328209",
+  "branch": "main",
+  "upstream": "1edcd54b43606d9079bb36650efe3f68707a79ea",
+  "upstream_status": "",
+  "existing_status_count": 164,
+  "r2_evidence_sha256": {
+    "docs/plans/evidence/r2-api-probe.json": "9a2309883fdf5c212ca7bf3b1dad2bb60530a703df9439ed1501917d87bfb598",
+    "docs/plans/evidence/r2-checks.json": "b28806eb3a77ea67b9c4445b0df9eab742ba8b9726b8cbc4011576fa7bba701f",
+    "docs/plans/evidence/r2-compose-check.json": "e46293111de4cb2e35aa86f2cd7711fda32a77078f727b1d46967b4f8aab2aa3",
+    "docs/plans/evidence/r2-ui-probe.json": "111464972df853995e93a1de522b7e39ec05c4cdf5507accb9a8941da48c77e0",
+    "docs/plans/WORKSPACE_CENTRIC_R2_ACCEPTANCE.md": "b0692104aef58091e7578ed3d9ed628f636ee5ba113cc6d9e00f6425939f0193"
+  },
+  "go": "go version go1.26.7 darwin/arm64",
+  "node24": "v24.19.0",
+  "scope": "R2 evidence preserved as historical; R3 results must be generated from current source; synthetic validation only"
+}

@@ -1,0 +1,41 @@
+{
+  "status": "passed",
+  "time": "2026-09-16T09:00:56.764932+00:00",
+  "scope": "Optional graph add-on: native Neo4j/APOC lifecycle and scoped RAG/quick-answer; synthetic OAuth/LLM on AMD64 emulation, not production quality acceptance.",
+  "image_id": "sha256:eb831a7b2b8a2f8f3423ceafb3859ec05c6a1db3138d5788095e1412745d5c9a",
+  "gateway_image_id": "sha256:5d4f089b7fd6f51f702897c04f8563642c04ef023ad0c7038819ac034b927c66",
+  "gateway_build": {
+    "gateway_source_sha256": "bd4e8641574d7d41285c11885250ed95ab9eaedea222cff15b5b053738e50dc2",
+    "gateway_sha256": "e185c210d118ee703af12b5741079fc1c2c8d381ce72ac57973036502f4e7ddf"
+  },
+  "graph_helper_sha256": "0d355ef6ad4f1280a396d1b801c2c2cc9522a57efb6333193df4f474a62d9f80",
+  "routes_sha256": "e12272067a7eb9e5f669e783b4ac0d668d48322d7ab7fd5c2a9019422299a8cb",
+  "screenshots_inspected": true,
+  "api_checks": 61,
+  "verified_files": {
+    "tools/graph/apply_probe.py": "81fd4e9ef078e757cdb2f71cadfc285fb14859149834e6752c112035d16eb60e",
+    "tools/graph/graph_browser.py": "c5172d0f18d102324f30736de1ae1b62c45248f472069e409b8cf3a143a7dc2e",
+    "tools/graph/graph_probe.py": "255ef6f0acb171fc3a384d727cf4ea2d9e1737fc72a76e632d8bad67a6b200fd",
+    "tools/graph/package_graph.py": "4479d7e02fa79b74526d9a6d89eb7eebaf2891d9a34d15ecb1bb38fe0b883938",
+    "tools/graph/test_graph.py": "fac1a7787279a50574af4e78604ea01704f5bff07184ba67f84055432c5969b8",
+    "tools/graph/verify_evidence.py": "95fadb56550e9c3814c81c6008710c693594bb79b0020e20dee05bbd203ca0a6",
+    "tools/graph/graph_browser.mjs": "40a693035589877a7eb9316bb3c40fb5c284632bb36465809827842c349078b4",
+    "testdata/graph/models.py": "1191a59060eaad6d32de04bf02b15dac06db30f86015748b6d4d4dc2f1df5729",
+    "images/mindcreek-neo4j/Dockerfile": "1d2fe189e416068f3e85952e2b26fc17e4c092649954e3597da188d9716b9a16",
+    "images/mindcreek-gateway/Dockerfile.release": "bd1af10a63445c6d85ddb93478aa3422a3154b3e5ebb4042e757750717e9ce53",
+    "tools/redesign/r3_routes.py": "df6643065f5d9bf41178a51d7994eafac4bf96bc7221319b4ceed343639cd5e1",
+    "docs/guides/R4_KNOWLEDGE_GRAPH_ZH.md": "0762b023a06edceac56d2cde21b9cb843df19ea9e82fc23138a3da90ff35a5cc",
+    "docs/plans/evidence/graph-api-probe.json": "d832f01e741170a4e006a2829ccde247a10e2f1f87a8e62fcca598a838c6dffb",
+    "docs/plans/evidence/graph-browser.json": "1504531d2efe9dcfa502da9d2284e456378663e44b0357d8bd7d495cfafe067e",
+    "docs/plans/evidence/graph-apply.json": "b8e2e3217a992a6fc7a8573fff6fc12630460d74af9ad9626665eb03b64285ea",
+    "docs/assets/graph/before-extraction-enabled.png": "31937120559a37e6b27f0b9ab2e7be5624d268d8edd9de695fedca1768fff57a",
+    "docs/assets/graph/after-extraction-preview.png": "9e2e8c40f63d548abf2477132e65f87e4a3a25eb9b763341303552fe4e9653a7",
+    "docs/assets/graph/after-saved-graph-settings.png": "5b87f1a270a3090ff1848985f78de92110c6846e8c559cc98a63d3442c4cf393",
+    "docs/assets/graph/after-employee-graph-answer.png": "d48112d7a89eeab9428219637d12695a4cb239c7f5f6d3013509e6fa89cff91b"
+  },
+  "pending": [
+    "Physical AMD64 and enterprise model quality/performance",
+    "Target backup/restore exercise",
+    "Ordinary Agent graph-tool upstream service proposal"
+  ]
+}

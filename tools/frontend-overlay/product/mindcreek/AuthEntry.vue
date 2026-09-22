@@ -6,6 +6,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent, markRaw, onMounted, shallowRef } from 'vue'
 import { getOIDCConfig } from '@/api/auth'
+import { enterpriseMode } from './enterprise-auth'
 
 const legacyLogin = markRaw(defineAsyncComponent(() => import('@/views/auth/Login.vue')))
 const corporateLogin = markRaw(defineAsyncComponent(() => import('@/mindcreek/SSOLogin.vue')))
@@ -13,6 +14,7 @@ const selected = shallowRef()
 
 onMounted(async () => {
   try {
+    if (await enterpriseMode()) { selected.value = corporateLogin; return }
     const response = await getOIDCConfig()
     selected.value = response.success && response.enabled === false ? legacyLogin : corporateLogin
   } catch {

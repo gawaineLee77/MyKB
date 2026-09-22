@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "ui_source_sha256": "258442c02aedb0f659d4302d20d63533f577715620a67ef50e685e83407a2d48",
+  "bundle_sha256": "71a5f2a1409644d3774078b5ce69e5cf876226025b0f764d9b48660c59466093",
+  "checks": [
+    "tests",
+    "type-check",
+    "build",
+    "native-boundary"
+  ]
+}

@@ -1,0 +1,564 @@
+{
+  "status": "passed",
+  "scope": "Unchanged native R4 UI, real gateway/native API/Neo4j; synthetic identity and model.",
+  "ui": {
+    "status": "passed",
+    "ui_source_sha256": "258442c02aedb0f659d4302d20d63533f577715620a67ef50e685e83407a2d48",
+    "bundle_sha256": "71a5f2a1409644d3774078b5ce69e5cf876226025b0f764d9b48660c59466093",
+    "checks": [
+      "tests",
+      "type-check",
+      "build",
+      "native-boundary"
+    ]
+  },
+  "node": "v24.21.0",
+  "requests": [
+    {
+      "role": "admin",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/mindcreek/auth/config",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/capabilities",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/info",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/parser-engines",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/tenants/kv/retrieval-config",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/agents",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/organizations",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/me/invitations/pending-count",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/tenants/kv/storage-engine-config",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/shared-agents",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/storage-engine-status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/knowledge/folders",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/tags",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/knowledge",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/knowledge",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/shared-knowledge-bases",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/knowledge",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/info",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/initialization/extract/text-relation",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/initialization/config/3a4b330f-d93d-4d01-89c5-6e85d378c2e1",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/mindcreek/auth/config",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/capabilities",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/info",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/parser-engines",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/tenants/kv/retrieval-config",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/shared-agents",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/organizations",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/me/invitations/pending-count",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/agents",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/tenants/kv/storage-engine-config",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/storage-engine-status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/knowledge",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/knowledge/folders",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/knowledge",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/tags",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/shared-knowledge-bases",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1/knowledge",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/knowledge-bases/3a4b330f-d93d-4d01-89c5-6e85d378c2e1",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "admin",
+      "path": "/api/v1/system/info",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/mindcreek/auth/config",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/mindcreek/onboarding",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/system/capabilities",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/knowledge-bases",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/system/info",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/system/parser-engines",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/agents",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/organizations",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/shared-agents",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/agents/builtin-quick-answer/suggested-questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/me/invitations/pending-count",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/shared-knowledge-bases",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/sessions",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/agents/b73f63a2-689b-4429-8c0c-85d870020612/suggested-questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/mindcreek/onboarding",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/system/parser-engines",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/mindcreek/agent/scope/resolve",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/sessions/09d79bd8-0ff9-4b60-bd87-08da6959bc3e",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/knowledge-chat/09d79bd8-0ff9-4b60-bd87-08da6959bc3e",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "role": "viewer",
+      "path": "/api/v1/sessions/09d79bd8-0ff9-4b60-bd87-08da6959bc3e/messages/3f9b1331-9109-4798-8338-e43047602fe5/suggestions",
+      "method": "POST",
+      "status": 200
+    }
+  ],
+  "screenshots": [
+    "docs/assets/graph/before-extraction-enabled.png",
+    "docs/assets/graph/after-extraction-preview.png",
+    "docs/assets/graph/after-saved-graph-settings.png",
+    "docs/assets/graph/after-employee-graph-answer.png"
+  ],
+  "checks": [
+    "native_toggle_preview_save_reload",
+    "viewer_graph_agent_stream"
+  ],
+  "probe_sha256": "40a693035589877a7eb9316bb3c40fb5c284632bb36465809827842c349078b4",
+  "graph_stream_source_verified": true
+}

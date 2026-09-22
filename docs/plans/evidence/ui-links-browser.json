@@ -1,0 +1,64 @@
+{
+  "scope": "Built Vue UI; synthetic API fixtures, no enterprise services or real credentials.",
+  "node": "v24.21.0",
+  "checks": [
+    {
+      "mode": "before",
+      "role": "owner",
+      "status": "passed"
+    },
+    {
+      "mode": "hidden",
+      "role": "owner",
+      "status": "passed"
+    },
+    {
+      "mode": "enabled",
+      "role": "owner",
+      "status": "passed"
+    },
+    {
+      "mode": "partial",
+      "role": "owner",
+      "status": "passed"
+    },
+    {
+      "mode": "missing",
+      "role": "owner",
+      "status": "passed"
+    },
+    {
+      "mode": "invalid",
+      "role": "owner",
+      "status": "passed"
+    },
+    {
+      "mode": "hidden",
+      "role": "viewer",
+      "status": "passed"
+    }
+  ],
+  "screenshots": [
+    "docs/assets/ui-links/before-members.png",
+    "docs/assets/ui-links/before-menu.png",
+    "docs/assets/ui-links/before-models.png",
+    "docs/assets/ui-links/before-api.png",
+    "docs/assets/ui-links/before-system.png",
+    "docs/assets/ui-links/before-graph.png",
+    "docs/assets/ui-links/hidden-members.png",
+    "docs/assets/ui-links/hidden-menu.png",
+    "docs/assets/ui-links/hidden-models.png",
+    "docs/assets/ui-links/hidden-api.png",
+    "docs/assets/ui-links/hidden-system.png",
+    "docs/assets/ui-links/hidden-graph.png",
+    "docs/assets/ui-links/enabled-members.png",
+    "docs/assets/ui-links/enabled-menu.png",
+    "docs/assets/ui-links/enabled-models.png",
+    "docs/assets/ui-links/enabled-api.png",
+    "docs/assets/ui-links/enabled-system.png",
+    "docs/assets/ui-links/enabled-graph.png",
+    "docs/assets/ui-links/after-viewer-menu.png"
+  ],
+  "unexpected": [],
+  "status": "passed"
+}

@@ -146,6 +146,7 @@ export interface KnowledgeSpaceResult {
   name: string
   product_mode: 'personal_notes' | 'rag'
   index_profile: 'notes_plain' | 'plain'
+  knowledge_base_type: 'document' | 'faq'
   access_policy: 'owner_only' | 'upstream'
   created: boolean
   reconciled: boolean

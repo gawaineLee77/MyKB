@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "source_id": "corporate-community",
+  "output_dir": ".local/community-import",
+  "http": {
+    "timeout_seconds": 60,
+    "read_attempts": 3,
+    "allow_insecure_http": false,
+    "ca_file": ""
+  },
+  "articles": {
+    "request": {
+      "url": "https://REPLACE_ARTICLE_API.example.invalid/articles",
+      "method": "GET",
+      "headers_env": {"Authorization": "COMMUNITY_AUTHORIZATION"},
+      "query": {"page": "{page}", "pageSize": "{page_size}"}
+    },
+    "items_path": "data.items",
+    "pagination": {"mode": "page", "start_page": 1, "page_size": 100, "max_pages": 10000}
+  },
+  "s3": {
+    "request": {
+      "url": "https://REPLACE_S3_API.example.invalid/download",
+      "method": "GET",
+      "headers_env": {"Authorization": "COMMUNITY_S3_AUTHORIZATION"},
+      "query": {"uuid": "{s3uuid}"}
+    },
+    "response_mode": "binary"
+  },
+  "mindcreek": {
+    "base_url": "https://REPLACE_MINDCREEK.example.invalid",
+    "knowledge_base_id": "REPLACE_EXISTING_DOCUMENT_RAG_KB_ID",
+    "headers_env": {"X-API-Key": "MINDCREEK_IMPORT_API_KEY"}
+  },
+  "limits": {
+    "max_file_mib": 500,
+    "max_image_mib": 20,
+    "max_embedded_images_mib": 100,
+    "max_images_per_article": 200,
+    "max_attachments_per_article": 100
+  },
+  "unsupported_attachments": "error"
+}

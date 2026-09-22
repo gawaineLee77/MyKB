@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "scope": "Actual packaged CLI/image import and original Compose rendering; synthetic instance, no services started.",
+  "checks": [
+    "concurrent_apply",
+    "repeat_apply",
+    "configured_links_preserved",
+    "other_services_and_env_preserved",
+    "single_private_backup",
+    "public_config_permissions",
+    "original_compose_valid"
+  ],
+  "helper_sha256": "32b9556385afd85c6118d4c6fb5baadbe568afe6fdfb6978c739677f9e8293f3"
+}

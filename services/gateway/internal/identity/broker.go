@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/diagnostics"
 )
 
 const (
@@ -31,6 +32,8 @@ const (
 )
 
 type authTransaction struct {
+	FlowID           string
+	StartedAt        time.Time
 	CookieBinding    string
 	CorporateNonce   string
 	PKCEVerifier     string
@@ -40,17 +43,20 @@ type authTransaction struct {
 }
 
 type authorizationCode struct {
+	FlowID      string
 	Identity    Identity
 	RedirectURI string
 	ExpiresAt   time.Time
 }
 
 type accessGrant struct {
+	FlowID    string
 	Identity  Identity
 	ExpiresAt time.Time
 }
 
 type Broker struct {
+	instanceID string
 	settings   config.IdentityConfig
 	provider   Provider
 	store      Store
@@ -75,7 +81,8 @@ func NewBroker(settings config.IdentityConfig, provider Provider, store Store) (
 		return nil, fmt.Errorf("generate identity broker signing key: %w", err)
 	}
 	broker := &Broker{
-		settings: settings, provider: provider, store: store, signingKey: key,
+		instanceID: diagnostics.NewID(),
+		settings:   settings, provider: provider, store: store, signingKey: key,
 		now: time.Now, transactions: make(map[string]authTransaction),
 		transactionCookies: make(map[string]string),
 		codes:              make(map[string]authorizationCode), tokens: make(map[string]accessGrant),
@@ -90,10 +97,13 @@ func NewBroker(settings config.IdentityConfig, provider Provider, store Store) (
 	mux.HandleFunc("GET /api/v1/mindcreek/oidc/jwks", broker.jwks)
 	mux.HandleFunc("GET /api/v1/mindcreek/oidc/logout", broker.logout)
 	broker.handler = mux
+	broker.logConfiguration(context.Background())
 	return broker, nil
 }
 
 func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := diagnostics.WithRequestID(r.Context(), r.Header.Get("X-Request-ID"))
+	r = r.WithContext(diagnostics.WithFlow(ctx, b.instanceID, ""))
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
 	b.handler.ServeHTTP(w, r)
@@ -124,11 +134,14 @@ func (b *Broker) status(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (b *Broker) authorize(w http.ResponseWriter, r *http.Request) {
+	flowID := diagnostics.NewID()
+	r = r.WithContext(diagnostics.WithFlow(r.Context(), b.instanceID, flowID))
 	query := r.URL.Query()
 	if query.Get("response_type") != "code" ||
 		subtle.ConstantTimeCompare([]byte(query.Get("client_id")), []byte(b.settings.BrokerClientID)) != 1 ||
 		subtle.ConstantTimeCompare([]byte(query.Get("redirect_uri")), []byte(b.settings.BrokerRedirectURI)) != 1 ||
 		!scopeContains(query.Get("scope"), "openid") || len(query.Get("state")) < 16 || len(query.Get("state")) > 4096 {
+		diagnostics.Event(r.Context(), "identity_authorize_rejected", map[string]any{"reason": "invalid_request"})
 		writeBrokerError(w, http.StatusBadRequest, "invalid_request")
 		return
 	}
@@ -156,6 +169,7 @@ func (b *Broker) authorize(w http.ResponseWriter, r *http.Request) {
 	challenge := base64.RawURLEncoding.EncodeToString(challengeDigest[:])
 	authorization, err := b.provider.AuthorizationRequest(r.Context(), corporateState, corporateNonce, challenge)
 	if err != nil {
+		diagnostics.Event(r.Context(), "identity_authorize_rejected", map[string]any{"reason": "provider_unavailable", "error_kind": diagnostics.ErrorKind(err)})
 		writeBrokerError(w, http.StatusBadGateway, "identity_provider_unavailable")
 		return
 	}
@@ -164,11 +178,17 @@ func (b *Broker) authorize(w http.ResponseWriter, r *http.Request) {
 	b.cleanupLocked(now)
 	stateHash := hashText(corporateState)
 	b.transactions[stateHash] = authTransaction{
+		FlowID: flowID, StartedAt: now,
 		CookieBinding: cookieBinding, CorporateNonce: corporateNonce, PKCEVerifier: verifier,
 		UpstreamState: query.Get("state"), UpstreamRedirect: query.Get("redirect_uri"), ExpiresAt: now.Add(transactionTTL),
 	}
 	b.transactionCookies[hashText(cookieBinding)] = stateHash
 	b.mu.Unlock()
+	diagnostics.Event(r.Context(), "identity_authorize_started", map[string]any{
+		"authorization_method": authorization.Method, "state_required": b.settings.StateRequired,
+		"pkce_enabled": b.settings.PKCEEnabled, "cookie_secure": b.settings.ExternalOrigin.Scheme == "https",
+		"cookie_path": "/api/v1/mindcreek/oidc/callback", "ttl_seconds": int(transactionTTL.Seconds()),
+	})
 	http.SetCookie(w, &http.Cookie{
 		Name: loginCookie, Value: cookieBinding, Path: "/api/v1/mindcreek/oidc/callback",
 		MaxAge: int(transactionTTL.Seconds()), HttpOnly: true,
@@ -195,26 +215,60 @@ func (b *Broker) callback(w http.ResponseWriter, r *http.Request) {
 	transaction, ok := b.transactions[stateHash]
 	valid := ok && !b.now().UTC().After(transaction.ExpiresAt) && cookieErr == nil &&
 		subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(transaction.CookieBinding)) == 1
+	// A cookie lookup is used only to correlate diagnostics. It never permits a
+	// missing/mismatched state to bypass the existing authentication decision.
+	traceTransaction := transaction
+	if !ok && cookieErr == nil {
+		traceTransaction = b.transactions[b.transactionCookies[hashText(cookie.Value)]]
+	}
+	reason := "accepted"
+	switch {
+	case state == "" && b.settings.StateRequired:
+		reason = "state_missing"
+	case cookieErr != nil:
+		reason = "cookie_missing"
+	case !ok && traceTransaction.FlowID != "":
+		reason = "state_mismatch"
+	case !ok:
+		reason = "transaction_not_found"
+	case b.now().UTC().After(transaction.ExpiresAt):
+		reason = "transaction_expired"
+	case !valid:
+		reason = "cookie_mismatch"
+	}
 	if valid {
 		delete(b.transactions, stateHash)
 		delete(b.transactionCookies, hashText(transaction.CookieBinding))
 	}
 	b.mu.Unlock()
+	r = r.WithContext(diagnostics.WithFlow(r.Context(), b.instanceID, traceTransaction.FlowID))
+	fields := map[string]any{
+		"reason": reason, "state_present": state != "", "cookie_present": cookieErr == nil,
+		"code_present": r.URL.Query().Get("code") != "", "state_required": b.settings.StateRequired,
+		"transaction_found": ok, "method": r.Method, "path": "/api/v1/mindcreek/oidc/callback",
+	}
+	if !traceTransaction.StartedAt.IsZero() {
+		fields["transaction_age_ms"] = b.now().UTC().Sub(traceTransaction.StartedAt).Milliseconds()
+	}
+	diagnostics.Event(r.Context(), "identity_callback_checked", fields)
 	if !valid {
 		writeBrokerError(w, http.StatusBadRequest, "invalid_state")
 		return
 	}
 	if providerError := strings.TrimSpace(r.URL.Query().Get("error")); providerError != "" {
+		diagnostics.Event(r.Context(), "identity_login_failed", map[string]any{"stage": "authorization", "reason": "provider_returned_error"})
 		b.redirectUpstreamError(w, r, transaction, "access_denied")
 		return
 	}
 	code := strings.TrimSpace(r.URL.Query().Get("code"))
 	if code == "" {
+		diagnostics.Event(r.Context(), "identity_login_failed", map[string]any{"stage": "callback", "reason": "code_missing"})
 		b.redirectUpstreamError(w, r, transaction, "missing_code")
 		return
 	}
 	claims, err := b.provider.Authenticate(r.Context(), code, transaction.PKCEVerifier, transaction.CorporateNonce)
 	if err != nil {
+		diagnostics.Event(r.Context(), "identity_login_failed", map[string]any{"stage": "corporate_authentication", "error_kind": diagnostics.ErrorKind(err)})
 		if claims.Issuer == "" || claims.Subject == "" {
 			claims = Claims{Issuer: b.settings.Issuer, Subject: "unknown"}
 		}
@@ -236,16 +290,19 @@ func (b *Broker) callback(w http.ResponseWriter, r *http.Request) {
 	}
 	identity, err := b.store.Upsert(r.Context(), claims, b.now().UTC())
 	if err != nil {
+		diagnostics.Event(r.Context(), "identity_login_failed", map[string]any{"stage": "identity_mapping", "error_kind": diagnostics.ErrorKind(err)})
 		b.recordAudit(r.Context(), claims, "login", "failure", "identity.provision_failed", r)
 		b.redirectUpstreamError(w, r, transaction, "identity.provision_failed")
 		return
 	}
 	if identity.Status != StatusActive {
+		diagnostics.Event(r.Context(), "identity_login_failed", map[string]any{"stage": "identity_status", "reason": "suspended"})
 		b.recordAudit(r.Context(), claims, "login", "denied", "identity.suspended", r)
 		b.redirectUpstreamError(w, r, transaction, "identity.suspended")
 		return
 	}
 	if err := b.recordAudit(r.Context(), claims, "login", "success", "", r); err != nil {
+		diagnostics.Event(r.Context(), "identity_login_failed", map[string]any{"stage": "audit", "error_kind": diagnostics.ErrorKind(err)})
 		b.redirectUpstreamError(w, r, transaction, "audit_unavailable")
 		return
 	}
@@ -255,19 +312,21 @@ func (b *Broker) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	b.mu.Lock()
-	b.codes[hashText(brokerCode)] = authorizationCode{Identity: identity, RedirectURI: transaction.UpstreamRedirect, ExpiresAt: b.now().UTC().Add(brokerCodeTTL)}
+	b.codes[hashText(brokerCode)] = authorizationCode{FlowID: transaction.FlowID, Identity: identity, RedirectURI: transaction.UpstreamRedirect, ExpiresAt: b.now().UTC().Add(brokerCodeTTL)}
 	b.mu.Unlock()
 	target, _ := url.Parse(transaction.UpstreamRedirect)
 	query := target.Query()
 	query.Set("code", brokerCode)
 	query.Set("state", transaction.UpstreamState)
 	target.RawQuery = query.Encode()
+	diagnostics.Event(r.Context(), "identity_callback_completed", map[string]any{"next_path": "/api/v1/auth/oidc/callback"})
 	http.Redirect(w, r, target.String(), http.StatusFound)
 }
 
 func (b *Broker) token(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
 	if err := r.ParseForm(); err != nil || r.Form.Get("grant_type") != "authorization_code" {
+		diagnostics.Event(r.Context(), "identity_broker_token_rejected", map[string]any{"reason": "invalid_request"})
 		writeBrokerError(w, http.StatusBadRequest, "invalid_request")
 		return
 	}
@@ -277,6 +336,7 @@ func (b *Broker) token(w http.ResponseWriter, r *http.Request) {
 	}
 	if subtle.ConstantTimeCompare([]byte(clientID), []byte(b.settings.BrokerClientID)) != 1 ||
 		subtle.ConstantTimeCompare([]byte(clientSecret), []byte(b.settings.BrokerClientSecret)) != 1 {
+		diagnostics.Event(r.Context(), "identity_broker_token_rejected", map[string]any{"reason": "invalid_client"})
 		w.Header().Set("WWW-Authenticate", `Basic realm="mindcreek-oidc"`)
 		writeBrokerError(w, http.StatusUnauthorized, "invalid_client")
 		return
@@ -286,8 +346,10 @@ func (b *Broker) token(w http.ResponseWriter, r *http.Request) {
 	grant, found := b.codes[codeHash]
 	delete(b.codes, codeHash)
 	b.mu.Unlock()
+	r = r.WithContext(diagnostics.WithFlow(r.Context(), b.instanceID, grant.FlowID))
 	if !found || b.now().UTC().After(grant.ExpiresAt) ||
 		subtle.ConstantTimeCompare([]byte(r.Form.Get("redirect_uri")), []byte(grant.RedirectURI)) != 1 {
+		diagnostics.Event(r.Context(), "identity_broker_token_rejected", map[string]any{"reason": "invalid_grant", "grant_found": found})
 		writeBrokerError(w, http.StatusBadRequest, "invalid_grant")
 		return
 	}
@@ -298,13 +360,14 @@ func (b *Broker) token(w http.ResponseWriter, r *http.Request) {
 	}
 	expiresAt := b.now().UTC().Add(brokerTokenTTL)
 	b.mu.Lock()
-	b.tokens[hashText(accessToken)] = accessGrant{Identity: grant.Identity, ExpiresAt: expiresAt}
+	b.tokens[hashText(accessToken)] = accessGrant{FlowID: grant.FlowID, Identity: grant.Identity, ExpiresAt: expiresAt}
 	b.mu.Unlock()
 	idToken, err := b.signIDToken(grant.Identity, expiresAt)
 	if err != nil {
 		writeBrokerError(w, http.StatusInternalServerError, "server_error")
 		return
 	}
+	diagnostics.Event(r.Context(), "identity_broker_token_completed", map[string]any{"status": http.StatusOK})
 	writeBrokerJSON(w, http.StatusOK, map[string]any{
 		"access_token": accessToken, "token_type": "Bearer", "expires_in": int(brokerTokenTTL.Seconds()), "id_token": idToken,
 	})
@@ -319,16 +382,20 @@ func (b *Broker) userInfo(w http.ResponseWriter, r *http.Request) {
 	b.mu.Lock()
 	grant, found := b.tokens[hashText(authorization[1])]
 	b.mu.Unlock()
+	r = r.WithContext(diagnostics.WithFlow(r.Context(), b.instanceID, grant.FlowID))
 	if !found || b.now().UTC().After(grant.ExpiresAt) {
+		diagnostics.Event(r.Context(), "identity_broker_userinfo_rejected", map[string]any{"reason": "invalid_token", "grant_found": found})
 		writeBrokerError(w, http.StatusUnauthorized, "invalid_token")
 		return
 	}
 	current, err := b.store.GetByUpstreamEmail(r.Context(), grant.Identity.UpstreamEmail)
 	if err != nil || current.Status != StatusActive {
+		diagnostics.Event(r.Context(), "identity_broker_userinfo_rejected", map[string]any{"reason": "identity_unavailable", "error_kind": diagnostics.ErrorKind(err)})
 		writeBrokerError(w, http.StatusUnauthorized, "invalid_token")
 		return
 	}
 	grant.Identity = current
+	diagnostics.Event(r.Context(), "identity_broker_userinfo_completed", map[string]any{"status": http.StatusOK})
 	writeBrokerJSON(w, http.StatusOK, map[string]any{
 		"sub": grant.Identity.BrokerSubject, "email": grant.Identity.UpstreamEmail,
 		"preferred_username": grant.Identity.Username, "name": grant.Identity.DisplayName,

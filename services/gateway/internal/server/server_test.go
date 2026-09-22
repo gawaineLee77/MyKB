@@ -34,7 +34,7 @@ func testConfig(t *testing.T) config.Config {
 		ListenAddr:      ":8080",
 		ProductVersion:  "test-version",
 		UpstreamURL:     u,
-		UpstreamVersion: "v0.7.2",
+		UpstreamVersion: "v0.8.0",
 		UpstreamTimeout: time.Second,
 		MaxFileSizeMB:   200,
 	}
@@ -155,7 +155,7 @@ func TestRoutePolicyDeniesDisabledAndUnknownRoutes(t *testing.T) {
 		t.Fatal("runtime.Caller failed")
 	}
 	filename := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../../config/phase1-route-policy.json"))
-	routePolicy, err := policy.Load(filename, "v0.7.2")
+	routePolicy, err := policy.Load(filename, "v0.8.0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,7 +237,7 @@ func TestCorporateIdentityRejectsUnlinkedBearer(t *testing.T) {
 
 func TestKBControlledRoutesRequireTrustedPrincipal(t *testing.T) {
 	_, source, _, _ := runtime.Caller(0)
-	routePolicy, err := policy.Load(filepath.Clean(filepath.Join(filepath.Dir(source), "../../../../config/phase1-route-policy.json")), "v0.7.2")
+	routePolicy, err := policy.Load(filepath.Clean(filepath.Join(filepath.Dir(source), "../../../../config/phase1-route-policy.json")), "v0.8.0")
 	if err != nil {
 		t.Fatal(err)
 	}

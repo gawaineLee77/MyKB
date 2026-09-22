@@ -1,0 +1,54 @@
+{
+  "status": "passed",
+  "time": "2026-09-16T08:57:19.988003+00:00",
+  "gateway_source_sha256": "bd4e8641574d7d41285c11885250ed95ab9eaedea222cff15b5b053738e50dc2",
+  "scope": "Executed checks for the optional graph extension; historical R4 reports remain unchanged. Synthetic tests; no enterprise model or identity connection.",
+  "node": "v24.21.0",
+  "go": "go1.26.7 darwin/arm64",
+  "frontend_tests": 594,
+  "graph_python_tests": 7,
+  "checks": [
+    {
+      "name": "gateway-uncached",
+      "command": "go test -count=1 ./...",
+      "exit_code": 0,
+      "log_sha256": "53a9d037e9111af84913a812fc64f0c66d95cfa5c9b5ed71cf8555a03d9eb4d9"
+    },
+    {
+      "name": "gateway-race",
+      "command": "go test -race -count=1 ./internal/nativeaccess ./internal/mcp ./internal/identity ./internal/enterprise ./internal/server",
+      "exit_code": 0,
+      "log_sha256": "1435c3df026d10a30828dacaad87a5a2c3f18f1a0951b900611765e460de192b"
+    },
+    {
+      "name": "frontend-node24",
+      "command": "sh scripts/test-product-frontend.sh --offline",
+      "exit_code": 0,
+      "log_sha256": "117979b2decf07a8734fcff896cc71bc3ed0ee48487bfaca3ef2618b0d43a2c7"
+    },
+    {
+      "name": "graph-python312",
+      "command": "python -m unittest discover -s tools/graph -p test_*.py (Python 3.12 Docker, network none)",
+      "exit_code": 0,
+      "log_sha256": "b5985bb5d4095da848c1e4e38b9358c2d452a471f0f3fb2fd143db7544944125"
+    },
+    {
+      "name": "phase0",
+      "command": "make phase0-check",
+      "exit_code": 0,
+      "log_sha256": "a59c2f513d03b4340ce02cbdf2d4ab5d8ce385f56e59f5b5f766457930ffd757"
+    },
+    {
+      "name": "stage1",
+      "command": "make stage1-check",
+      "exit_code": 0,
+      "log_sha256": "1b53111c436882fcef0bc3cfa3f479eff1cb8ce24694cedf375fcdfecf7ff947"
+    },
+    {
+      "name": "route-manifest",
+      "command": "python3 tools/redesign/r3_routes.py --inventory .local/redesign-r3/upstream-routes.json --check",
+      "exit_code": 0,
+      "log_sha256": "6a02ed52fd698e015ccccfe226311dd8339790dadeb8a2eeef6b3789e2854410"
+    }
+  ]
+}

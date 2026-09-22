@@ -1,0 +1,1747 @@
+{
+  "time": "2026-09-16T08:56:07.124637+00:00",
+  "project": "mindcreek-graph-b2cb9c39",
+  "scope": "AMD64 emulation: native WeKnora v0.8.0, real Neo4j/APOC and product gateway, isolated synthetic OAuth and deterministic LLM. Not enterprise model extraction quality.",
+  "checks": [
+    {
+      "name": "migration.empty_rollback_forward",
+      "passed": true
+    },
+    {
+      "name": "install.tenantless_admin_created",
+      "passed": true
+    },
+    {
+      "name": "install.repeat_prepare_same_account",
+      "passed": true
+    },
+    {
+      "name": "admin.rejects_before_native_promotion",
+      "passed": true
+    },
+    {
+      "name": "install.native_bootstrap_confirmed",
+      "passed": true
+    },
+    {
+      "name": "admin.tenantless_setup_only",
+      "passed": true
+    },
+    {
+      "name": "install.concurrent_default_space_single_id",
+      "passed": true
+    },
+    {
+      "name": "install.default_space_and_scoped_key",
+      "passed": true
+    },
+    {
+      "name": "install.admin_is_default_owner",
+      "passed": true
+    },
+    {
+      "name": "upstream.version",
+      "passed": true,
+      "version": "0.8.0",
+      "commit_id": "1edcd54"
+    },
+    {
+      "name": "security.employee_password_and_machine_space_creation_closed",
+      "passed": true
+    },
+    {
+      "name": "migration.rejects_erasing_installation_and_restores_schema",
+      "passed": true
+    },
+    {
+      "name": "employee.corporate_oauth_without_personal_space",
+      "passed": true
+    },
+    {
+      "name": "employee.identity_only_status",
+      "passed": true
+    },
+    {
+      "name": "employee.pending_knowledge_denied_and_role_input_rejected",
+      "passed": true
+    },
+    {
+      "name": "employee.concurrent_postgres_onboarding",
+      "passed": true
+    },
+    {
+      "name": "employee.auto_join_viewer",
+      "passed": true
+    },
+    {
+      "name": "employee.repeat_oauth_reuses_account",
+      "passed": true
+    },
+    {
+      "name": "employee.no_create_capability",
+      "passed": true
+    },
+    {
+      "name": "admin.refresh_rejects_employee",
+      "passed": true
+    },
+    {
+      "name": "member.native_role_contributor",
+      "passed": true
+    },
+    {
+      "name": "member.native_role_admin",
+      "passed": true
+    },
+    {
+      "name": "member.native_role_viewer",
+      "passed": true
+    },
+    {
+      "name": "employee.relogin_preserves_contributor",
+      "passed": true
+    },
+    {
+      "name": "member.last_owner_protected",
+      "passed": true
+    },
+    {
+      "name": "workspace.platform_admin_creates_as_owner",
+      "passed": true
+    },
+    {
+      "name": "member.corporate_email_invitation_accept",
+      "passed": true
+    },
+    {
+      "name": "member.unregistered_email_not_provisioned",
+      "passed": true
+    },
+    {
+      "name": "member.cross_space_tampering_denied",
+      "passed": true
+    },
+    {
+      "name": "settings.enterprise_contract_protected",
+      "passed": true
+    },
+    {
+      "name": "employee.removed_not_readded",
+      "passed": true
+    },
+    {
+      "name": "employee.removed_can_keep_other_workspace",
+      "passed": true
+    },
+    {
+      "name": "install.service_key_cannot_grant_owner_or_cross_space",
+      "passed": true
+    },
+    {
+      "name": "graph.neo4j_system_info",
+      "passed": true
+    },
+    {
+      "name": "graph.apoc_offline_loaded",
+      "passed": true
+    },
+    {
+      "name": "graph.native_example_tags",
+      "passed": true
+    },
+    {
+      "name": "graph.native_example_text",
+      "passed": true
+    },
+    {
+      "name": "graph.native_extraction_preview",
+      "passed": true
+    },
+    {
+      "name": "graph.document_extraction_completed.Graph-A",
+      "passed": true
+    },
+    {
+      "name": "graph.document_extraction_completed.Graph-B",
+      "passed": true
+    },
+    {
+      "name": "graph.native_persisted_nodes",
+      "passed": true
+    },
+    {
+      "name": "graph.native_persisted_edge",
+      "passed": true
+    },
+    {
+      "name": "graph.only_index_config_preserved",
+      "passed": true
+    },
+    {
+      "name": "graph.mcp_answer_has_graph_only_source",
+      "passed": true
+    },
+    {
+      "name": "graph.source_is_authorized_document",
+      "passed": true
+    },
+    {
+      "name": "graph.native_agent_answer_with_sources",
+      "passed": true
+    },
+    {
+      "name": "graph.cross_space_denied_before_model",
+      "passed": true
+    },
+    {
+      "name": "graph.machine_key_scoped_answer",
+      "passed": true
+    },
+    {
+      "name": "graph.machine_key_foreign_denied",
+      "passed": true
+    },
+    {
+      "name": "graph.restart_preserves_data",
+      "passed": true
+    },
+    {
+      "name": "graph.reparse_idempotent",
+      "passed": true
+    },
+    {
+      "name": "graph.delete_cleans_only_target_document",
+      "passed": true
+    },
+    {
+      "name": "member.ownership_transferred_platform_identity_retained",
+      "passed": true
+    },
+    {
+      "name": "workspace.transferred_owner_has_no_platform_creation",
+      "passed": true
+    },
+    {
+      "name": "install.restart_does_not_reclaim_owner",
+      "passed": true
+    },
+    {
+      "name": "migration.rejects_erasing_completed_onboarding",
+      "passed": true
+    },
+    {
+      "name": "employee.revoked_service_key_fails_closed",
+      "passed": true
+    },
+    {
+      "name": "install.current_owner_repairs_revoked_key",
+      "passed": true
+    },
+    {
+      "name": "admin.native_refresh_dto",
+      "passed": true
+    },
+    {
+      "name": "admin.password_rotation_revokes_access_and_refresh",
+      "passed": true
+    },
+    {
+      "name": "admin.logout_revokes_access_and_refresh",
+      "passed": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "http://app:8080/health",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/login",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/login",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/installation",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/login",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/info",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "auth": "member_api_key",
+      "workspace_header": false,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        404
+      ],
+      "actual_status": 404
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        404
+      ],
+      "actual_status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/url",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/mindcreek/oidc/authorize",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/auth/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/mcp",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        400
+      ],
+      "actual_status": 400
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/url",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/mindcreek/oidc/authorize",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/auth/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/refresh",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/url",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/mindcreek/oidc/authorize",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/auth/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/10000/members/2492d23e-33a4-4b58-919f-9b9ac6e4dc05",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/10000/invitations",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/10000/members/2492d23e-33a4-4b58-919f-9b9ac6e4dc05",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/10000/invitations",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/10000/members/2492d23e-33a4-4b58-919f-9b9ac6e4dc05",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/10000/invitations",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/10000/members/2492d23e-33a4-4b58-919f-9b9ac6e4dc05",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/10000/members/9cb72995-3139-438a-abf8-9da11904e28f",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        201
+      ],
+      "actual_status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10001/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/10001/invitations",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        201
+      ],
+      "actual_status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/invitations/1/accept",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/10001/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/10001/members/9cb72995-3139-438a-abf8-9da11904e28f",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/system/admin/settings/auth.default_tenant_mode",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/system/admin/settings/auth.registration_mode",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/system/admin/settings/tenant.self_service_creation_enabled",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        409
+      ],
+      "actual_status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/url",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/mindcreek/oidc/authorize",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/auth/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/tenants/10000/members/37f53a34-7e79-4894-b905-bbe08dcf93bf",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/url",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/mindcreek/oidc/authorize",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/auth/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/10001/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        201
+      ],
+      "actual_status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "http://app:8080/api/v1/tenants/10000/members/2492d23e-33a4-4b58-919f-9b9ac6e4dc05",
+      "auth": "member_api_key",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "GET",
+      "path": "http://app:8080/api/v1/tenants/10001/members",
+      "auth": "member_api_key",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/info",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/extract/fabri-tag",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/extract/fabri-text",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/extract/text-relation",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200,
+        201
+      ],
+      "actual_status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/bfccb30d-c023-4111-b269-677f482ffbbc/knowledge/manual",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/2f5d1438-e2c4-4c10-9a85-ee12e6bc1fff",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/2f5d1438-e2c4-4c10-9a85-ee12e6bc1fff",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/2f5d1438-e2c4-4c10-9a85-ee12e6bc1fff",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200,
+        201
+      ],
+      "actual_status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/a8015d0a-8337-4e1f-a757-1e92d1c73da9/knowledge/manual",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/eb101e5f-187c-4d19-a5e2-4f9ff33715b8",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/eb101e5f-187c-4d19-a5e2-4f9ff33715b8",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/url",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/mindcreek/oidc/authorize",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/auth/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/mcp",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agents",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200,
+        201
+      ],
+      "actual_status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/mcp",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://models:19090/counts",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200,
+      "execution_counts": {
+        "/v1/chat/completions": 11,
+        "graph_extraction": 5,
+        "/v1/embeddings": 2,
+        "/v1/rerank": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/extract/text-relation",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/mcp",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/bfccb30d-c023-4111-b269-677f482ffbbc",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "GET",
+      "path": "http://models:19090/counts",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200,
+      "execution_counts": {
+        "/v1/chat/completions": 11,
+        "graph_extraction": 5,
+        "/v1/embeddings": 2,
+        "/v1/rerank": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/10000/api-keys",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        201
+      ],
+      "actual_status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/mcp",
+      "auth": "member_api_key",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://models:19090/counts",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200,
+      "execution_counts": {
+        "/v1/chat/completions": 14,
+        "graph_extraction": 6,
+        "/v1/embeddings": 3,
+        "/v1/rerank": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mcp",
+      "auth": "member_api_key",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://models:19090/counts",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200,
+      "execution_counts": {
+        "/v1/chat/completions": 14,
+        "graph_extraction": 6,
+        "/v1/embeddings": 3,
+        "/v1/rerank": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge/2f5d1438-e2c4-4c10-9a85-ee12e6bc1fff/reparse",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/2f5d1438-e2c4-4c10-9a85-ee12e6bc1fff",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/2f5d1438-e2c4-4c10-9a85-ee12e6bc1fff",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/2f5d1438-e2c4-4c10-9a85-ee12e6bc1fff",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/knowledge/2f5d1438-e2c4-4c10-9a85-ee12e6bc1fff",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/10000/members/2492d23e-33a4-4b58-919f-9b9ac6e4dc05",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/10000/members/9cb72995-3139-438a-abf8-9da11904e28f",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        403
+      ],
+      "actual_status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/tenants/10000/api-keys/1",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/url",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/mindcreek/oidc/authorize",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mindcreek/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "GET",
+      "path": "http://gateway:8080/api/v1/auth/oidc/callback",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        302
+      ],
+      "actual_status": 302
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/10000/api-keys",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        201
+      ],
+      "actual_status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/onboarding",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/10000/members",
+      "auth": "bearer",
+      "workspace_header": true,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/login",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/refresh",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/change-password",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/refresh",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/login",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/logout",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        200
+      ],
+      "actual_status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "auth": "bearer",
+      "workspace_header": false,
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mindcreek/admin/auth/refresh",
+      "auth": "none",
+      "workspace_header": false,
+      "expected_status": [
+        401
+      ],
+      "actual_status": 401
+    }
+  ],
+  "images": {
+    "app": {
+      "tag": "wechatopenai/weknora-app:v0.8.0",
+      "id": "sha256:d266bb3cb6b9de071b78d133e9b68592826d42be63bae7a6b4374b8d0ce1bdc5"
+    },
+    "postgres": {
+      "tag": "paradedb/paradedb:v0.22.2-pg17",
+      "id": "sha256:cb2af8cbafea8c41cde450b7be845abfd74c014cb13e35e06677aad8aed0eba0"
+    },
+    "redis": {
+      "tag": "redis:7.0-alpine",
+      "id": "sha256:0a34d7c44fe60c6ba273c0cddc26d1571a5ccd69280623a66b70393231a9eed9"
+    },
+    "identity": {
+      "tag": "python:3.12-alpine",
+      "id": "sha256:78e98729f8fc4099e53cffb3fe59fd15b18dfa4ace8c914dee0cefa5320068eb"
+    },
+    "neo4j": "sha256:eb831a7b2b8a2f8f3423ceafb3859ec05c6a1db3138d5788095e1412745d5c9a"
+  },
+  "gateway_source_sha256": "bd4e8641574d7d41285c11885250ed95ab9eaedea222cff15b5b053738e50dc2",
+  "gateway_sha256": "e185c210d118ee703af12b5741079fc1c2c8d381ce72ac57973036502f4e7ddf",
+  "r3_inputs_sha256": "28558261555ec8ec6bff97e1344e9fb870af7f6261ee12db666d73958cf848d2",
+  "status": "passed",
+  "cleanup": "only disposable project removed",
+  "probe_sha256": "d2785c723ba52347af321bb0ebec6759ca26d8cda6f259b9d542f8496e79798e"
+}

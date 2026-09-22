@@ -1,0 +1,89 @@
+{
+  "time": "2026-09-16T00:58:55.820517+00:00",
+  "status": "passed",
+  "method": "Rendered PNG inspection with view_image",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "ui_source_sha256": "258442c02aedb0f659d4302d20d63533f577715620a67ef50e685e83407a2d48",
+  "bundle_sha256": "71a5f2a1409644d3774078b5ce69e5cf876226025b0f764d9b48660c59466093",
+  "scope": "Synthetic desktop screenshots only; before uses mock HTTP, after uses actual gateway/native API. Not a real enterprise OAuth or mobile-browser acceptance.",
+  "observations": [
+    "Four native role navigation states are readable; Viewer has no KB/Agent management menu.",
+    "Agent editor and default models are visible after loading.",
+    "Batch results preserve existing Owner and show unknown accounts without registration.",
+    "Transfer recovery shows promoted Owner and explicit second confirmation.",
+    "Admin expiry and retired bookmarks show the intended entry pages."
+  ],
+  "screenshots": [
+    {
+      "path": "docs/assets/r4/before-owner.png",
+      "sha256": "0fe5eac653d470d832a8d21d1a9b16c5e6a12a2136467e1b295933bcfd073035"
+    },
+    {
+      "path": "docs/assets/r4/before-admin.png",
+      "sha256": "20f2eb8b5b430d2325767960cf34a8d2c9238ca8d378e0ac3dc8cfdd11b4e8fc"
+    },
+    {
+      "path": "docs/assets/r4/before-contributor.png",
+      "sha256": "4a4fc7eb54bb8ab39816615afa3ac74e516a46387af27d78a70d391ec36a7867"
+    },
+    {
+      "path": "docs/assets/r4/before-viewer.png",
+      "sha256": "4a1ce05bc3bd3b3f9a86b434302b599265905ae142f1bbbd2b7baff50519d799"
+    },
+    {
+      "path": "docs/assets/r4/after-owner.png",
+      "sha256": "c8a0acef680f5c09e4ec3cac445e3776240ee91ba02da59d5b1d1ad3f21b1897"
+    },
+    {
+      "path": "docs/assets/r4/after-admin.png",
+      "sha256": "f25583caea7a0b4ccaa90e8f169d7309e61a638b293384e4876f56bbc33735b9"
+    },
+    {
+      "path": "docs/assets/r4/after-contributor.png",
+      "sha256": "8eecaaae2e4294b6b89c11018dc06e559643dc66b22ae76399231a3b088c52bf"
+    },
+    {
+      "path": "docs/assets/r4/after-viewer.png",
+      "sha256": "d7f055ba95094a2ad5e5c8fb2f94b4ee0546c88be6c397ca934a488e4403cb9f"
+    },
+    {
+      "path": "docs/assets/r4/after-agent-editor.png",
+      "sha256": "bedc5d07f84b2d5bb81893dd17f564781f32d4c891132f44044e12168269244a"
+    },
+    {
+      "path": "docs/assets/r4/after-faq.png",
+      "sha256": "6335f7bdd64389640d50171d46e7d900b396784453a6421859acf6f70b2a00a7"
+    },
+    {
+      "path": "docs/assets/r4/after-viewer-conversation.png",
+      "sha256": "3b20d9f7917e0538c5a3d20759e226a7e7b28b802aba53a9dfee0f0c8252f320"
+    },
+    {
+      "path": "docs/assets/r4/after-platform-create-space.png",
+      "sha256": "342dce6c8e1a2869cccba2732861bcff47abf87010a2d9d5e805841260aa3fac"
+    },
+    {
+      "path": "docs/assets/r4/after-admin-expired.png",
+      "sha256": "da227fb83f46a5b36ae2a904be37fec6a81aac7c41d8d29bb2176c7115e13f2b"
+    },
+    {
+      "path": "docs/assets/r4/after-role-refresh.png",
+      "sha256": "1e8231a47527ad09c1096ef29140659a769c513bbb6e89500f31bf721e472cec"
+    },
+    {
+      "path": "docs/assets/r4/after-member-results.png",
+      "sha256": "4cb2d72753fbe9345ca2f13f2521f6ff784c40f3e3879796f1a33a22b9c4991a"
+    },
+    {
+      "path": "docs/assets/r4/after-transfer-recovery.png",
+      "sha256": "5fc5d9f90f9d24aedc526006b42338772564eb8212e6e427c672ec87ed9bc117"
+    },
+    {
+      "path": "docs/assets/r4/after-retired-link.png",
+      "sha256": "d17c47c9f68c5b06adbb87141e8328b5506ebfd6997a2cf6155b559bea838320"
+    }
+  ]
+}

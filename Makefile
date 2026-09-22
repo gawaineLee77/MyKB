@@ -2,6 +2,9 @@
 .PHONY: phase4-images-pull phase4-images-build phase4-images-list phase4-images-save phase4-images-pull-amd64 phase4-images-build-amd64 phase4-images-list-amd64 phase4-images-save-amd64 phase4-compose-config phase4-build phase4-up phase4-ps phase4-down phase4-upgrade-compose-config phase4-upgrade-up phase4-upgrade-ps phase4-upgrade-down phase4-gate-a-static-check phase4-gate-b-static-check phase4-gate-c-static-check phase4-gate-d-static-check phase4-upstream-contract-check phase4-clean-copy-check phase4-check phase4-gate-a phase4-gate-b-probe phase4-gate-b phase4-gate-c-probe phase4-gate-c phase4-gate-d
 .PHONY: phase5-images-pull phase5-images-build phase5-images-list phase5-images-save phase5-images-pull-amd64 phase5-images-build-amd64 phase5-images-list-amd64 phase5-images-save-amd64
 .PHONY: phase5-models-render phase5-compose-config phase5-production-compose-config phase5-build phase5-build-offline phase5-up phase5-ps phase5-down phase5-runtime-check phase5-gate-a-static-check phase5-gate-a-probe phase5-gate-a phase5-gate-b-static-check phase5-gate-b-probe phase5-gate-b phase5-backup phase5-recovery-drill phase5-observability-probe phase5-load-probe phase5-migration-probe phase5-failure-recovery-probe phase5-security-scan phase5-gate-c-static-check phase5-gate-c phase5-pilot-probe phase5-upstream-contract-check phase5-clean-copy-check phase5-gate-d-static-check phase5-check phase5-gate-d phase5-upgrade-compose-config phase5-upgrade-up phase5-upgrade-ps phase5-upgrade-down
+.PHONY: product-test-frontend
+.PHONY: community-import-test
+COMMUNITY_IMPORT_PYTHON ?= python3
 
 help:
 	@echo "MindCreek repository commands"
@@ -83,6 +86,8 @@ help:
 	@echo "  make phase5-gate-c          Run operational hardening and recovery acceptance"
 	@echo "  make phase5-gate-d          Run pilot, compatibility, and clean-copy release acceptance"
 	@echo "  make stage1-check          Verify the MindCreek overlay and upstream boundary"
+	@echo "  make product-test-frontend Test/type-check/build the overlaid UI (PRODUCT_FRONTEND_TEST_ARGS=--offline reuses installed dependencies)"
+	@echo "  make community-import-test Run synthetic community API/export/upload tests (no live credentials)"
 	@echo "  make stage1-compose-config Validate the Stage 1 Compose distribution"
 	@echo "  make stage1-ui-build       Build the branded MindCreek UI image"
 	@echo "  make stage1-up             Start Stage 1 (build the UI first when needed)"
@@ -548,6 +553,12 @@ phase5-upgrade-down:
 stage1-check: phase0-check
 	./tools/frontend-overlay/check.sh
 
+product-test-frontend: phase0-check
+	sh ./scripts/test-product-frontend.sh $(PRODUCT_FRONTEND_TEST_ARGS)
+
+community-import-test:
+	$(COMMUNITY_IMPORT_PYTHON) -m unittest discover -s tools/community-import/tests -v
+
 stage1-compose-config:
 	./scripts/mindcreek-compose.sh config --quiet
 
@@ -581,3 +592,98 @@ upstream-test-frontend:
 
 upstream-test-mcp:
 	cd upstream/weknora/mcp-server && uv sync --python 3.12 --extra test && uv run --python 3.12 python -m unittest discover -s . -p "test_*.py" -v
+
+# Workspace redesign: static evidence checks and disposable synthetic API probes.
+.PHONY: r1-check r1-api-probe
+r1-check:
+	./scripts/verify-upstream.sh
+	./scripts/check-design-docs.sh --r1
+
+r1-api-probe:
+	python3 tools/redesign/r1_probe.py
+
+.PHONY: r2-gateway-build r2-api-probe r2-compose-config r2-install-status
+r2-gateway-build:
+	@mkdir -p .local/redesign-r2 .local/gateway-go-build
+	CGO_ENABLED=0 GOOS=linux GOARCH=$${R2_GOARCH:-arm64} GOCACHE="$(CURDIR)/.local/gateway-go-build" GOPROXY=off GOSUMDB=off go -C services/gateway build -o ../../.local/redesign-r2/gateway-linux ./cmd/gateway
+	python3 tools/redesign/r2_evidence.py record-build
+
+r2-api-probe: r2-gateway-build
+	python3 tools/redesign/r2_probe.py
+
+r2-compose-config:
+	./scripts/r2-compose.sh config --quiet
+
+r2-install-status:
+	./scripts/r2-install.sh status
+
+.PHONY: r2-check r2-ui-probe
+r2-check:
+	./scripts/verify-upstream.sh
+	./scripts/check-design-docs.sh --r1 --r2
+
+r2-ui-probe:
+	./scripts/r2-ui-probe.sh
+
+.PHONY: r3-gateway-build r3-api-probe
+r3-gateway-build:
+	@mkdir -p .local/redesign-r3 .local/gateway-go-build
+	CGO_ENABLED=0 GOOS=linux GOARCH=$${R3_GOARCH:-arm64} GOCACHE="$(CURDIR)/.local/gateway-go-build" GOPROXY=off GOSUMDB=off go -C services/gateway build -o ../../.local/redesign-r3/gateway-linux ./cmd/gateway
+	python3 tools/redesign/r3_evidence.py
+
+r3-api-probe: r3-gateway-build
+	python3 tools/redesign/r3_probe.py
+
+.PHONY: r3-check r3-executable-checks r3-compose-config
+r3-check: phase0-check
+	./scripts/check-design-docs.sh --r1 --r2 --r3
+
+r3-executable-checks:
+	python3 tools/redesign/r3_checks.py
+
+r3-compose-config:
+	./scripts/r3-compose.sh config --quiet
+
+.PHONY: r4-gateway-build r4-ui-build r4-api-probe r4-executable-checks r4-compose-config r4-check
+r4-gateway-build:
+	@mkdir -p .local/redesign-r4 .local/gateway-go-build
+	CGO_ENABLED=0 GOOS=linux GOARCH=$${R4_GOARCH:-arm64} GOCACHE="$(CURDIR)/.local/gateway-go-build" GOPROXY=off GOSUMDB=off go -C services/gateway build -o ../../.local/redesign-r4/gateway-linux ./cmd/gateway
+	python3 tools/redesign/r4_evidence.py
+
+r4-ui-build:
+	sh scripts/r4-build-ui.sh
+
+r4-api-probe: r4-gateway-build
+	python3 tools/redesign/r2_probe.py --profile r4
+
+r4-executable-checks:
+	python3 tools/redesign/r4_checks.py
+
+.PHONY: r5-gateway-build r5-ui-build r5-api-probe r5-check
+r5-gateway-build:
+	@mkdir -p .local/redesign-r5 .local/gateway-go-build
+	CGO_ENABLED=0 GOOS=linux GOARCH=$${R5_GOARCH:-arm64} GOCACHE="$(CURDIR)/.local/gateway-go-build" GOPROXY=off GOSUMDB=off go -C services/gateway build -o ../../.local/redesign-r5/gateway-linux ./cmd/gateway
+	python3 tools/redesign/r5_evidence.py
+
+r5-ui-build:
+	sh scripts/r5-build-ui.sh
+
+r5-api-probe: r5-gateway-build
+	python3 tools/redesign/r2_probe.py --profile r5
+
+r5-check:
+	./scripts/check-design-docs.sh --r1 --r2 --r3 --r5
+
+r4-compose-config:
+	./scripts/r4-compose.sh config --quiet
+
+r4-check: phase0-check
+	./scripts/check-design-docs.sh --r1 --r2 --r3 --r4
+
+# Optional graph extension: keeps the historical R2–R4 evidence intact.
+.PHONY: graph-check graph-config-test
+graph-check: phase0-check
+	python3 tools/graph/verify_evidence.py
+
+graph-config-test:
+	python3 -m unittest discover -s tools/graph -p 'test_*.py'

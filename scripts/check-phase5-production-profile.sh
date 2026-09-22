@@ -20,7 +20,7 @@ chmod 600 "$KEY"
 
 cat > "$ENV_FILE" <<EOF
 MINDCREEK_DEPLOYMENT_ENV=production
-WEKNORA_VERSION=v0.7.2
+WEKNORA_VERSION=v0.8.0
 DB_USER=mindcreek
 DB_PASSWORD=synthetic-db-credential-000001
 DB_NAME=mindcreek

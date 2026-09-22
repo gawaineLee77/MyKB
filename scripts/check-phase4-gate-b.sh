@@ -2,7 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE4_IMPLEMENTATION_PLAN.md"
+PLAN="$ROOT/docs/archive/phase4/PHASE4_IMPLEMENTATION_PLAN.md"
 ASK="$ROOT/tools/frontend-overlay/product/mindcreek/AskWorkspace.vue"
 
 fail() {
@@ -16,7 +16,7 @@ for FILE in \
   "$ROOT/services/gateway/internal/access/gate.go" \
   "$ASK" \
   "$ROOT/scripts/phase4-gate-b-probe.py" \
-  "$ROOT/docs/PHASE4_GATE_B.md"; do
+  "$ROOT/docs/archive/phase4/PHASE4_GATE_B.md"; do
   [ -f "$FILE" ] || fail "missing ${FILE#$ROOT/}"
 done
 
@@ -29,7 +29,7 @@ rg -q 'data-testid="ask-button"' "$ROOT/tools/frontend-overlay/product/mindcreek
 for TASK in P4-07 P4-08 P4-09 P4-10 P4-11 P4-12; do
   rg -q "\[x\].*$TASK" "$PLAN" || fail "$TASK is not recorded complete"
 done
-"$ROOT/tools/frontend-overlay/check.sh" >/dev/null
+"$ROOT/tools/frontend-overlay/check-legacy.sh" >/dev/null
 [ -z "$(git -C "$ROOT/upstream/weknora" status --porcelain --untracked-files=all)" ] || fail "upstream submodule is dirty"
 
 echo "MindCreek Phase 4 Gate B Web agent and retrieval baseline verified"

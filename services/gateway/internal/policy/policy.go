@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-const supportedCommit = "3d5d8bfcdfeeea266b292b71cea616847af28d0f"
+const supportedCommit = "1edcd54b43606d9079bb36650efe3f68707a79ea"
 
 type Classification string
 
@@ -63,8 +63,8 @@ func Load(filename, upstreamVersion string) (*Policy, error) {
 	if err := ensureEOF(decoder); err != nil {
 		return nil, err
 	}
-	if document.SchemaVersion != 1 || document.UpstreamTag != upstreamVersion || document.UpstreamCommit != supportedCommit || document.ExpectedRouteCount != 373 {
-		return nil, fmt.Errorf("route policy does not match the verified WeKnora v0.7.2 contract")
+	if document.SchemaVersion != 1 || document.UpstreamTag != upstreamVersion || document.UpstreamCommit != supportedCommit || document.ExpectedRouteCount != 429 {
+		return nil, fmt.Errorf("route policy does not match the verified WeKnora v0.8.0 contract")
 	}
 	if len(document.Rules) == 0 {
 		return nil, fmt.Errorf("route policy has no rules")

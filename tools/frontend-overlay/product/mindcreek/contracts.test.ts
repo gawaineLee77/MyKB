@@ -59,6 +59,7 @@ test('builds only approved Phase 1 profiles and local storage', () => {
     {
       mode: 'personal_notes',
       index_profile: 'notes_plain',
+      knowledge_base_type: 'document',
       name: 'Field notes',
       description: 'private work log',
       embedding_model_id: 'embedding-1',
@@ -68,10 +69,34 @@ test('builds only approved Phase 1 profiles and local storage', () => {
   )
 })
 
+test('maps the FAQ entry to WeKnora native FAQ inside the governed RAG mode', () => {
+  assert.equal(isSelectionEnabled(capabilities, 'faq'), true)
+  assert.deepEqual(
+    buildKnowledgeSpaceRequest(capabilities, {
+      mode: 'faq',
+      name: '  Support FAQ  ',
+      description: '  Standard answers  ',
+      embeddingModelId: 'embedding-1',
+      summaryModelId: 'chat-1',
+    }),
+    {
+      mode: 'rag',
+      index_profile: 'plain',
+      knowledge_base_type: 'faq',
+      name: 'Support FAQ',
+      description: 'Standard answers',
+      embedding_model_id: 'embedding-1',
+      summary_model_id: 'chat-1',
+      storage_provider: 'local',
+    },
+  )
+})
+
 test('requires the advertised plain profile for RAG', () => {
   const disabled = structuredClone(capabilities)
   disabled.knowledge_modes[1].profiles![0].enabled = false
   assert.equal(isSelectionEnabled(disabled, 'rag'), false)
+  assert.equal(isSelectionEnabled(disabled, 'faq'), false)
   assert.throws(
     () => buildKnowledgeSpaceRequest(disabled, {
       mode: 'rag',

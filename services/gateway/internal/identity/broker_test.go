@@ -15,6 +15,7 @@ import (
 )
 
 type providerStub struct {
+	authenticateCalls       int
 	state, nonce, challenge string
 	method                  string
 	claims                  Claims
@@ -30,6 +31,7 @@ func (p *providerStub) AuthorizationRequest(_ context.Context, state, nonce, cha
 }
 
 func (p *providerStub) Authenticate(_ context.Context, code, verifier, nonce string) (Claims, error) {
+	p.authenticateCalls++
 	if code != "corporate-code" || verifier == "" || nonce != p.nonce || p.challenge == "" {
 		return Claims{}, ErrInvalid
 	}

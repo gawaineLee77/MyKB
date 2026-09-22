@@ -1,0 +1,21 @@
+{
+  "release": "r4-20260916-118b8af3",
+  "time": "2026-09-16T01:48:34.160005+00:00",
+  "host_os": "Darwin",
+  "host_arch": "arm64",
+  "image": {
+    "name": "paradedb/paradedb:v0.22.2-pg17",
+    "id": "sha256:cb2af8cbafea8c41cde450b7be845abfd74c014cb13e35e06677aad8aed0eba0",
+    "os": "linux",
+    "architecture": "amd64",
+    "repo_digests": [
+      "paradedb/paradedb@sha256:cb2af8cbafea8c41cde450b7be845abfd74c014cb13e35e06677aad8aed0eba0"
+    ],
+    "config_digest": "sha256:d6fb8f50e25ea880d20e3acad6862931f97cb23abf4efa9c6256d2e112ed8de4"
+  },
+  "status": "failed",
+  "scope": "Isolated synthetic PostgreSQL/BM25 query; no business volumes, ports, or network access.",
+  "error": "NOTICE:  extension \"pg_search\" already exists, skipping\nserver closed the connection unexpectedly\n\tThis probably means the server terminated abnormally\n\tbefore or while processing the request.\nconnection to server was lost\n",
+  "diagnostics": "2026-09-16 01:48:41.752 UTC [1] LOG:  listening on Unix socket \"/var/run/postgresql/.s.PGSQL.5432\"\n2026-09-16 01:48:41.758 UTC [117] LOG:  database system was shut down at 2026-09-16 01:48:41 UTC\n2026-09-16 01:48:41.770 UTC [1] LOG:  database system is ready to accept connections\n2026-09-16 01:48:41.820 UTC [120] LOG:  pg_cron scheduler started\nmunmap_chunk(): invalid pointer\n2026-09-16 01:48:43.044 UTC [1] LOG:  server process (PID 135) was terminated by signal 6: Aborted\n2026-09-16 01:48:43.044 UTC [1] DETAIL:  Failed process was running: SELECT paradedb.score(id),content FROM docs WHERE knowledge_base_id='kb' AND content ||| 'synthetic recovery' AND (is_enabled IS NULL OR is_enabled=true) ORDER BY paradedb.score(id) DESC LIMIT 10;\n2026-09-16 01:48:43.045 UTC [1] LOG:  terminating any other active server processes\n2026-09-16 01:48:43.046 UTC [1] LOG:  all server processes terminated; reinitializing\n2026-09-16 01:48:43.055 UTC [136] LOG:  database system was interrupted; last known up at 2026-09-16 01:48:41 UTC\n2026-09-16 01:48:43.064 UTC [136] LOG:  database system was not properly shut down; automatic recovery in progress\n2026-09-16 01:48:43.067 UTC [136] LOG:  redo starts at 0/4610198\n",
+  "disposable_container_removed": true
+}

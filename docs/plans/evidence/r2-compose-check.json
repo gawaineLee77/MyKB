@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "scope": "Compose rendering and private-port/configuration assertions only; no enterprise deployment",
+  "checks": [
+    "enterprise_enabled",
+    "registration_closed",
+    "tenantless",
+    "private_service_ports",
+    "loopback_frontend",
+    "dedicated_configuration"
+  ]
+}

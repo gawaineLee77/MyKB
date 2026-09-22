@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "upstream_tag": "v0.7.2",
-  "upstream_commit": "3d5d8bfcdfeeea266b292b71cea616847af28d0f",
-  "expected_route_count": 373,
+  "upstream_tag": "v0.8.0",
+  "upstream_commit": "1edcd54b43606d9079bb36650efe3f68707a79ea",
+  "expected_route_count": 429,
   "rules": [
     {
       "id": "disable-development-swagger",
@@ -28,6 +28,11 @@
       "id": "disable-hosted-mcp",
       "classification": "disabled",
       "path_regex": "^/api/v1/(?:mcp-oauth(?:/|$)|mcp-services(?:/|$)|agent/(?:mcp-oauth-resolutions|tool-approvals)(?:/|$))"
+    },
+    {
+      "id": "disable-sandbox-catalog-memory-and-local-user-create",
+      "classification": "disabled",
+      "path_regex": "^/api/v1/(?:skills/|sandbox-configs(?:/|$)|me/env-vars(?:/|$)|memory(?:/|$)|system/sandbox-check$|system/admin/users/create$)"
     },
     {
       "id": "disable-web-search",

@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "image": {
+    "name": "mindcreek-ui:r4-20260918-links1",
+    "id": "sha256:0a3e36b1e0c973eeb58289ae482c24594dcd178d39bf87d31483ee44f645ac2a",
+    "architecture": "amd64"
+  },
+  "checks": [
+    "nginx_config_valid",
+    "default_hidden",
+    "no_store",
+    "mounted_config",
+    "atomic_live_update",
+    "missing_mount_file_hidden"
+  ],
+  "scope": "Actual Linux AMD64 Nginx image on ARM64 Docker emulation; network disabled, synthetic public URLs."
+}

@@ -2,8 +2,8 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE2_IMPLEMENTATION_PLAN.md"
-EVIDENCE="$ROOT/docs/PHASE2_GATE_A.md"
+PLAN="$ROOT/docs/archive/phase2/PHASE2_IMPLEMENTATION_PLAN.md"
+EVIDENCE="$ROOT/docs/archive/phase2/PHASE2_GATE_A.md"
 MIGRATION="$ROOT/services/gateway/internal/database/migrations/000006_kb_access_grants.up.sql"
 
 fail() {

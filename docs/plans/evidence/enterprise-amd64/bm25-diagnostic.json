@@ -1,0 +1,32 @@
+{
+  "container": "mindcreek-bm25-b44d5e3b",
+  "platform": "linux/amd64",
+  "checks": [
+    {
+      "mode": "default",
+      "passed": false,
+      "error": "server closed the connection unexpectedly\n\tThis probably means the server terminated abnormally\n\tbefore or while processing the request.\nconnection to server was lost\n"
+    },
+    {
+      "mode": "jit_off",
+      "passed": false,
+      "error": "server closed the connection unexpectedly\n\tThis probably means the server terminated abnormally\n\tbefore or while processing the request.\nconnection to server was lost\n"
+    },
+    {
+      "mode": "custom_off",
+      "passed": false,
+      "error": "server closed the connection unexpectedly\n\tThis probably means the server terminated abnormally\n\tbefore or while processing the request.\nconnection to server was lost\n"
+    },
+    {
+      "mode": "parallel_off",
+      "passed": false,
+      "error": "server closed the connection unexpectedly\n\tThis probably means the server terminated abnormally\n\tbefore or while processing the request.\nconnection to server was lost\n"
+    },
+    {
+      "mode": "both_off",
+      "passed": false,
+      "error": "server closed the connection unexpectedly\n\tThis probably means the server terminated abnormally\n\tbefore or while processing the request.\nconnection to server was lost\n"
+    }
+  ],
+  "logs": ""
+}

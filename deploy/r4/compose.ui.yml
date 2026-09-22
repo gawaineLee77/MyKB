@@ -1,0 +1,10 @@
+# Full native UI + R3 authorization, for the dedicated R4 project.
+services:
+  frontend:
+    image: ${MINDCREEK_R4_UI_IMAGE:-mindcreek-ui:r4}
+    build:
+      args:
+        MINDCREEK_UI_VERSION: 0.8-r4
+        VITE_FRONTEND_COMMIT: weknora-v0.8.0-mindcreek-r4
+  gateway:
+    image: ${MINDCREEK_R4_GATEWAY_IMAGE:-mindcreek-gateway:r4}

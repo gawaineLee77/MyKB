@@ -1,0 +1,91 @@
+{
+  "status": "passed",
+  "recorded_at": "2026-09-16T06:20:41.117308+00:00",
+  "scope": "Gateway identity diagnostics hotfix and packaging; not a new full R4 acceptance run.",
+  "release": "r4-20260916-identity-diag1",
+  "base_release": "r4-20260916-118b8af3",
+  "gateway_source_sha256": "e983db492e68b1a3a5f072978a4a631ab03f6d36fb76b38fb92fe54f445aa47e",
+  "gateway_binary_sha256": "99d8dbb02a4b0e18f2d1f67e904d4825bbb918e1a36adef6cd3f3db5c2504e68",
+  "image": "mindcreek-gateway:r4-20260916-identity-diag1",
+  "image_id": "sha256:d5944e423a87ac487c5974337d9a0d4c5e4511d2b6bd41c2bb8c029de2c784cd",
+  "image_config_digest": "sha256:5b314bb5919d10a0321229603ec669f795cdd72bbc01fd34386f6d210a9a4d44",
+  "apply_script_sha256": "b652c8a37629b7b63829ce03475ac314d41a12510be662288a84c9529ce5b20e",
+  "collect_script_sha256": "4532337a3370376c8646c759acb2401d62d3968817a97f6c012bec90a7190ca3",
+  "runtime": {
+    "go": "1.26.7",
+    "python": "3.12",
+    "target": "linux/amd64",
+    "host": "macOS ARM64 Docker Desktop",
+    "amd64_execution": "emulated"
+  },
+  "checks": {
+    "go_uncached": {
+      "command": "GOFLAGS=-count=1 GOPROXY=off GOSUMDB=off make phase1-gateway-test",
+      "passed_packages": 33
+    },
+    "race": {
+      "command": "go -C services/gateway test -race -count=1 ./internal/diagnostics ./internal/identity ./internal/observability ./internal/weknora ./internal/server",
+      "passed_packages": 5
+    },
+    "amd64_identity": {
+      "top_level_tests_passed": 11,
+      "count": 1,
+      "executed_in_hotfix_image": true
+    },
+    "amd64_diagnostics": {
+      "top_level_tests_passed": 4,
+      "count": 1,
+      "executed_in_hotfix_image": true
+    },
+    "python312_amd64": {
+      "passed_tests": 9,
+      "modules": [
+        "test_gateway_hotfix",
+        "test_identity_logs"
+      ]
+    },
+    "packaged_collector_cli": {
+      "status": "passed",
+      "fixture": "Disposable synthetic compose-log wrapper",
+      "events_extracted": 3,
+      "private_field_and_raw_log_excluded": true
+    },
+    "apply": {
+      "status": "passed",
+      "image_reloaded_and_locked": true,
+      "upgraded_previous_short_secret_patch": true,
+      "override_fields_preserved": true,
+      "backup_mode_0600": true,
+      "repeat_apply_idempotent": true,
+      "baseline_manifest_and_instance_env_unchanged": true,
+      "scope": "Real apply command twice in a disposable synthetic instance. No business service started."
+    },
+    "design_documents": "python3 scripts/check-design-docs.py passed; 22 aligned sections and 28 referenced documents",
+    "links_and_fences": "Diagnostic guide, deployment guide and current status checked",
+    "diff_whitespace": "git diff --check passed",
+    "upstream_worktree": "Clean (git -C upstream/weknora status --porcelain empty)",
+    "exported_image": "AMD64 manifest/config and gateway binary hash verified against build output"
+  },
+  "coverage": [
+    "Callback rejection reason matrix; invalid/missing required state cannot trigger corporate token requests.",
+    "Legacy state-optional cookie-bound behavior preserved.",
+    "Synthetic Phase 5 POST authorization, JSON token exchange and query UserInfo over TLS; untrusted CA rejected, trusted CA reaches broker handoff.",
+    "HTTP cancellation, safe error classification, fixed auth paths, log correlation and credential-canary redaction.",
+    "Previous short-secret patch upgrade and repeated real apply command in disposable synthetic instance."
+  ],
+  "log_sha256": {
+    "go-test.log": "5d1bade098b2ebd7fabb34cba261bd96a3eb0c982f23ad452eebdf24c1a1c673",
+    "race-test.log": "3de82a091c8e754b23d36e6ad662f4d08bf4c48264cdb9d821eed2b2e084985f",
+    "amd64-identity.log": "da2a1eb68ea3e8c2d44ceb70a4008bac0a15dbf02ed3c2d32f8eb2f28b8348ad",
+    "amd64-diagnostics.log": "467a1ccf74e6149bddf43e59d49e0442c6d6b95cd1ed1037446cf0c70f58f89b",
+    "python312.log": "ccaf4f330a57f06fbe04340ff9312eae6d93c90371cb207abd2177948ab1a51b"
+  },
+  "limitations": [
+    "Actual enterprise OAuth2 login and production endpoint certificate chains remain unverified; server diagnostics are required.",
+    "No authentication policy or deployment configuration is automatically changed; Phase 5 and R4 template protocol defaults differ.",
+    "Original frontend root callback bridge drops state. This gateway-only hotfix documents but does not fix that frontend gap.",
+    "Historical full R4 browser/API acceptance was not rerun or relabeled; no frontend or upstream source changes in this hotfix.",
+    "Physical AMD64 host validation remains pending; prior AMD64-emulated BM25 failure remains unresolved.",
+    "Synthetic successful OAuth exchange verifies broker handoff, not a live corporate-to-WeKnora end-to-end login."
+  ]
+}

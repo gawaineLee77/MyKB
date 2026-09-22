@@ -1,0 +1,18 @@
+# Apply only with the dedicated R3 wrapper/project. Intermediate R3 builds are
+# not installation/release artifacts until the R3 acceptance record is complete.
+services:
+  gateway:
+    image: ${MINDCREEK_R3_GATEWAY_IMAGE:-mindcreek-gateway:r3}
+    environment:
+      MINDCREEK_NATIVE_WORKSPACE_ENABLED: "true"
+      MINDCREEK_EMPLOYEE_ASSISTANT_ENABLED: ${MINDCREEK_EMPLOYEE_ASSISTANT_ENABLED:-false}
+      MINDCREEK_NATIVE_ROUTES_FILE: /etc/mindcreek/r3-routes.json
+      MINDCREEK_CAPABILITIES_FILE: /etc/mindcreek/r3-capabilities.json
+      MINDCREEK_GRAPH_ENABLED: "false"
+    volumes:
+      - ../../config/r3-routes.json:/etc/mindcreek/r3-routes.json:ro
+      - ../../config/r3-capabilities.json:/etc/mindcreek/r3-capabilities.json:ro
+  app:
+    environment:
+      NEO4J_ENABLE: "false"
+      WEKNORA_TENANT_ENABLE_CROSS_TENANT_ACCESS: "false"

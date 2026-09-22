@@ -84,7 +84,7 @@ func loadMindCreekRoutePolicy(t *testing.T) mindCreekRoutePolicy {
 	if err := json.Unmarshal(data, &policy); err != nil {
 		t.Fatalf("parse route policy: %v", err)
 	}
-	if policy.SchemaVersion != 1 || policy.UpstreamTag != "v0.7.2" || policy.UpstreamCommit != "3d5d8bfcdfeeea266b292b71cea616847af28d0f" {
+	if policy.SchemaVersion != 1 || policy.UpstreamTag != "v0.8.0" || policy.UpstreamCommit != "1edcd54b43606d9079bb36650efe3f68707a79ea" {
 		t.Fatalf("route policy targets an unexpected upstream baseline: %#v", policy)
 	}
 	validClassifications := map[string]bool{"disabled": true, "kb_policy_controlled": true, "pass_through": true}
@@ -150,6 +150,7 @@ func mindCreekUpstreamRoutes(t *testing.T) []gin.RouteInfo {
 	RegisterKnowledgeBaseRoutes(v1, &handler.KnowledgeBaseHandler{}, g)
 	RegisterKnowledgeBaseActivityRoutes(v1, &handler.AuditLogHandler{}, g)
 	serveKBScopedFiles(v1, g, nil, nil, nil, nil)
+	serveMessageScopedFiles(v1, g, nil, nil, nil, nil, nil, nil)
 	RegisterKnowledgeTagRoutes(v1, &handler.TagHandler{}, g)
 	RegisterKnowledgeRoutes(v1, &handler.KnowledgeHandler{}, g)
 	RegisterFAQRoutes(v1, &handler.FAQHandler{}, g)
@@ -158,6 +159,8 @@ func mindCreekUpstreamRoutes(t *testing.T) []gin.RouteInfo {
 	RegisterChatRoutes(v1, &sessionhandler.Handler{}, g)
 	RegisterMessageRoutes(v1, &handler.MessageHandler{}, g)
 	RegisterModelRoutes(v1, &handler.ModelHandler{}, &handler.ModelCredentialsHandler{}, g)
+	RegisterSandboxConfigRoutes(v1, &handler.SandboxConfigHandler{}, &handler.SandboxSkillHandler{}, g)
+	RegisterMyEnvVarRoutes(v1, &handler.MeEnvVarHandler{})
 	RegisterEvaluationRoutes(v1, &handler.EvaluationHandler{}, g)
 	RegisterInitializationRoutes(v1, &handler.InitializationHandler{}, g)
 	RegisterSystemRoutes(v1, &handler.SystemHandler{}, g)
@@ -176,6 +179,7 @@ func mindCreekUpstreamRoutes(t *testing.T) []gin.RouteInfo {
 	RegisterDataSourceRoutes(v1, &handler.DataSourceHandler{}, &handler.DataSourceCredentialsHandler{}, g)
 	RegisterWeKnoraCloudRoutes(v1, &handler.WeKnoraCloudHandler{}, g)
 	RegisterWikiPageRoutes(v1, &handler.WikiPageHandler{}, g)
+	RegisterMemoryRoutes(v1, &handler.MemoryHandler{}, g)
 	RegisterChunkerDebugRoutes(v1, g)
 
 	routes := append(r.Routes(), mindCreekConditionalRoutes()...)

@@ -2,8 +2,8 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE3_IMPLEMENTATION_PLAN.md"
-EVIDENCE="$ROOT/docs/PHASE3_GATE_C.md"
+PLAN="$ROOT/docs/archive/phase3/PHASE3_IMPLEMENTATION_PLAN.md"
+EVIDENCE="$ROOT/docs/archive/phase3/PHASE3_GATE_C.md"
 LIBRARY="$ROOT/tools/frontend-overlay/product/mindcreek/KnowledgeLibrary.vue"
 
 fail() {
@@ -29,7 +29,7 @@ rg -q 'data-testid="discover-tab"' "$LIBRARY" || fail "Discover tab is missing"
 rg -q 'PublicationDialog' "$LIBRARY" || fail "publication controls are missing"
 rg -q 'markPublicationSeen' "$LIBRARY" || fail "mark-seen behavior is missing"
 rg -q "product_mode !== 'personal_notes'" "$LIBRARY" || fail "Personal Notes publication control is not suppressed"
-"$ROOT/tools/frontend-overlay/check.sh" >/dev/null
+"$ROOT/tools/frontend-overlay/check-legacy.sh" >/dev/null
 [ -z "$(git -C "$ROOT/upstream/weknora" status --porcelain --untracked-files=all)" ] || fail "upstream submodule is dirty"
 
 echo "MindCreek Phase 3 Gate C product UI verified"

@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "date": "2026-09-22T02:49:56.435284+00:00",
+  "inspection": "Codex view_image review of all nine screenshots; changed images re-inspected after final rerun, identical images confirmed by SHA-256.",
+  "ui_source_sha256": "e31d4f2a3ffd6bcce3c964fe41c7ecdde6f6fd4f335532650c3b250a7cf3b517",
+  "bundle_sha256": "de78d062a628d3578ab5f5db4d1928abbbf41f1c493947968900de6106bf75a2",
+  "screenshots": {
+    "docs/assets/r5/before-agent-list.png": "8e0a9efc29c6056c7734a23b91397eaf3c408c3fc6991c1a78566a7561ee7214",
+    "docs/assets/r5/after-channel-publishing.png": "900a61575b4d73003e169cfdba23a28732fb69edd8a54dae9a168481d96baef3",
+    "docs/assets/r5/after-embed-code.png": "c29f09a0bbee37916d67e5cb79a79c9d419e2e9a4484f4070e6e4fdeb3fa3194",
+    "docs/assets/r5/after-synthetic-login-popup.png": "9a27f33536b40b332c1b80bcaa7258e961183eaa2ea4fbfc025e750ccce6e43e",
+    "docs/assets/r5/after-employee-login.png": "f6861ca1cd590f828130fc0880cb0484717c1148287bb3785262766169bd3e0d",
+    "docs/assets/r5/after-employee-answer.png": "4b84a2c2d2aa312502f87e6b176b7f84afa198dffe7b454dcdfb482965aa3ec1",
+    "docs/assets/r5/after-history-image.png": "c0fce1c5ad84381e8c54315398276aa05b7ed125c4213772955265ba6871cf74",
+    "docs/assets/r5/after-knowledge-references.png": "3145fa7dee30b7c875866db4b2a225997519d1c253e3816c2fcae2a3d0717537",
+    "docs/assets/r5/after-channel-revoked.png": "2b1c11092b8230ce5e75b60b3a7cfe344fed5a33bd9058f2f730dd2fef7174af"
+  },
+  "observations": [
+    "R4 before screenshot shows the loaded Agent list without the publishing button.",
+    "Publishing settings and scrolled embed code remain readable within the main layout.",
+    "Synthetic login popup is explicitly marked as a fixture.",
+    "Employee widget displays the complete streamed answer, uploaded image and attachment; history reload retains the image.",
+    "Native references drawer shows the permitted source document and excerpt.",
+    "Revoked channel clears the conversation and shows the login/permission notice."
+  ],
+  "limits": [
+    "Desktop Chrome 1440x1000 host viewport and synthetic IdP only.",
+    "Corporate browsers, COOP/Cookie policy, mobile layout and production model quality remain R6 target-environment checks."
+  ]
+}

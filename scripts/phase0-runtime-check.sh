@@ -3,8 +3,8 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 COMPOSE="$ROOT/scripts/phase0-compose.sh"
-EXPECTED_COMMIT=3d5d8bfcdfeeea266b292b71cea616847af28d0f
-EXPECTED_VERSION=v0.7.2
+EXPECTED_COMMIT=1edcd54b43606d9079bb36650efe3f68707a79ea
+EXPECTED_VERSION=v0.8.0
 
 fail() {
   echo "phase0 runtime check failed: $*" >&2

@@ -11,6 +11,8 @@ import (
 
 const (
 	Version          = 1
+	KBTypeDocument   = "document"
+	KBTypeFAQ        = "faq"
 	MaxRAGFileBytes  = int64(500 << 20)
 	MaxRAGFiles      = 1000
 	MaxNoteFileBytes = int64(64 << 10)
@@ -39,14 +41,15 @@ type Limits struct {
 }
 
 type EffectiveConfig struct {
-	ProfileID      string                        `json:"profile_id"`
-	ProfileVersion int                           `json:"profile_version"`
-	Storage        weknora.StorageProviderConfig `json:"storage"`
-	Chunking       weknora.ChunkingConfig        `json:"chunking"`
-	Indexing       weknora.IndexingStrategy      `json:"indexing"`
-	Retrieval      Retrieval                     `json:"retrieval"`
-	Models         Models                        `json:"models"`
-	Limits         Limits                        `json:"limits"`
+	ProfileID         string                        `json:"profile_id"`
+	ProfileVersion    int                           `json:"profile_version"`
+	KnowledgeBaseType string                        `json:"knowledge_base_type,omitempty"`
+	Storage           weknora.StorageProviderConfig `json:"storage"`
+	Chunking          weknora.ChunkingConfig        `json:"chunking"`
+	Indexing          weknora.IndexingStrategy      `json:"indexing"`
+	Retrieval         Retrieval                     `json:"retrieval"`
+	Models            Models                        `json:"models"`
+	Limits            Limits                        `json:"limits"`
 }
 
 type Definition struct {
@@ -107,6 +110,27 @@ func BuildWithManagedModels(mode profile.ProductMode, embeddingModelID, summaryM
 	return definition, nil
 }
 
+// ForKnowledgeBaseType applies an upstream-native knowledge-base type without
+// introducing a fourth MindCreek product mode. FAQ remains part of the governed
+// RAG family while using WeKnora's dedicated FAQ storage and retrieval path.
+func (d Definition) ForKnowledgeBaseType(knowledgeBaseType string) (Definition, error) {
+	switch knowledgeBaseType {
+	case "", KBTypeDocument:
+		// Keep the legacy document profile JSON byte-for-byte compatible. An
+		// omitted type means document; only the non-default FAQ type is recorded.
+		d.Config.KnowledgeBaseType = ""
+	case KBTypeFAQ:
+		if d.Mode != profile.ModeRAG {
+			return Definition{}, fmt.Errorf("FAQ knowledge bases require RAG mode")
+		}
+		d.Config.KnowledgeBaseType = KBTypeFAQ
+		d.Config.Models.VLMModelID = ""
+	default:
+		return Definition{}, fmt.Errorf("unsupported knowledge-base type %q", knowledgeBaseType)
+	}
+	return d, nil
+}
+
 func (d Definition) JSON() (json.RawMessage, error) {
 	encoded, err := json.Marshal(d.Config)
 	if err != nil {
@@ -116,14 +140,23 @@ func (d Definition) JSON() (json.RawMessage, error) {
 }
 
 func (d Definition) UpstreamRequest(id, name, description string) weknora.CreateKnowledgeBaseRequest {
-	vlmEnabled := d.Mode == profile.ModeRAG && d.Config.Models.VLMModelID != ""
-	return weknora.CreateKnowledgeBaseRequest{
-		ID: id, Name: name, Description: description, Type: "document",
+	knowledgeBaseType := d.Config.KnowledgeBaseType
+	if knowledgeBaseType == "" {
+		knowledgeBaseType = KBTypeDocument
+	}
+	vlmEnabled := d.Mode == profile.ModeRAG && knowledgeBaseType == KBTypeDocument && d.Config.Models.VLMModelID != ""
+	request := weknora.CreateKnowledgeBaseRequest{
+		ID: id, Name: name, Description: description, Type: knowledgeBaseType,
 		EmbeddingModelID: d.Config.Models.EmbeddingModelID, SummaryModelID: d.Config.Models.SummaryModelID,
 		VLMConfig:             weknora.VLMConfig{Enabled: vlmEnabled, ModelID: enabledModelID(vlmEnabled, d.Config.Models.VLMModelID)},
 		StorageProviderConfig: d.Config.Storage, ChunkingConfig: d.Config.Chunking, IndexingStrategy: d.Config.Indexing,
 		QuestionGenerationConfig: weknora.QuestionGenerationConfig{Enabled: false, QuestionCount: 0},
 	}
+	if knowledgeBaseType == KBTypeFAQ {
+		// Match the defaults selected by WeKnora's native FAQ creation UI.
+		request.FAQConfig = &weknora.FAQConfig{IndexMode: "question_only", QuestionIndexMode: "separate"}
+	}
+	return request
 }
 
 func enabledModelID(enabled bool, id string) string {

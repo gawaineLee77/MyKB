@@ -1,0 +1,146 @@
+{
+  "time": "2026-09-16T00:54:28.288178+00:00",
+  "status": "passed",
+  "gateway_source_sha256": "118b8af3c3e376527b368e061f54a54dfa58db8958ab89b8119ee71b3fe8b8c6",
+  "r4_inputs_sha256": "5a148f2b1d522b03360112bb20d95e099e64e4c29cd8773fcbd4b5ea584b11f4",
+  "checks": [
+    {
+      "name": "gateway-uncached",
+      "command": [
+        "go",
+        "-C",
+        "services/gateway",
+        "test",
+        "-count=1",
+        "./..."
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 15.32,
+      "log_sha256": "66fa1ac2f5c6131bca124689f2906753b5a590553823d92ca4a62b1d8028d23a"
+    },
+    {
+      "name": "gateway-race",
+      "command": [
+        "go",
+        "-C",
+        "services/gateway",
+        "test",
+        "-race",
+        "-count=1",
+        "./internal/nativeaccess",
+        "./internal/mcp",
+        "./internal/enterprise",
+        "./internal/identity",
+        "./internal/weknora",
+        "./internal/server"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.87,
+      "log_sha256": "c32728cbde1f389dace80e0d3ac14ad0f7cfb78d8ea60c1bb53fff3e0918f59b"
+    },
+    {
+      "name": "phase0",
+      "command": [
+        "make",
+        "phase0-check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.45,
+      "log_sha256": "c618644803c289593dcbb27504b550f159f8e18c23c047fad22c0cef74cf61a4"
+    },
+    {
+      "name": "phase5",
+      "command": [
+        "make",
+        "phase5-check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 38.95,
+      "log_sha256": "b6ced33b6da44e5e0934a12aade85c0520b5f8ce20ac2b6f027b73ca1057a659"
+    },
+    {
+      "name": "stage1",
+      "command": [
+        "make",
+        "stage1-check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.8,
+      "log_sha256": "bc776bc7f82c2136b1fec3bbbe1e8a291b4a24dbd17d6c889e5c4f8c96f212ee"
+    },
+    {
+      "name": "frontend-node24",
+      "command": [
+        "sh",
+        "scripts/r4-build-ui.sh"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 59.08,
+      "log_sha256": "37c6ca58e54b3f0377d357aa565309a9765f439182d21643f83d5e5cc19eee80"
+    },
+    {
+      "name": "importer-python312",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "-v",
+        "/Users/gawaine/Desktop/KnowledgeBase/tools/community-import:/work:ro",
+        "-w",
+        "/work",
+        "sha256:b64631e04e4920160c50fbe8d8df828f7f35f06f425cb44aa09bca53e708a35a",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.27,
+      "log_sha256": "e88fe9e3e2772b769ee3b1829f244af0afb674b707410f6d49ca68a5976790be"
+    },
+    {
+      "name": "r3-route-manifest",
+      "command": [
+        "python3",
+        "tools/redesign/r3_routes.py",
+        "--inventory",
+        ".local/redesign-r3/upstream-routes.json",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.07,
+      "log_sha256": "6a02ed52fd698e015ccccfe226311dd8339790dadeb8a2eeef6b3789e2854410"
+    },
+    {
+      "name": "r4-compose",
+      "command": [
+        "scripts/r4-compose.sh",
+        "config",
+        "--quiet"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.28,
+      "log_sha256": "45f69703121f8415a452a0ceca9e17377b391a8aa8a56b26a636f64d9f6b1bbf"
+    },
+    {
+      "name": "r4-shell",
+      "command": [
+        "sh",
+        "-n",
+        "scripts/r4-compose.sh",
+        "scripts/r4-install.sh",
+        "scripts/r2-install.sh"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.01,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Synthetic executable regression; R4 native UI checks. Actual synthetic browser/API evidence is recorded separately; no production deployment acceptance.",
+  "node": "v24.19.0",
+  "upstream_clean": true
+}

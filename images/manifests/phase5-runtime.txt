@@ -4,8 +4,8 @@ mindcreek-ui:phase5
 mindcreek-ui:0.6.0
 mindcreek-gateway:phase5
 mindcreek-gateway:0.6.0-phase5
-wechatopenai/weknora-app:v0.7.2
-wechatopenai/weknora-docreader:v0.7.2
+wechatopenai/weknora-app:v0.8.0
+wechatopenai/weknora-docreader:v0.8.0
 paradedb/paradedb:v0.22.2-pg17
 redis:7.0-alpine
 python:3.12-alpine

@@ -1,0 +1,45 @@
+services:
+  frontend:
+    container_name: !reset null
+    image: ${MINDCREEK_R2_UI_IMAGE:-mindcreek-ui:r2}
+  gateway:
+    container_name: !reset null
+    image: ${MINDCREEK_R2_GATEWAY_IMAGE:-mindcreek-gateway:r2}
+    user: "${MINDCREEK_R2_UID:-1000}:${MINDCREEK_R2_GID:-1000}"
+    environment:
+      MINDCREEK_ENTERPRISE_ENABLED: "true"
+      MINDCREEK_INSTALL_ADMIN_EMAIL: ${MINDCREEK_INSTALL_ADMIN_EMAIL:?set installation admin email}
+      MINDCREEK_INSTALL_ADMIN_USERNAME: ${MINDCREEK_INSTALL_ADMIN_USERNAME:-admin}
+      MINDCREEK_INSTALL_ADMIN_PASSWORD_FILE: /run/mindcreek-enterprise/admin-password
+      MINDCREEK_DEFAULT_SPACE_NAME: ${MINDCREEK_DEFAULT_SPACE_NAME:-默认空间}
+      MINDCREEK_DEFAULT_SPACE_DESCRIPTION: ${MINDCREEK_DEFAULT_SPACE_DESCRIPTION:-企业默认知识空间}
+      MINDCREEK_MEMBER_KEY_FILE: /run/mindcreek-enterprise/member-key
+      MINDCREEK_RECOVERY_OWNER_BEARER_FILE: /run/mindcreek-enterprise/recovery-owner-bearer
+    volumes:
+      - ${MINDCREEK_R2_SECRET_DIR:?set enterprise secret directory}:/run/mindcreek-enterprise:ro
+  app:
+    container_name: !reset null
+    ports: !override []
+    env_file: !override
+      - ${MINDCREEK_R2_ENV_FILE:?set a dedicated enterprise env file}
+    environment:
+      DISABLE_REGISTRATION: ${MINDCREEK_R2_REGISTRATION_DISABLED:-true}
+      WEKNORA_AUTH_DEFAULT_TENANT_MODE: tenantless
+      WEKNORA_TENANT_SELF_SERVICE_CREATION_ENABLED: "true"
+      WEKNORA_TENANT_ENABLE_RBAC: "true"
+      WEKNORA_TENANT_ENABLE_CROSS_TENANT_ACCESS: "false"
+      WEKNORA_TENANT_AUTO_CREATE_API_KEY: "false"
+      WEKNORA_BOOTSTRAP_SYSTEM_ADMIN_EMAIL: ${MINDCREEK_R2_BOOTSTRAP_EMAIL:-}
+    volumes:
+      - ${MINDCREEK_R2_MODEL_FILE:?use the R2 compose wrapper}:/app/config/builtin_models.yaml:ro
+  postgres:
+    container_name: !reset null
+    ports: !override []
+  redis:
+    container_name: !reset null
+    ports: !override []
+  docreader:
+    container_name: !reset null
+    ports: !override []
+  mock-embedding:
+    container_name: !reset null

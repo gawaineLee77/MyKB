@@ -2,7 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE4_IMPLEMENTATION_PLAN.md"
+PLAN="$ROOT/docs/archive/phase4/PHASE4_IMPLEMENTATION_PLAN.md"
 HANDLER="$ROOT/services/gateway/internal/mcp/handler.go"
 SERVICE="$ROOT/services/gateway/internal/mcp/service.go"
 
@@ -11,7 +11,7 @@ fail() {
   exit 1
 }
 
-for FILE in "$HANDLER" "$SERVICE" "$ROOT/scripts/phase4-gate-c-probe.py" "$ROOT/docs/PHASE4_GATE_C.md"; do
+for FILE in "$HANDLER" "$SERVICE" "$ROOT/scripts/phase4-gate-c-probe.py" "$ROOT/docs/archive/phase4/PHASE4_GATE_C.md"; do
   [ -f "$FILE" ] || fail "missing ${FILE#$ROOT/}"
 done
 rg -q 'ModernProtocol = "2026-07-28"' "$HANDLER" || fail "modern MCP protocol is missing"

@@ -1,0 +1,26 @@
+{
+  "scope": "Pre-R4 actual Vue bundle; synthetic responses; not live OAuth",
+  "checks": [
+    {
+      "role": "owner",
+      "screenshot": "docs/assets/r4/before-owner.png",
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "screenshot": "docs/assets/r4/before-admin.png",
+      "passed": true
+    },
+    {
+      "role": "contributor",
+      "screenshot": "docs/assets/r4/before-contributor.png",
+      "passed": true
+    },
+    {
+      "role": "viewer",
+      "screenshot": "docs/assets/r4/before-viewer.png",
+      "passed": true
+    }
+  ],
+  "status": "passed"
+}

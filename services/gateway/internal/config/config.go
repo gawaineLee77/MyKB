@@ -13,7 +13,7 @@ import (
 const (
 	defaultListenAddr       = ":8080"
 	defaultUpstreamURL      = "http://app:8080"
-	defaultUpstreamVersion  = "v0.7.2"
+	defaultUpstreamVersion  = "v0.8.0"
 	defaultUpstreamTimeout  = 5 * time.Second
 	defaultRoutePolicyFile  = "config/phase1-route-policy.json"
 	defaultRouteActionsFile = "config/phase2-route-actions.json"
@@ -39,6 +39,11 @@ type Config struct {
 	ModelOverrideAllowHTTP bool
 	ModelOverridesEnabled  bool
 	Identity               IdentityConfig
+	EnterpriseEnabled      bool
+	NativeWorkspaceEnabled bool
+	NativeRoutesFile       string
+	GraphEnabled           bool
+	AssistantEnabled       bool
 }
 
 const (
@@ -122,6 +127,10 @@ func Load(buildVersion string) (Config, error) {
 		return Config{}, fmt.Errorf("MINDCREEK_UPSTREAM_TIMEOUT must be a positive duration")
 	}
 	cfg.UpstreamTimeout = timeout
+	cfg.AssistantEnabled, err = strconv.ParseBool(value("MINDCREEK_EMPLOYEE_ASSISTANT_ENABLED", "false"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MINDCREEK_EMPLOYEE_ASSISTANT_ENABLED must be true or false")
+	}
 
 	maxFileSizeMB, err := strconv.ParseInt(value("MAX_FILE_SIZE_MB", strconv.FormatInt(defaultMaxFileSizeMB, 10)), 10, 64)
 	if err != nil || maxFileSizeMB < 1 || maxFileSizeMB > maxAllowedFileSizeMB {
@@ -147,6 +156,22 @@ func Load(buildVersion string) (Config, error) {
 		return Config{}, err
 	}
 	cfg.Identity = identity
+	cfg.EnterpriseEnabled, err = strconv.ParseBool(value("MINDCREEK_ENTERPRISE_ENABLED", "false"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MINDCREEK_ENTERPRISE_ENABLED must be true or false")
+	}
+	cfg.NativeWorkspaceEnabled, err = strconv.ParseBool(value("MINDCREEK_NATIVE_WORKSPACE_ENABLED", "false"))
+	if err != nil || (cfg.NativeWorkspaceEnabled && !cfg.EnterpriseEnabled) {
+		return Config{}, fmt.Errorf("native workspace requires MINDCREEK_ENTERPRISE_ENABLED=true and a boolean feature flag")
+	}
+	cfg.NativeRoutesFile = value("MINDCREEK_NATIVE_ROUTES_FILE", "config/r3-routes.json")
+	if cfg.AssistantEnabled && (!cfg.NativeWorkspaceEnabled || !cfg.Identity.Enabled) {
+		return Config{}, fmt.Errorf("employee assistant requires native workspace and enterprise identity")
+	}
+	cfg.GraphEnabled, err = strconv.ParseBool(value("MINDCREEK_GRAPH_ENABLED", "false"))
+	if err != nil {
+		return Config{}, fmt.Errorf("MINDCREEK_GRAPH_ENABLED must be true or false")
+	}
 
 	if strings.TrimSpace(cfg.ListenAddr) == "" || strings.TrimSpace(cfg.ProductVersion) == "" {
 		return Config{}, fmt.Errorf("listen address and product version must not be empty")
@@ -339,8 +364,9 @@ func loadIdentityConfig() (IdentityConfig, error) {
 			return IdentityConfig{}, fmt.Errorf("corporate OAuth2 UserInfo claim mappings are incomplete")
 		}
 	}
-	if result.ClientID == "" || len(result.ClientSecret) < 16 {
-		return IdentityConfig{}, fmt.Errorf("corporate identity client ID and a client secret of at least 16 characters are required")
+	// The corporate provider issues this credential and determines its length.
+	if result.ClientID == "" || result.ClientSecret == "" {
+		return IdentityConfig{}, fmt.Errorf("corporate identity client ID and client secret are required")
 	}
 	if len(result.BrokerClientSecret) < 32 {
 		return IdentityConfig{}, fmt.Errorf("MINDCREEK_BROKER_CLIENT_SECRET must contain at least 32 characters")

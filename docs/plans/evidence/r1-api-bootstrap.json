@@ -1,0 +1,54 @@
+{
+  "time": "2026-09-15T06:17:52.486605+00:00",
+  "project": "mindcreek-r1-6101cc44",
+  "scope": "real v0.8.0 HTTP APIs with synthetic OAuth provider; no product R2 implementation or real browser/IdP/model acceptance",
+  "checks": [
+    {
+      "name": "admin.register_tenantless",
+      "passed": true
+    },
+    {
+      "name": "admin.duplicate_registration_rejected",
+      "passed": true
+    },
+    {
+      "name": "admin.bootstrap_promotes_existing_user",
+      "passed": true
+    },
+    {
+      "name": "admin.creates_default_space_as_owner",
+      "passed": true
+    },
+    {
+      "name": "upstream.version",
+      "passed": true,
+      "version": "0.8.0",
+      "commit_id": "1edcd54"
+    },
+    {
+      "name": "admin.closes_public_registration",
+      "passed": true
+    }
+  ],
+  "images": {
+    "app": {
+      "tag": "wechatopenai/weknora-app:v0.8.0",
+      "id": "sha256:14953fcb990c59b2546f00e94673d2a4c88689e3319bfcf2b06f82feaccec9b4"
+    },
+    "postgres": {
+      "tag": "paradedb/paradedb:v0.22.2-pg17",
+      "id": "sha256:af585013f97f622715de01e48d00558f7edf17055d7b40deafc9f98ca8d99a56"
+    },
+    "redis": {
+      "tag": "redis:7-alpine",
+      "id": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065"
+    },
+    "identity": {
+      "tag": "python:3.12-alpine",
+      "id": "sha256:b64631e04e4920160c50fbe8d8df828f7f35f06f425cb44aa09bca53e708a35a"
+    }
+  },
+  "status": "passed",
+  "cleanup": "only disposable project removed",
+  "probe_sha256": "82f6535980a2a28cb1d2f820ca61e69f46b95ca923dc1610002132c2f3ebee16"
+}

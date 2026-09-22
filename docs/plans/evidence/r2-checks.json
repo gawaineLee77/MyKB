@@ -1,0 +1,36 @@
+{
+  "time": "2026-09-15T08:47:36.140628+00:00",
+  "status": "passed",
+  "gateway_cached": false,
+  "gateway_passed_packages": 31,
+  "race_passed_packages": 3,
+  "node_major": 24,
+  "screenshots_inspected": true,
+  "checks": [
+    "uncached gateway suite",
+    "enterprise/identity/server race tests",
+    "Node 24 frontend tests/type-check/build",
+    "phase5-check",
+    "stage1-check",
+    "Compose structure and private ports",
+    "shell and Python syntax",
+    "upstream clean",
+    "git diff --check",
+    "r2-ui-probe wrapper including cleanup and evidence copy"
+  ],
+  "log_sha256": {
+    "gateway": "6d47b6f336521b32afcb5d9775306c65e25c4a3654fec1cd9b41419e494d872f",
+    "race": "d7c4dabeb2c1dd9cf137b7ef138e66ec22f74e37694c85cc3db8caef4e95bdc5",
+    "frontend": "b3b5aaba375c7e7d3c4a926a8a8e450a80ba831bce1a6096fd750211aa0d4995",
+    "contracts": "f42c58c8270ba9f2718e878e635a16045c82a3e5769919ff8715846ab803828a",
+    "ui_wrapper": "f2d27d2b7e5e6fea10a2b64eb80caa41289d218ad63e813e260c7da17e9b2237"
+  },
+  "scope": "Synthetic local acceptance; real corporate OAuth, model services and target-host deployment remain pending",
+  "screenshots_sha256": {
+    "after-installation-status.png": "fd00aa47e57ddf993d72c373ef28c9d17cfe3250c72b5cfff584edd4307f4fb2",
+    "after-admin-login.png": "caa568685e68fd9ea600f141ed8e09f94446293f7d4ab07ebd20b3a0b3fed944",
+    "before-employee-login.png": "4bfac6e630114ee08ef92e2e23b22df7a5f1fe2d9b163303c7502977a88461d4",
+    "after-employee-removed.png": "098a2f57b98e1bc2a7fa82ee212e14a53e17fcda3bff607373ec916c5aed4d9d",
+    "after-employee-failed.png": "966e65b632bc3451bcdddf4e4bab30996d8b67c5e1ab39e11b26ac9c92438219"
+  }
+}

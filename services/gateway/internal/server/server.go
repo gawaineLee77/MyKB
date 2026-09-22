@@ -15,14 +15,18 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/agentscope"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/apierror"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/assistant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/catalog"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/diagnostics"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/enterprise"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	corporateidentity "github.com/gawaineLee77/MyKB/services/gateway/internal/identity"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/managedmodel"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/nativeaccess"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/note"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/observability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
@@ -38,6 +42,10 @@ type PrincipalResolver interface {
 }
 
 type Dependencies struct {
+	Assistant      *assistant.Service
+	AssistantProxy http.Handler
+	NativeAccess   *nativeaccess.Gate
+	NativeScopes   *nativeaccess.ScopeService
 	Principals     PrincipalResolver
 	Access         *access.Gate
 	Spaces         KnowledgeSpaceService
@@ -56,6 +64,7 @@ type Dependencies struct {
 	IdentityBroker http.Handler
 	IdentityGate   CorporateIdentityGate
 	IdentityAdmin  IdentityAdminService
+	Enterprise     *enterprise.Service
 	Observability  *observability.Recorder
 }
 
@@ -159,6 +168,10 @@ func NewGateway(cfg config.Config, capabilities *capability.Registry, routePolic
 	proxy.Director = func(r *http.Request) {
 		originalDirector(r)
 		r.Host = cfg.UpstreamURL.Host
+		if cfg.NativeWorkspaceEnabled {
+			// Inspect uncompressed native JSON/SSE before returning it.
+			r.Header.Set("Accept-Encoding", "identity")
+		}
 		r.Header.Set("X-Request-ID", requestID(r))
 		for _, header := range []string{"X-MindCreek-User-ID", "X-MindCreek-Owner-ID", "X-MindCreek-Workspace-ID"} {
 			r.Header.Del(header)
@@ -179,13 +192,24 @@ func NewGateway(cfg config.Config, capabilities *capability.Registry, routePolic
 		}
 	}
 	fallback := http.Handler(proxy)
-	if routePolicy != nil {
+	if cfg.NativeWorkspaceEnabled {
+		if dependencies.NativeAccess == nil {
+			panic("native authorization gate is required")
+		}
+		proxy.ModifyResponse = dependencies.NativeAccess.FilterResponse
+		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) { nativeaccess.WriteError(w, r, err) }
+		dependencies.AssistantProxy = proxy
+		fallback = dependencies.NativeAccess.Wrap(proxy)
+	} else if routePolicy != nil {
 		fallback = policyHandler(routePolicy, proxy, dependencies)
 	}
 	return newHandler(cfg, capabilities, dependencies, fallback)
 }
 
 func newHandler(cfg config.Config, capabilities *capability.Registry, dependencies Dependencies, fallback http.Handler) http.Handler {
+	if cfg.NativeWorkspaceEnabled {
+		return newNativeHandler(cfg, capabilities, dependencies, fallback)
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{
@@ -210,6 +234,7 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 		})
 	}
 	registerNoteRoutes(mux, dependencies)
+	registerEnterpriseRoutes(mux, dependencies)
 	registerIngestionRoutes(mux, dependencies, cfg.MaxFileSizeMB)
 	registerSharingRoutes(mux, dependencies)
 	registerPublicationRoutes(mux, dependencies)
@@ -296,6 +321,9 @@ func newHandler(cfg config.Config, capabilities *capability.Registry, dependenci
 	})
 	mux.Handle("/", fallback)
 	handler := corporateIdentityMiddleware(mux, dependencies)
+	if dependencies.Enterprise != nil {
+		handler = enterpriseIdentityMiddleware(mux, dependencies)
+	}
 	if dependencies.Observability != nil {
 		handler = dependencies.Observability.Wrap(handler)
 	}
@@ -332,7 +360,8 @@ func requestIDMiddleware(next http.Handler) http.Handler {
 		}
 		r.Header.Set("X-Request-ID", id)
 		w.Header().Set("X-Request-ID", id)
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestIDKey{}, id)))
+		ctx := diagnostics.WithRequestID(r.Context(), id)
+		next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, requestIDKey{}, id)))
 	})
 }
 
@@ -513,9 +542,15 @@ func methodPath(r *http.Request) string { return r.Method + " " + r.URL.Path }
 func writePrincipalError(w http.ResponseWriter, r *http.Request, err error) {
 	var upstreamError *weknora.Error
 	if !errors.As(err, &upstreamError) {
+		diagnostics.Event(r.Context(), "identity_principal_failed", map[string]any{"path": diagnostics.PathLabel(r.URL.Path), "error_code": "auth.resolution_failed", "error_kind": diagnostics.ErrorKind(err)})
 		apierror.Write(w, http.StatusBadGateway, "auth.resolution_failed", "Unable to resolve authenticated principal", requestID(r))
 		return
 	}
+	diagnostics.Event(r.Context(), "identity_principal_failed", map[string]any{
+		"path": diagnostics.PathLabel(r.URL.Path), "error_code": upstreamError.Code,
+		"error_kind": diagnostics.ErrorKind(err), "upstream_status": upstreamError.UpstreamStatus,
+		"context_state": diagnostics.ErrorKind(r.Context().Err()),
+	})
 	switch upstreamError.Code {
 	case "upstream.unauthorized":
 		apierror.Write(w, http.StatusUnauthorized, "auth.invalid", "Authentication is invalid or expired", requestID(r))

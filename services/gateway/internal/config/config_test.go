@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestLoadDefaults(t *testing.T) {
 	t.Setenv("MINDCREEK_LISTEN_ADDR", "")
@@ -170,5 +173,55 @@ func TestLoadDefaultsExistingIdentityToOIDCAndRequiresOpenIDScope(t *testing.T) 
 	cfg, err := Load("test-version")
 	if err != nil || cfg.Identity.Protocol != IdentityProtocolOIDC {
 		t.Fatalf("legacy identity default is not OIDC: protocol=%q error=%v", cfg.Identity.Protocol, err)
+	}
+}
+
+func TestLoadIdentityClientCredentials(t *testing.T) {
+	for name, value := range map[string]string{
+		"MINDCREEK_IDENTITY_ENABLED":           "true",
+		"MINDCREEK_EXTERNAL_ORIGIN":            "https://mindcreek.internal",
+		"MINDCREEK_IDENTITY_ISSUER":            "https://identity.internal",
+		"MINDCREEK_IDENTITY_AUTHORIZATION_URL": "https://identity.internal/authorize",
+		"MINDCREEK_IDENTITY_TOKEN_URL":         "https://identity.internal/token",
+		"MINDCREEK_IDENTITY_USERINFO_URL":      "https://identity.internal/userinfo",
+		"MINDCREEK_IDENTITY_SCOPES":            "openid,profile,email",
+	} {
+		t.Setenv(name, value)
+	}
+	for _, protocol := range []string{IdentityProtocolOAuth2, IdentityProtocolOIDC} {
+		t.Run(protocol, func(t *testing.T) {
+			t.Setenv("MINDCREEK_IDENTITY_PROTOCOL", protocol)
+			for _, tc := range []struct {
+				name, clientID, secret, brokerSecret, errorContains string
+			}{
+				{"one character", "mindcreek", "x", strings.Repeat("b", 32), ""},
+				{"below old minimum", "mindcreek", strings.Repeat("s", 15), strings.Repeat("b", 32), ""},
+				{"old minimum", "mindcreek", strings.Repeat("s", 16), strings.Repeat("b", 32), ""},
+				{"long secret", "mindcreek", strings.Repeat("s", 64), strings.Repeat("b", 32), ""},
+				{"missing secret", "mindcreek", "", strings.Repeat("b", 32), "client ID and client secret are required"},
+				{"blank secret", "mindcreek", " \t ", strings.Repeat("b", 32), "client ID and client secret are required"},
+				{"missing client ID", "", "short", strings.Repeat("b", 32), "client ID and client secret are required"},
+				{"short broker secret", "mindcreek", "short", strings.Repeat("b", 31), "MINDCREEK_BROKER_CLIENT_SECRET"},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					t.Setenv("MINDCREEK_IDENTITY_CLIENT_ID", tc.clientID)
+					t.Setenv("MINDCREEK_IDENTITY_CLIENT_SECRET", tc.secret)
+					t.Setenv("MINDCREEK_BROKER_CLIENT_SECRET", tc.brokerSecret)
+					cfg, err := Load("test-version")
+					if tc.errorContains != "" {
+						if err == nil || !strings.Contains(err.Error(), tc.errorContains) {
+							t.Fatalf("expected credential validation error %q, got %v", tc.errorContains, err)
+						}
+						return
+					}
+					if err != nil {
+						t.Fatalf("provider-issued client secret rejected: %v", err)
+					}
+					if cfg.Identity.ClientSecret != tc.secret {
+						t.Fatal("provider-issued client secret was modified")
+					}
+				})
+			}
+		})
 	}
 }

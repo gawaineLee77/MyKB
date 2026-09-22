@@ -1,0 +1,10 @@
+{
+  "time": "2026-09-15T10:21:01.636818+00:00",
+  "head": "f09e46457d60c9bf5b5555f02feac720c5328209",
+  "upstream": "1edcd54b43606d9079bb36650efe3f68707a79ea",
+  "existing_changes": 180,
+  "r3_evidence_sha256": {
+    "r3-api-probe.json": "f2c03e4def9c3d5a43aa76a8b4a7d8becc7812ed682d6b4dc255f7873f010870",
+    "r3-checks.json": "09e14c44826c8c622c44173a2f8daf148a84aeae7b8063de921d016108f5d919"
+  }
+}

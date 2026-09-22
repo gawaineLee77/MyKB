@@ -42,25 +42,27 @@ type Authorizer interface {
 }
 
 type CreateInput struct {
-	Mode             string `json:"mode"`
-	IndexProfile     string `json:"index_profile,omitempty"`
-	Name             string `json:"name"`
-	Description      string `json:"description,omitempty"`
-	EmbeddingModelID string `json:"embedding_model_id"`
-	SummaryModelID   string `json:"summary_model_id,omitempty"`
-	RerankModelID    string `json:"-"`
-	VLMModelID       string `json:"-"`
-	StorageProvider  string `json:"storage_provider,omitempty"`
+	Mode              string `json:"mode"`
+	IndexProfile      string `json:"index_profile,omitempty"`
+	KnowledgeBaseType string `json:"knowledge_base_type,omitempty"`
+	Name              string `json:"name"`
+	Description       string `json:"description,omitempty"`
+	EmbeddingModelID  string `json:"embedding_model_id"`
+	SummaryModelID    string `json:"summary_model_id,omitempty"`
+	RerankModelID     string `json:"-"`
+	VLMModelID        string `json:"-"`
+	StorageProvider   string `json:"storage_provider,omitempty"`
 }
 
 type CreateResult struct {
-	KnowledgeBaseID string               `json:"knowledge_base_id"`
-	Name            string               `json:"name"`
-	ProductMode     profile.ProductMode  `json:"product_mode"`
-	IndexProfile    string               `json:"index_profile"`
-	AccessPolicy    profile.AccessPolicy `json:"access_policy"`
-	Created         bool                 `json:"created"`
-	Reconciled      bool                 `json:"reconciled"`
+	KnowledgeBaseID   string               `json:"knowledge_base_id"`
+	Name              string               `json:"name"`
+	ProductMode       profile.ProductMode  `json:"product_mode"`
+	IndexProfile      string               `json:"index_profile"`
+	KnowledgeBaseType string               `json:"knowledge_base_type"`
+	AccessPolicy      profile.AccessPolicy `json:"access_policy"`
+	Created           bool                 `json:"created"`
+	Reconciled        bool                 `json:"reconciled"`
 }
 
 type Error struct {
@@ -99,6 +101,9 @@ func (s *Service) Create(ctx context.Context, input CreateInput, idempotencyKey 
 		return CreateResult{}, err
 	}
 	definition, err := preset.BuildWithManagedModels(productMode, normalized.EmbeddingModelID, normalized.SummaryModelID, normalized.RerankModelID, normalized.VLMModelID)
+	if err == nil {
+		definition, err = definition.ForKnowledgeBaseType(normalized.KnowledgeBaseType)
+	}
 	if err != nil || definition.Config.ProfileID != indexProfile || definition.AccessPolicy != accessPolicy {
 		return CreateResult{}, &Error{Code: "space.preset_invalid", Message: "Approved knowledge-space preset is unavailable", StatusCode: http.StatusServiceUnavailable, Err: err}
 	}
@@ -170,7 +175,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput, idempotencyKey 
 	}
 	return CreateResult{
 		KnowledgeBaseID: ledger.UpstreamKBID, Name: kb.Name, ProductMode: productMode,
-		IndexProfile: indexProfile, AccessPolicy: accessPolicy, Created: inserted && created,
+		IndexProfile: indexProfile, KnowledgeBaseType: kb.Type, AccessPolicy: accessPolicy, Created: inserted && created,
 		Reconciled: !inserted || !created,
 	}, nil
 }
@@ -208,6 +213,10 @@ func (s *Service) GetProfile(ctx context.Context, kbID string, identity access.I
 func normalizeCreateInput(input CreateInput) (CreateInput, profile.ProductMode, string, profile.AccessPolicy, error) {
 	input.Mode = strings.TrimSpace(input.Mode)
 	input.IndexProfile = strings.TrimSpace(input.IndexProfile)
+	input.KnowledgeBaseType = strings.ToLower(strings.TrimSpace(input.KnowledgeBaseType))
+	if input.KnowledgeBaseType == "" {
+		input.KnowledgeBaseType = preset.KBTypeDocument
+	}
 	input.Name = strings.TrimSpace(input.Name)
 	input.Description = strings.TrimSpace(input.Description)
 	input.EmbeddingModelID = strings.TrimSpace(input.EmbeddingModelID)
@@ -226,6 +235,9 @@ func normalizeCreateInput(input CreateInput) (CreateInput, profile.ProductMode, 
 	}
 	switch input.Mode {
 	case string(profile.ModePersonalNotes):
+		if input.KnowledgeBaseType != preset.KBTypeDocument {
+			return input, "", "", "", disabledModeError()
+		}
 		if input.IndexProfile == "" {
 			input.IndexProfile = "notes_plain"
 		}
@@ -234,6 +246,12 @@ func normalizeCreateInput(input CreateInput) (CreateInput, profile.ProductMode, 
 		}
 		return input, profile.ModePersonalNotes, input.IndexProfile, profile.PolicyOwnerOnly, nil
 	case string(profile.ModeRAG):
+		if input.KnowledgeBaseType != preset.KBTypeDocument && input.KnowledgeBaseType != preset.KBTypeFAQ {
+			return input, "", "", "", disabledModeError()
+		}
+		if input.KnowledgeBaseType == preset.KBTypeFAQ {
+			input.VLMModelID = ""
+		}
 		if input.IndexProfile == "" {
 			input.IndexProfile = "plain"
 		}
@@ -259,10 +277,10 @@ func (s *Service) findUpstream(ctx context.Context, id string, headers http.Head
 }
 
 func verifyUpstreamOwnership(kb weknora.KnowledgeBase, request CreationRequest, input CreateInput) error {
-	if kb.ID != request.UpstreamKBID || kb.TenantID != request.TenantID || kb.CreatorID != request.OwnerUserID || kb.Name != input.Name || kb.Type != "document" {
+	if kb.ID != request.UpstreamKBID || kb.TenantID != request.TenantID || kb.CreatorID != request.OwnerUserID || kb.Name != input.Name || kb.Type != input.KnowledgeBaseType {
 		return &Error{Code: "space.reconciliation_conflict", Message: "The allocated upstream resource does not match this creation request", StatusCode: http.StatusConflict}
 	}
-	if input.VLMModelID != "" && (!kb.VLMConfig.Enabled || kb.VLMConfig.ModelID != input.VLMModelID) {
+	if input.KnowledgeBaseType == preset.KBTypeDocument && input.VLMModelID != "" && (!kb.VLMConfig.Enabled || kb.VLMConfig.ModelID != input.VLMModelID) {
 		return &Error{Code: "space.reconciliation_conflict", Message: "The allocated upstream resource does not match the managed vision profile", StatusCode: http.StatusConflict}
 	}
 	return nil

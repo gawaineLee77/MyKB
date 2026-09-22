@@ -3,9 +3,9 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 UPSTREAM="$ROOT/upstream/weknora"
-MODEL="$ROOT/docs/PHASE2_SHARING_MODEL.md"
-PLAN="$ROOT/docs/PHASE2_IMPLEMENTATION_PLAN.md"
-EXPECTED_COMMIT="3d5d8bfcdfeeea266b292b71cea616847af28d0f"
+MODEL="$ROOT/docs/reference/PHASE2_SHARING_MODEL.md"
+PLAN="$ROOT/docs/archive/phase2/PHASE2_IMPLEMENTATION_PLAN.md"
+EXPECTED_COMMIT="1edcd54b43606d9079bb36650efe3f68707a79ea"
 
 fail() {
   echo "Phase 2 sharing-model check failed: $*" >&2
@@ -32,4 +32,4 @@ rg -q '\[x\].*P2-01' "$PLAN" || fail "P2-01 is not recorded complete"
 
 [ -z "$(git -C "$UPSTREAM" status --porcelain --untracked-files=all)" ] || fail "upstream submodule is dirty"
 
-echo "MindCreek Phase 2 sharing-model map verified against WeKnora v0.7.2"
+echo "MindCreek Phase 2 sharing-model map verified against WeKnora v0.8.0"

@@ -149,7 +149,7 @@ func (r *Repository) SetStatus(ctx context.Context, brokerSubject string, status
 	}
 	return scanIdentity(r.db.QueryRowContext(ctx, `
 		UPDATE mindcreek.corporate_identities
-		SET status=$2, suspended_at=CASE WHEN $2='suspended' THEN $3 ELSE NULL END
+		SET status=$2::varchar, suspended_at=CASE WHEN $2::varchar='suspended' THEN $3::timestamptz ELSE NULL END
 		WHERE broker_subject=$1
 		RETURNING issuer, subject, broker_subject, upstream_email, corporate_email, username,
 		          display_name, groups_json, status, local_user_id, local_tenant_id,
@@ -223,7 +223,9 @@ func normalizeClaims(claims Claims) Claims {
 	claims.DisplayName = strings.TrimSpace(claims.DisplayName)
 	unique := make(map[string]bool)
 	originalGroups := append([]string(nil), claims.Groups...)
-	claims.Groups = claims.Groups[:0]
+	// Persist an array even when the provider omits groups: JSON null violates
+	// the corporate_identity_groups_array constraint during first sign-in.
+	claims.Groups = make([]string, 0, len(originalGroups))
 	for _, group := range originalGroups {
 		if value := strings.ToLower(strings.TrimSpace(group)); value != "" && !unique[value] {
 			unique[value] = true

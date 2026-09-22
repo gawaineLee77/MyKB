@@ -1,0 +1,32 @@
+{
+  "container": "mindcreek-bm25-e1ad5436",
+  "platform": "linux/arm64",
+  "checks": [
+    {
+      "mode": "default",
+      "passed": true,
+      "output": "   score   |                    content                    \n-----------+-----------------------------------------------\n 2.3695192 | The synthetic recovery code is AMD64-VERIFIED\n 0.3764908 | PDF verification recovery code PDF-VERIFIED\n(2 rows)\n\n"
+    },
+    {
+      "mode": "jit_off",
+      "passed": true,
+      "output": "SET\n   score   |                    content                    \n-----------+-----------------------------------------------\n 2.3695192 | The synthetic recovery code is AMD64-VERIFIED\n 0.3764908 | PDF verification recovery code PDF-VERIFIED\n(2 rows)\n\n"
+    },
+    {
+      "mode": "custom_off",
+      "passed": true,
+      "output": "SET\n   score   |                    content                    \n-----------+-----------------------------------------------\n 2.3695192 | The synthetic recovery code is AMD64-VERIFIED\n 0.3764908 | PDF verification recovery code PDF-VERIFIED\n(2 rows)\n\n"
+    },
+    {
+      "mode": "parallel_off",
+      "passed": true,
+      "output": "SET\n   score   |                    content                    \n-----------+-----------------------------------------------\n 2.3695192 | The synthetic recovery code is AMD64-VERIFIED\n 0.3764908 | PDF verification recovery code PDF-VERIFIED\n(2 rows)\n\n"
+    },
+    {
+      "mode": "both_off",
+      "passed": true,
+      "output": "SET\nSET\n   score   |                    content                    \n-----------+-----------------------------------------------\n 2.3695192 | The synthetic recovery code is AMD64-VERIFIED\n 0.3764908 | PDF verification recovery code PDF-VERIFIED\n(2 rows)\n\n"
+    }
+  ],
+  "logs": "2026-09-16 01:46:39.245 UTC [55] LOG:  aborting any active transactions\n2026-09-16 01:46:39.245 UTC [61] LOG:  pg_cron scheduler shutting down\n2026-09-16 01:46:39.246 UTC [55] LOG:  background worker \"pg_cron launcher\" (PID 61) exited with exit code 1\n2026-09-16 01:46:39.246 UTC [55] LOG:  background worker \"logical replication launcher\" (PID 62) exited with exit code 1\n2026-09-16 01:46:39.247 UTC [56] LOG:  shutting down\n2026-09-16 01:46:39.247 UTC [56] LOG:  checkpoint starting: shutdown immediate\n2026-09-16 01:46:39.269 UTC [56] LOG:  checkpoint complete: wrote 5765 buffers (35.2%); 0 WAL file(s) added, 0 removed, 3 recycled; write=0.021 s, sync=0.002 s, total=0.022 s; sync files=1155, longest=0.001 s, average=0.000 s; distance=50321 kB, estimate=50321 kB; lsn=0/4611C58, redo lsn=0/4611C58\n2026-09-16 01:46:39.275 UTC [55] LOG:  database system is shut down\n done\nserver stopped\n\nPostgreSQL init process complete; ready for start up.\n\n"
+}

@@ -171,7 +171,7 @@ func NewPhase4Gate(profiles ProfileStore, resolver ResourceResolver, actions Act
 // AuthorizeRequest protects direct KB and indirect source/chunk routes.
 func (g *Gate) AuthorizeRequest(ctx context.Context, request *http.Request, identity Identity) error {
 	if isUnscopedDerivedTaskPath(request.URL.Path) {
-		// v0.7.2 task progress endpoints expose only a tenant-scoped opaque
+		// v0.8.0 task progress endpoints expose only a tenant-scoped opaque
 		// task ID, not a resolvable parent KB. Deny until a product-owned task
 		// mapping can prove Note Space ownership.
 		return &Error{Code: "resource.not_found", Message: "Resource not found", StatusCode: http.StatusNotFound}

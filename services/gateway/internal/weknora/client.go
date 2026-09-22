@@ -17,11 +17,13 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/diagnostics"
 )
 
 const (
 	// SupportedVersion is the only upstream contract verified for this release.
-	SupportedVersion = "v0.7.2"
+	SupportedVersion = "v0.8.0"
 	maxResponseBytes = 1 << 20
 )
 
@@ -42,7 +44,7 @@ func (e *Error) Error() string {
 
 func (e *Error) Unwrap() error { return e.Err }
 
-// Client calls only the upstream endpoints approved for the v0.7.2 adapter.
+// Client calls only the upstream endpoints approved for the v0.8.0 adapter.
 type Client struct {
 	baseURL         *url.URL
 	httpClient      *http.Client
@@ -307,11 +309,17 @@ type CreateKnowledgeBaseRequest struct {
 	Type                     string                   `json:"type"`
 	EmbeddingModelID         string                   `json:"embedding_model_id"`
 	SummaryModelID           string                   `json:"summary_model_id,omitempty"`
+	FAQConfig                *FAQConfig               `json:"faq_config,omitempty"`
 	VLMConfig                VLMConfig                `json:"vlm_config"`
 	StorageProviderConfig    StorageProviderConfig    `json:"storage_provider_config"`
 	ChunkingConfig           ChunkingConfig           `json:"chunking_config"`
 	IndexingStrategy         IndexingStrategy         `json:"indexing_strategy"`
 	QuestionGenerationConfig QuestionGenerationConfig `json:"question_generation_config"`
+}
+
+type FAQConfig struct {
+	IndexMode         string `json:"index_mode"`
+	QuestionIndexMode string `json:"question_index_mode"`
 }
 
 type VLMConfig struct {
@@ -966,7 +974,11 @@ func (c *Client) CreateChatSession(ctx context.Context, title string, inbound ht
 }
 
 func (c *Client) AskKnowledge(ctx context.Context, sessionID, query, agentID string, kbIDs []string, inbound http.Header) (AgentAnswer, error) {
-	if strings.TrimSpace(sessionID) == "" || strings.TrimSpace(query) == "" || len(kbIDs) == 0 {
+	return c.AskKnowledgeWithModel(ctx, sessionID, query, agentID, kbIDs, "", inbound)
+}
+
+func (c *Client) AskKnowledgeWithModel(ctx context.Context, sessionID, query, agentID string, kbIDs []string, modelID string, inbound http.Header) (AgentAnswer, error) {
+	if strings.TrimSpace(sessionID) == "" || strings.TrimSpace(query) == "" || (len(kbIDs) == 0 && strings.TrimSpace(agentID) == "") {
 		return AgentAnswer{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest}
 	}
 	path := "/api/v1/knowledge-chat/" + url.PathEscape(sessionID)
@@ -981,6 +993,9 @@ func (c *Client) AskKnowledge(ctx context.Context, sessionID, query, agentID str
 	}
 	if agentEnabled {
 		payload["agent_id"] = agentID
+	}
+	if modelID != "" {
+		payload["summary_model_id"] = modelID
 	}
 	encoded, err := json.Marshal(payload)
 	if err != nil {
@@ -1074,7 +1089,12 @@ func (c *Client) sendJSON(ctx context.Context, method, path string, query url.Va
 		request.Header.Set("Content-Type", "application/json")
 	}
 
-	response, err := c.httpClient.Do(request)
+	var response *http.Response
+	if path == "/api/v1/auth/me" {
+		response, err = diagnostics.HTTP(ctx, c.httpClient, request, "upstream_auth_me")
+	} else {
+		response, err = c.httpClient.Do(request)
+	}
 	if err != nil {
 		code := "upstream.unavailable"
 		var netError interface{ Timeout() bool }
@@ -1179,6 +1199,7 @@ type User struct {
 	TenantID            uint64 `json:"tenant_id"`
 	CanAccessAllTenants bool   `json:"can_access_all_tenants,omitempty"`
 	IsSystemAdmin       bool   `json:"is_system_admin,omitempty"`
+	IsActive            bool   `json:"is_active"`
 }
 
 type Tenant struct {

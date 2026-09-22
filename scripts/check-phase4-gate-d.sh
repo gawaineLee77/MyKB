@@ -2,7 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE4_IMPLEMENTATION_PLAN.md"
+PLAN="$ROOT/docs/archive/phase4/PHASE4_IMPLEMENTATION_PLAN.md"
 LEDGER="$ROOT/docs/UPSTREAM_PATCHES.md"
 
 fail() {
@@ -15,8 +15,8 @@ for FILE in \
   "$ROOT/images/manifests/phase4-runtime.txt" \
   "$ROOT/scripts/check-phase4-upstream-contract.sh" \
   "$ROOT/scripts/phase4-clean-copy-check.sh" \
-  "$ROOT/docs/PHASE4_OPERATIONS.md" \
-  "$ROOT/docs/PHASE4_GATE_D.md"; do
+  "$ROOT/docs/archive/phase4/PHASE4_OPERATIONS.md" \
+  "$ROOT/docs/archive/phase4/PHASE4_GATE_D.md"; do
   [ -f "$FILE" ] || fail "missing ${FILE#$ROOT/}"
 done
 rg -q '\[x\].*P4-17' "$PLAN" || fail "P4-17 is not recorded complete"

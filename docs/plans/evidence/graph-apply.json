@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "scope": "Actual packaged CLI/image load, synthetic private instance, no business services started",
+  "concurrent_enable": true,
+  "repeat_enable": true,
+  "disable_enable_preserves_password_and_volume": true,
+  "gateway_updated_tls_and_env_preserved": true,
+  "private_backups": true,
+  "original_compose_merged_and_valid": true,
+  "neo4j_ports_private": true,
+  "graph_helper_sha256": "0d355ef6ad4f1280a396d1b801c2c2cc9522a57efb6333193df4f474a62d9f80"
+}

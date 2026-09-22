@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/diagnostics"
 )
 
 type Provider interface {
@@ -124,7 +125,7 @@ func (p *CorporateProvider) Authenticate(ctx context.Context, code, verifier, no
 	}
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("Accept", "application/json")
-	response, err := p.client.Do(request)
+	response, err := diagnostics.HTTP(ctx, p.client, request, "corporate_token")
 	if err != nil {
 		return Claims{}, fmt.Errorf("exchange corporate authorization code: %w", err)
 	}
@@ -204,7 +205,7 @@ func (p *CorporateProvider) loadMetadata(ctx context.Context) (*providerMetadata
 		return nil, err
 	}
 	request.Header.Set("Accept", "application/json")
-	response, err := p.client.Do(request)
+	response, err := diagnostics.HTTP(ctx, p.client, request, "corporate_discovery")
 	if err != nil {
 		return nil, fmt.Errorf("load corporate OIDC discovery: %w", err)
 	}
@@ -251,7 +252,7 @@ func (p *CorporateProvider) userInfo(ctx context.Context, endpoint, accessToken 
 	}
 	request.Header.Set("Authorization", "Bearer "+accessToken)
 	request.Header.Set("Accept", "application/json")
-	response, err := p.client.Do(request)
+	response, err := diagnostics.HTTP(ctx, p.client, request, "corporate_userinfo")
 	if err != nil {
 		return nil, fmt.Errorf("load corporate userinfo: %w", err)
 	}
@@ -321,7 +322,7 @@ func (p *CorporateProvider) loadRSAKey(ctx context.Context, endpoint, keyID stri
 		return nil, err
 	}
 	request.Header.Set("Accept", "application/json")
-	response, err := p.client.Do(request)
+	response, err := diagnostics.HTTP(ctx, p.client, request, "corporate_jwks")
 	if err != nil {
 		return nil, fmt.Errorf("load corporate signing keys: %w", err)
 	}

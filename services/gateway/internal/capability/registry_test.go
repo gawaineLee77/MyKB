@@ -9,7 +9,7 @@ import (
 
 func TestLoadAndDocumentAgreeOnEveryFlag(t *testing.T) {
 	registry := loadTestRegistry(t, releaseValues)
-	document := registry.Document("product-test", "v0.7.2")
+	document := registry.Document("product-test", "v0.8.0")
 	if len(document.Capabilities) != len(Keys()) {
 		t.Fatalf("API flags=%d, known flags=%d", len(document.Capabilities), len(Keys()))
 	}

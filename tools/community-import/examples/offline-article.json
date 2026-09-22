@@ -1,0 +1,12 @@
+[
+  {
+    "articleCode": "SYNTHETIC-OFFLINE-001",
+    "aritcleTitle": "离线演示：合成帖子",
+    "articleAbstract": "仅用于验证整理工具，不包含真实公司资料。",
+    "contentType": 1,
+    "content": "<h2>合成操作步骤</h2><p>先检查连接，再检查配置。此处的图片是一个演示像素，不用于验证实际 OCR 质量。</p><img alt='演示像素' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jZ1sAAAAASUVORK5CYII='>",
+    "attachments": [],
+    "lastUpdateDate": "2026-09-11T10:00:00Z",
+    "kmsUrl": "https://community.example.invalid/synthetic/001"
+  }
+]

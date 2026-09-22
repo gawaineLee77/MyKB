@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/nativeaccess"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
 )
 
@@ -36,10 +37,22 @@ type Limiter interface {
 }
 
 type Handler struct {
-	principals PrincipalResolver
-	tools      ToolCaller
-	limiter    Limiter
-	version    string
+	principals  PrincipalResolver
+	tools       ToolCaller
+	limiter     Limiter
+	version     string
+	nativeTools NativeToolCaller
+}
+
+type NativeToolCaller interface {
+	CallNative(context.Context, string, json.RawMessage, nativeaccess.Actor, http.Header, string) (any, error)
+}
+
+func NewNativeHandler(principals PrincipalResolver, caller NativeToolCaller, limiter Limiter, version string) (*Handler, error) {
+	if principals == nil || caller == nil || limiter == nil || version == "" {
+		return nil, fmt.Errorf("native MCP dependencies required")
+	}
+	return &Handler{principals: principals, nativeTools: caller, limiter: limiter, version: version}, nil
 }
 
 func NewHandler(principals PrincipalResolver, tools ToolCaller, limiter Limiter, productVersion string) (*Handler, error) {
@@ -70,7 +83,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	principalHeaders := r.Header.Clone()
-	principalHeaders.Del("X-Tenant-ID")
+	if h.nativeTools == nil {
+		principalHeaders.Del("X-Tenant-ID")
+	}
 	principal, err := h.principals.CurrentPrincipal(r.Context(), principalHeaders)
 	if err != nil || principal.User == nil || principal.User.ID == "" || principal.Tenant == nil || principal.Tenant.ID == 0 {
 		writeHTTPError(w, http.StatusUnauthorized, "authentication_invalid")
@@ -84,6 +99,15 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	limitKey := fmt.Sprintf("%d:%s", principal.Tenant.ID, principal.User.ID)
+	var actor nativeaccess.Actor
+	if h.nativeTools != nil {
+		actor, err = nativeaccess.ResolveActor(r.Context(), h.principals, r.Header)
+		if err != nil {
+			nativeaccess.WriteError(w, r, err)
+			return
+		}
+		limitKey = fmt.Sprintf("%d:%s:%s", actor.TenantID, actor.Kind, actor.ID)
+	}
 	if !h.limiter.Allow(limitKey, time.Now().UTC()) {
 		w.Header().Set("Retry-After", "60")
 		writeHTTPError(w, http.StatusTooManyRequests, "rate_limited")
@@ -153,8 +177,17 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			response.Error = &rpcError{Code: -32602, Message: "Invalid tool arguments"}
 			break
 		}
-		value, callErr := h.tools.Call(r.Context(), params.Name, params.Arguments,
-			authorization.Principal{UserID: principal.User.ID, TenantID: principal.Tenant.ID}, r.Header, correlationID(r))
+		var value any
+		var callErr error
+		if h.nativeTools != nil {
+			if !nativeToolName(params.Name) {
+				response.Error = &rpcError{Code: -32602, Message: "Unknown tool: " + params.Name}
+				break
+			}
+			value, callErr = h.nativeTools.CallNative(r.Context(), params.Name, params.Arguments, actor, r.Header, correlationID(r))
+		} else {
+			value, callErr = h.tools.Call(r.Context(), params.Name, params.Arguments, authorization.Principal{UserID: principal.User.ID, TenantID: principal.Tenant.ID}, r.Header, correlationID(r))
+		}
 		if callErr != nil {
 			log.Printf("mindcreek MCP tool=%q correlation=%q failed: %v", params.Name, correlationID(r), callErr)
 			response.Error = toolRPCError(callErr)
@@ -248,13 +281,44 @@ func (h *Handler) discoveryResult() map[string]any {
 }
 
 func (h *Handler) toolList(modern bool) map[string]any {
-	result := map[string]any{"tools": toolDefinitions()}
+	definitions := toolDefinitions()
+	if h.nativeTools != nil {
+		filtered := []map[string]any{}
+		for _, tool := range definitions {
+			name, _ := tool["name"].(string)
+			if !nativeToolName(name) {
+				continue
+			}
+			if schema, ok := tool["inputSchema"].(map[string]any); ok {
+				if props, ok := schema["properties"].(map[string]any); ok {
+					if scope, ok := props["knowledge_base_ids"].(map[string]any); ok {
+						scope["description"] = "Optional explicit KB IDs; omitted uses native accessible scope."
+						scope["maxItems"] = nativeaccess.MaxScope
+					}
+				}
+			}
+			if name == "ask_knowledge_agent" {
+				tool["annotations"] = map[string]bool{"readOnlyHint": true, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}
+			}
+			filtered = append(filtered, tool)
+		}
+		definitions = filtered
+	}
+	result := map[string]any{"tools": definitions}
 	if modern {
 		result["resultType"] = "complete"
 		result["ttlMs"] = 300000
 		result["cacheScope"] = "private"
 	}
 	return result
+}
+
+func nativeToolName(name string) bool {
+	switch name {
+	case "list_knowledge_bases", "search_knowledge", "get_source_excerpt", "ask_knowledge_agent":
+		return true
+	}
+	return false
 }
 
 func toolDefinitions() []map[string]any {

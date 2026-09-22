@@ -37,8 +37,8 @@ func TestEmbeddedMigrationsIncludeCurrentProductSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(migrations) != 12 {
-		t.Fatalf("embedded migration count = %d, want 12", len(migrations))
+	if len(migrations) != 16 {
+		t.Fatalf("embedded migration count = %d, want 16", len(migrations))
 	}
 	grantMigration := migrations[5]
 	if grantMigration.Version != 6 || grantMigration.Name != "kb_access_grants" {

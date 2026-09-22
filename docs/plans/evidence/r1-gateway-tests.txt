@@ -1,0 +1,34 @@
+mkdir -p .local/gateway-go-build
+cd services/gateway && GOCACHE=/Users/gawaine/Desktop/KnowledgeBase/.local/gateway-go-build go test ./...
+?   	github.com/gawaineLee77/MyKB/services/gateway/cmd/gateway	[no test files]
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/access	0.484s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/agentaudit	0.646s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/agentscope	1.058s
+?   	github.com/gawaineLee77/MyKB/services/gateway/internal/apierror	[no test files]
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/audit	1.460s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/authorization	1.885s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/capability	2.266s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/catalog	2.677s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/config	3.110s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/database	3.384s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/grant	3.435s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/identity	3.618s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/ingestion	3.443s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/library	3.420s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/managedmodel	3.469s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/mcp	3.508s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/note	3.354s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/notespolicy	3.351s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/observability	3.335s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/ownership	3.136s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/policy	3.351s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/preset	3.208s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/profile	2.991s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/publication	2.733s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/revision	2.575s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/routeaction	2.284s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/server	2.043s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/sessionscope	1.910s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/space	1.597s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/subscription	1.543s
+ok  	github.com/gawaineLee77/MyKB/services/gateway/internal/weknora	1.700s

@@ -142,7 +142,7 @@ func assertManualInput(t *testing.T, r *http.Request, title, status string) {
 	}
 }
 
-func TestV072Contracts(t *testing.T) {
+func TestV080Contracts(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/health":
@@ -152,7 +152,7 @@ func TestV072Contracts(t *testing.T) {
 				http.Error(w, "missing credential", http.StatusUnauthorized)
 				return
 			}
-			_, _ = w.Write([]byte(`{"code":0,"msg":"success","data":{"version":"v0.7.2","edition":"standard","commit_id":"3d5d8bf"}}`))
+			_, _ = w.Write([]byte(`{"code":0,"msg":"success","data":{"version":"v0.8.0","edition":"standard","commit_id":"1edcd54"}}`))
 		case "/api/v1/auth/me":
 			if r.Header.Get("X-Tenant-ID") != "42" {
 				http.Error(w, "missing tenant", http.StatusForbidden)
@@ -247,7 +247,7 @@ func TestV072Contracts(t *testing.T) {
 
 func TestUnsupportedConfiguredVersionFailsClosed(t *testing.T) {
 	base, _ := url.Parse("http://upstream.example")
-	_, err := New(base, "v0.8.0", time.Second)
+	_, err := New(base, "v0.8.1", time.Second)
 	assertAdapterError(t, err, "upstream.version_unsupported", http.StatusServiceUnavailable)
 }
 
@@ -270,7 +270,7 @@ func TestBuiltinAgentAllScopeDoesNotUseSharedAgentLookup(t *testing.T) {
 
 func TestLiveVersionMismatchFailsClosed(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(`{"code":0,"data":{"version":"v0.8.0"}}`))
+		_, _ = w.Write([]byte(`{"code":0,"data":{"version":"v0.8.1"}}`))
 	}))
 	defer upstream.Close()
 	_, err := newTestClient(t, upstream.URL, time.Second).Version(context.Background(), nil)

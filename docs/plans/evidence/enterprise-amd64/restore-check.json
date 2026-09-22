@@ -1,0 +1,17 @@
+{
+  "time": "2026-09-16T01:56:30.558726+00:00",
+  "release": "r4-20260916-118b8af3",
+  "package_runtime_sha256": "01a217e075647fb5389258286e9870343542352bf76d0643027b418c56f39c8c",
+  "project": "mindcreek-restore-0a611658",
+  "status": "passed",
+  "scope": "Fresh disposable database and volumes restored from the current synthetic AMD64 smoke backup, using documented commands.",
+  "restored_rows": {
+    "knowledge_bases": 2,
+    "users": 2,
+    "installation_stage": "ready",
+    "knowledges": 3
+  },
+  "restored_files": 6,
+  "redis_after_restore": "healthy",
+  "disposable_project_removed": true
+}

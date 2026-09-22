@@ -9,4 +9,5 @@ rg -q 'BUILTIN_MODELS_CONFIG' "$CANDIDATE" || { echo "candidate lacks declarativ
 rg -q 'OIDC_AUTH_ENABLE' "$CANDIDATE" || { echo "candidate lacks the private broker OIDC configuration seam" >&2; exit 1; }
 rg -q 'OIDC_AUTH_AUTHORIZATION_ENDPOINT' "$CANDIDATE" || { echo "candidate lacks explicit OIDC broker endpoints" >&2; exit 1; }
 rg -q 'DISABLE_REGISTRATION' "$CANDIDATE" || { echo "candidate lacks closed-registration configuration" >&2; exit 1; }
+MINDCREEK_CANDIDATE_WEKNORA="$CANDIDATE" "$ROOT/tools/frontend-overlay/check.sh"
 echo "MindCreek Phase 5 candidate-upstream model and identity contract passed: $CANDIDATE"

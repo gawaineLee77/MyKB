@@ -2,7 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE5_IMPLEMENTATION_PLAN.md"
+PLAN="$ROOT/docs/archive/phase5/PHASE5_IMPLEMENTATION_PLAN.md"
 
 fail() {
   echo "Phase 5 Gate B check failed: $*" >&2
@@ -22,8 +22,8 @@ for FILE in \
   "$ROOT/tools/frontend-overlay/product/mindcreek/SSOLogin.vue" \
   "$ROOT/tools/frontend-overlay/product/mindcreek/AuthEntry.vue" \
   "$ROOT/scripts/phase5-gate-b-probe.py" \
-  "$ROOT/docs/PHASE5_IDENTITY_PROVIDER.md" \
-  "$ROOT/docs/PHASE5_GATE_B.md"; do
+  "$ROOT/docs/guides/PHASE5_IDENTITY_PROVIDER.md" \
+  "$ROOT/docs/archive/phase5/PHASE5_GATE_B.md"; do
   [ -f "$FILE" ] || fail "missing ${FILE#$ROOT/}"
 done
 

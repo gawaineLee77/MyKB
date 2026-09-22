@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "time": "2026-09-15T06:36:42.191028+00:00",
+  "r1_complete": true,
+  "checks": {
+    "make_r1_check": "passed",
+    "bilingual_numbered_sections": 22,
+    "checked_documents": 16,
+    "local_links_formatting": "passed",
+    "git_diff_check": "passed",
+    "python_syntax": "passed",
+    "api_checks": 27,
+    "recorded_http_requests": 65,
+    "uncached_gateway_packages": 30,
+    "upstream_clean": true,
+    "existing_business_code_runtime_config_and_ui_unchanged": true
+  },
+  "changed_existing_files": [
+    "Makefile",
+    "README.md",
+    "docs/CURRENT_STATUS.md",
+    "docs/OVERALL_DESIGN.md",
+    "docs/OVERALL_DESIGN_ZH.md",
+    "docs/README.md",
+    "docs/ROADMAP.md",
+    "docs/archive/README.md",
+    "docs/guides/FULL_DEPLOYMENT_RUNBOOK_ZH.md",
+    "docs/guides/PHASE5_IDENTITY_PROVIDER.md",
+    "docs/guides/PHASE5_OPERATIONS.md",
+    "docs/plans/WORKSPACE_CENTRIC_REDESIGN_ZH.md",
+    "scripts/check-design-docs.sh"
+  ],
+  "new_gateway_files": [
+    "services/gateway/internal/identity/r1_onboarding_contract_test.go",
+    "services/gateway/internal/server/r1_onboarding_contract_test.go"
+  ],
+  "business_implementation": "R2–R6 not implemented",
+  "deferred_acceptance": [
+    "R2 persistent bootstrap/onboarding and local-admin product sessions",
+    "R3 authorization/model/MCP migration",
+    "R4 Node 24 frontend compatibility and screenshots",
+    "R5 real corporate OAuth and independent browser embedding",
+    "R6 real models, parsing, backup recovery and first production installation"
+  ]
+}

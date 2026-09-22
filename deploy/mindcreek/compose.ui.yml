@@ -6,7 +6,7 @@ services:
       dockerfile: images/mindcreek-ui/Dockerfile
       args:
         MINDCREEK_UI_VERSION: ${MINDCREEK_UI_VERSION:-0.5.0}
-        VITE_FRONTEND_COMMIT: weknora-${WEKNORA_VERSION:-v0.7.2}-mindcreek-${MINDCREEK_UI_VERSION:-0.5.0}
+        VITE_FRONTEND_COMMIT: weknora-${WEKNORA_VERSION:-v0.8.0}-mindcreek-${MINDCREEK_UI_VERSION:-0.5.0}
     container_name: MindCreek-frontend
 
   app:

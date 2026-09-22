@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-EXPECTED_TAG="v0.7.2"
-EXPECTED_COMMIT="3d5d8bfcdfeeea266b292b71cea616847af28d0f"
+EXPECTED_TAG="v0.8.0"
+EXPECTED_COMMIT="1edcd54b43606d9079bb36650efe3f68707a79ea"
 EXPECTED_URL="https://github.com/Tencent/WeKnora.git"
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -32,6 +32,7 @@ test -z "$DIRTY" || fail "upstream worktree is modified; use product-owned modul
 SUBMODULE_STATUS=$(git -C "$REPO_ROOT" submodule status upstream/weknora)
 case "$SUBMODULE_STATUS" in
   " $EXPECTED_COMMIT"*) ;;
+  "+$EXPECTED_COMMIT"*) ;;
   *) fail "unexpected submodule status: $SUBMODULE_STATUS" ;;
 esac
 

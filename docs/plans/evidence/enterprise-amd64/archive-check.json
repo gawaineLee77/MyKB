@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "release": "r4-20260916-118b8af3",
+  "images": [
+    {
+      "name": "wechatopenai/weknora-app:v0.8.0",
+      "platform": "linux/amd64",
+      "config_digest": "sha256:254df7b8594d71884aae0fc96822d0a9b94b875d9cb14a4193238cbda58d1594"
+    },
+    {
+      "name": "wechatopenai/weknora-docreader:v0.8.0",
+      "platform": "linux/amd64",
+      "config_digest": "sha256:e32792dbbe3cf0f0222a5e64d968d0925b22e78deab12f0dcbe6351ba7852391"
+    },
+    {
+      "name": "paradedb/paradedb:v0.22.2-pg17",
+      "platform": "linux/amd64",
+      "config_digest": "sha256:d6fb8f50e25ea880d20e3acad6862931f97cb23abf4efa9c6256d2e112ed8de4"
+    },
+    {
+      "name": "redis:7.0-alpine",
+      "platform": "linux/amd64",
+      "config_digest": "sha256:426f6fb54a1b82a2254bce70e5f4a72d15c14ecd3cc70d799465b956e7a32548"
+    },
+    {
+      "name": "python:3.12-alpine",
+      "platform": "linux/amd64",
+      "config_digest": "sha256:28eb0cb65acb65b970e85c0dc57d10067868fae8dd00d072413df273132123ac"
+    },
+    {
+      "name": "nginx:1.30.3-alpine",
+      "platform": "linux/amd64",
+      "config_digest": "sha256:d0701bd41f8279135aa6c81e23fbcdae7bcc3df591c47741405412a8dcdb2eab"
+    },
+    {
+      "name": "mindcreek-ui:r4-20260916-118b8af3",
+      "platform": "linux/amd64",
+      "config_digest": "sha256:6b9ab7f014c7706815e68ebec61acea962151a983cc701872e2c2c0c88b2814e"
+    },
+    {
+      "name": "mindcreek-gateway:r4-20260916-118b8af3",
+      "platform": "linux/amd64",
+      "config_digest": "sha256:86f2ce447dbc2862058b2efee1f47b1aa98fcae9b6d7e63dbf96c9761e466594"
+    }
+  ],
+  "archive_bytes": 2756463616,
+  "docker_load": "passed",
+  "frontend_nginx_sources": "match_built_image",
+  "time": "2026-09-16T01:42:49.555216+00:00"
+}

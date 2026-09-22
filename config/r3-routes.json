@@ -1,0 +1,3822 @@
+{
+  "schema_version": 1,
+  "upstream_tag": "v0.8.0",
+  "upstream_commit": "1edcd54b43606d9079bb36650efe3f68707a79ea",
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/api/v1/agent-chat/:session_id",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).AgentQA-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agent/mcp-oauth-resolutions/:pending_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPOAuthHandler).ResolveMCPOAuth-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agent/mcp-oauth-resolutions/:pending_id/cancel",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPOAuthHandler).CancelMCPOAuth-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agent/tool-approvals/:pending_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).ResolveToolApproval-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*CustomAgentHandler).ListAgents-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agents",
+      "disposition": "native",
+      "checks": [
+        "models_upload",
+        "agent_binding"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*CustomAgentHandler).CreateAgent-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/agents/:id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*CustomAgentHandler).DeleteAgent-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents/:id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*CustomAgentHandler).GetAgent-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/agents/:id",
+      "disposition": "native",
+      "checks": [
+        "models_upload",
+        "agent_binding"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*CustomAgentHandler).UpdateAgent-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agents/:id/copy",
+      "disposition": "native",
+      "checks": [
+        "models_upload",
+        "agent_binding"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*CustomAgentHandler).CopyAgent-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents/:id/embed-channels",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EmbedChannelHandler).ListEmbedChannels-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agents/:id/embed-channels",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EmbedChannelHandler).CreateEmbedChannel-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents/:id/im-channels",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).ListIMChannels-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agents/:id/im-channels",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).CreateIMChannel-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents/:id/shares",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListAgentShares-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agents/:id/shares",
+      "disposition": "native",
+      "checks": [
+        "models_upload",
+        "agent_binding"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ShareAgent-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/agents/:id/shares/:share_id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).RemoveAgentShare-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents/:id/suggested-questions",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*CustomAgentHandler).GetSuggestedQuestions-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents/placeholders",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*CustomAgentHandler).GetPlaceholders-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents/type-presets",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*CustomAgentHandler).GetAgentTypePresets-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/auto-setup",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).AutoSetup-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/change-password",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).ChangePassword-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/config",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).GetAuthConfig-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/invitations/lookup",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).LookupInvitationByToken-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).Login-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).Logout-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).GetCurrentUser-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/auth/me/preferences",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).UpdateMyPreferences-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/callback",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).OIDCRedirectCallback-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/config",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).GetOIDCConfig-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/start",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).OIDCStart-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/url",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).GetOIDCAuthorizationURL-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).RefreshToken-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).Register-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/register-by-invite",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).RegisterByInvite-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/switch-tenant",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).SwitchTenant-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/validate",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuthHandler).ValidateToken-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/chunker/preview",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.PreviewChunking"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/chunks/:knowledge_id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).DeleteChunksByKnowledgeID-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chunks/:knowledge_id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).ListKnowledgeChunks-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/chunks/:knowledge_id/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).DeleteChunk-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/chunks/:knowledge_id/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).UpdateChunk-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/chunks/:knowledge_id/:id/revert",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).RevertChunk-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chunks/:knowledge_id/:id/revisions",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).ListChunkRevisions-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chunks/by-id/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).GetChunkByIDOnly-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/chunks/by-id/:id/questions",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).DeleteGeneratedQuestion-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/chunks/by-id/:id/questions",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).UpsertGeneratedQuestion-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/chunks/by-id/:id/questions/regenerate",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ChunkHandler).RegenerateGeneratedQuestions-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/datasource",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).ListDataSources-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/datasource",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).CreateDataSource-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/datasource/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).DeleteDataSource-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/datasource/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).GetDataSource-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/datasource/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).UpdateDataSource-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/datasource/:id/credentials",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceCredentialsHandler).Put-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/datasource/:id/credentials/:field",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceCredentialsHandler).DeleteField-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/datasource/:id/logs",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).GetSyncLogs-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/datasource/:id/pause",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).PauseDataSource-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/datasource/:id/resource-ancestors",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).ResolveResourceAncestors-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/datasource/:id/resources",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).ListAvailableResources-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/datasource/:id/resume",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).ResumeDataSource-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/datasource/:id/sync",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).ManualSync-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/datasource/:id/validate",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).ValidateConnection-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/datasource/logs/:log_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).GetSyncLog-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/datasource/types",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).GetAvailableConnectors-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/datasource/validate-credentials",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-external-data-sources",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*DataSourceHandler).ValidateCredentials-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed-channels",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EmbedChannelHandler).ListAllEmbedChannels-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/embed-channels/:channel_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EmbedChannelHandler).DeleteEmbedChannel-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed-channels/:channel_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EmbedChannelHandler).GetEmbedChannel-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/embed-channels/:channel_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EmbedChannelHandler).UpdateEmbedChannel-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed-channels/:channel_id/preview-session",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EmbedChannelHandler).IssuePreviewSession-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed-channels/:channel_id/rotate-token",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EmbedChannelHandler).RotateEmbedToken-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed-channels/:channel_id/stats",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EmbedChannelHandler).GetEmbedChannelStats-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/agent-chat/:session_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed/:channel_id/chunks/:chunk_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed/:channel_id/config",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/exchange",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed/:channel_id/files",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/knowledge-chat/:session_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed/:channel_id/messages/:session_id/load",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/sessions",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/events",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/mcp-oauth-resolutions/:pending_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/mcp-oauth-resolutions/:pending_id/cancel",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/mcp-services/:id/oauth/authorize-url",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/mcp-services/:id/oauth/status",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/messages/:message_id/suggestions",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/messages/:message_id/suggestions",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/stop",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/suggestion-events",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/embed/:channel_id/sessions/:session_id/tool-approvals/:pending_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/embed/:channel_id/suggested-questions",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-public-embed",
+      "handler": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/evaluation",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-cross-kb-evaluation",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EvaluationHandler).GetEvaluationResult-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/evaluation",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-cross-kb-evaluation",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*EvaluationHandler).Evaluation-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/faq/import/progress/:task_id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).GetImportProgress-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/files/presigned",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-raw-and-capability-files",
+      "handler": "github.com/Tencent/WeKnora/internal/router.servePresignedFiles.presignedFileHandler.func1"
+    },
+    {
+      "method": "HEAD",
+      "path": "/api/v1/files/presigned",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-raw-and-capability-files",
+      "handler": "github.com/Tencent/WeKnora/internal/router.servePresignedFiles.presignedFileHandler.func1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/files/presigned-preview",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-raw-and-capability-files",
+      "handler": "github.com/Tencent/WeKnora/internal/router.servePresignedPreview.func1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/im-channels",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).ListAllIMChannels-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/im-channels/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).DeleteIMChannel-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/im-channels/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).UpdateIMChannel-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/im-channels/:id/toggle",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).ToggleIMChannel-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/im/callback/:channel_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).IMCallback-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/im/callback/:channel_id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).IMCallback-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/asr/check",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-future-index-profiles",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).CheckASRModel-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/initialization/config/:kbId",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).GetCurrentConfigByKB-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/initialization/config/:kbId",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).UpdateKBConfig-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/embedding/test",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).TestEmbeddingModel-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/extract/fabri-tag",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "disable-future-index-profiles",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).FabriTag-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/extract/fabri-text",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "disable-future-index-profiles",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).FabriText-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/extract/text-relation",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "disable-future-index-profiles",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).ExtractTextRelations-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/initialize/:kbId",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).InitializeByKB-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/multimodal/test",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-future-index-profiles",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).TestMultimodalFunction-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/initialization/ollama/download/progress/:taskId",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).GetDownloadProgress-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/initialization/ollama/download/tasks",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).ListDownloadTasks-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/initialization/ollama/models",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).ListOllamaModels-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/ollama/models/check",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).CheckOllamaModels-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/ollama/models/download",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).DownloadOllamaModel-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/initialization/ollama/status",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).CheckOllamaStatus-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/remote/check",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).CheckRemoteModel-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/initialization/rerank/check",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-approved-initialization",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*InitializationHandler).CheckRerankModel-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).ListKnowledgeBases-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).CreateKnowledgeBase-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/knowledge-bases/:id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).DeleteKnowledgeBase-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).GetKnowledgeBase-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/:id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).UpdateKnowledgeBase-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/activity",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuditLogHandler).ListKnowledgeBaseActivity-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/duplicate",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).DuplicateKnowledgeBase-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/knowledge-bases/:id/faq/entries",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).DeleteEntries-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/faq/entries",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).ListEntries-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/faq/entries",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).UpsertEntries-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/faq/entries/:entry_id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).GetEntry-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/:id/faq/entries/:entry_id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).UpdateEntry-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/faq/entries/:entry_id/similar-questions",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).AddSimilarQuestions-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/faq/entries/export",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).ExportEntries-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/:id/faq/entries/fields",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).UpdateEntryFieldsBatch-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/:id/faq/entries/tags",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).UpdateEntryTagBatch-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/faq/entry",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).CreateEntry-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/:id/faq/import/last-result/display",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).UpdateLastImportResultDisplayStatus-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/faq/search",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*FAQHandler).SearchFAQ-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/files",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/router.serveKBScopedFiles.newKBScopedFileServeHandlerWithResources.func2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/hybrid-search",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).HybridSearch-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/hybrid-search",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).HybridSearch-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/knowledge-bases/:id/knowledge",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).ClearKnowledgeBaseContents-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/knowledge",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).ListKnowledge-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/knowledge/file",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).CreateKnowledgeFromFile-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/knowledge/folders",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).ListKnowledgeFolders-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/:id/knowledge/folders",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).RenameKnowledgeFolder-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/knowledge/manual",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).CreateManualKnowledge-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/knowledge/url",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).CreateKnowledgeFromURL-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/move-targets",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).ListMoveTargets-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/:id/pin",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).TogglePinKnowledgeBase-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/shares",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListKBShares-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/shares",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ShareKnowledgeBase-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/knowledge-bases/:id/shares/:share_id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).RemoveShare-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/:id/shares/:share_id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).UpdateSharePermission-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/:id/tags",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TagHandler).ListTags-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/:id/tags",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TagHandler).CreateTag-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/knowledge-bases/:id/tags/:tag_id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TagHandler).DeleteTag-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge-bases/:id/tags/:tag_id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TagHandler).UpdateTag-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-bases/copy",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).CopyKnowledgeBase-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge-bases/copy/progress/:task_id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeBaseHandler).GetKBCloneProgress-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-chat/:session_id",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).KnowledgeQA-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge-search",
+      "disposition": "native",
+      "checks": [
+        "scope_session"
+      ],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).SearchKnowledge-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/knowledge/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).DeleteKnowledge-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).GetKnowledge-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).UpdateKnowledge-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge/:id/cancel-parse",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).CancelKnowledgeParse-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/:id/download",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).DownloadKnowledgeFile-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/:id/preview",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).PreviewKnowledgeFile-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge/:id/regenerate-summary",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).RegenerateKnowledgeSummary-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge/:id/reparse",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).ReparseKnowledge-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/:id/spans",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).GetKnowledgeSpans-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/:id/stages",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).GetKnowledgeSpans-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/batch",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).GetKnowledgeBatch-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge/batch-delete",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).BatchDeleteKnowledge-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge/batch-reparse",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).BatchReparseKnowledge-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge/folder",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).MoveKnowledgeToFolder-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge/image/:id/:chunk_id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).UpdateImageInfo-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge/manual/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).UpdateManualKnowledge-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledge/move",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).MoveKnowledge-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/move/progress/:task_id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).GetKnowledgeMoveProgress-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledge/search",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).SearchKnowledge-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledge/tags",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*KnowledgeHandler).UpdateKnowledgeTagBatch-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/auto-fix",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).AutoFix-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/folders",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).ListFolders-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/folders",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).CreateFolder-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/folders/:folder_id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).DeleteFolder-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/folders/:folder_id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).UpdateFolder-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/graph",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).GetGraph-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/index",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).GetIndex-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/issues",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).ListIssues-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/issues/:issue_id/status",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).UpdateIssueStatus-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/lint",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).Lint-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/move-page",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).MovePage-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/pages",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).ListPages-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/pages",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).CreatePage-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/pages/*slug",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).DeletePage-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/pages/*slug",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).GetPage-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/pages/*slug",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).UpdatePage-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/rebuild-links",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).RebuildLinks-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/revert",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).RevertPage-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/revisions/*slug",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).ListRevisions-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/search",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).SearchPages-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/knowledgebase/:kb_id/wiki/stats",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-kb-content",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WikiPageHandler).GetStats-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mcp-oauth/callback",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPOAuthHandler).Callback-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mcp-services",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).ListMCPServices-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mcp-services",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).CreateMCPService-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/mcp-services/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).DeleteMCPService-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mcp-services/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).GetMCPService-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/mcp-services/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).UpdateMCPService-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/mcp-services/:id/credentials",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPCredentialsHandler).Put-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/mcp-services/:id/credentials/:field",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPCredentialsHandler).DeleteField-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mcp-services/:id/oauth/authorize-url",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPOAuthHandler).AuthorizeURL-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mcp-services/:id/oauth/status",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPOAuthHandler).Status-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/mcp-services/:id/oauth/token",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPOAuthHandler).Revoke-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mcp-services/:id/resources",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).GetMCPServiceResources-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mcp-services/:id/test",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).TestMCPService-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mcp-services/:id/tool-approvals",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).ListMCPToolApprovals-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/mcp-services/:id/tool-approvals/:tool_name",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).SetMCPToolApproval-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mcp-services/:id/tools",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-hosted-mcp",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MCPServiceHandler).GetMCPServiceTools-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me/env-vars",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MeEnvVarHandler).List-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/me/env-vars/sandbox",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MeEnvVarHandler).DeleteSandbox-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/me/env-vars/sandbox",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MeEnvVarHandler).SetSandbox-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/me/env-vars/skill",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MeEnvVarHandler).DeleteSkill-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/me/env-vars/skill",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MeEnvVarHandler).SetSkill-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me/invitations",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantInvitationHandler).ListMyInvitations-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/invitations/:inv_id/accept",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantInvitationHandler).AcceptMyInvitation-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/invitations/:inv_id/decline",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantInvitationHandler).DeclineMyInvitation-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/invitations/accept-by-token",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantInvitationHandler).AcceptMyInvitationByToken-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me/invitations/pending-count",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantInvitationHandler).CountMyPendingInvitations-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/memory/consolidate",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).Consolidate-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/memory/documents",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).ListDocuments-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/memory/documents/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).DeleteDocument-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/memory/export",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).Export-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/memory/items",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).Clear-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/memory/items",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).ListItems-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/memory/items",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).CreateItem-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/memory/items/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).DeleteItem-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/memory/items/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).UpdateItem-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/memory/items/:id/confirm",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).ConfirmItem-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/memory/items/:id/reject",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).RejectItem-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/memory/settings",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).GetSettings-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/memory/settings",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).UpdateSettings-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/memory/topics",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).ListTopics-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/memory/topics/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).DeleteTopic-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/memory/topics/:id/promote",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MemoryHandler).PromoteTopic-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/messages/:session_id/:id",
+      "disposition": "native",
+      "checks": [
+        "scope_session"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MessageHandler).DeleteMessage-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/messages/:session_id/load",
+      "disposition": "native",
+      "checks": [
+        "scope_session"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MessageHandler).LoadMessages-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/messages/chat-history-stats",
+      "disposition": "native",
+      "checks": [
+        "scope_session"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MessageHandler).GetChatHistoryKBStats-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/messages/search",
+      "disposition": "native",
+      "checks": [
+        "scope_session"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MessageHandler).SearchMessages-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ModelHandler).ListModels-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/models",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ModelHandler).CreateModel-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/models/:id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ModelHandler).DeleteModel-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models/:id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ModelHandler).GetModel-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/models/:id",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ModelHandler).UpdateModel-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/models/:id/credentials",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ModelCredentialsHandler).Put-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/models/:id/credentials/:field",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ModelCredentialsHandler).DeleteField-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/models/:id/debug",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ModelHandler).DebugModel-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models/providers",
+      "disposition": "native",
+      "checks": [
+        "models_upload"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*ModelHandler).ListModelProviders-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models/weknoracloud/status",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-weknora-cloud",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WeKnoraCloudHandler).Status-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListMyOrganizations-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organizations",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).CreateOrganization-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/organizations/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).DeleteOrganization-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).GetOrganization-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/organizations/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).UpdateOrganization-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/:id/agent-shares",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListOrgAgentShares-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organizations/:id/invite",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).InviteMember-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organizations/:id/invite-code",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).GenerateInviteCode-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/:id/join-requests",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListJoinRequests-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/organizations/:id/join-requests/:request_id/review",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ReviewJoinRequest-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organizations/:id/leave",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).LeaveOrganization-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/:id/members",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListMembers-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/organizations/:id/members/:tenant_id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).RemoveMember-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/organizations/:id/members/:tenant_id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).UpdateMemberRole-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organizations/:id/request-upgrade",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).RequestRoleUpgrade-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/:id/search-tenants",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).SearchTenantsForInvite-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/:id/search-users",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).SearchUsersForInvite-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/:id/shared-agents",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListOrganizationSharedAgents-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/:id/shared-knowledge-bases",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListOrganizationSharedKnowledgeBases-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/:id/shares",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListOrgShares-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organizations/join",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).JoinByInviteCode-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organizations/join-by-id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).JoinByOrganizationID-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organizations/join-request",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).SubmitJoinRequest-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/preview/:code",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).PreviewByInviteCode-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organizations/search",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-organization-sharing",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).SearchOrganizations-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sandbox-configs",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxConfigHandler).List-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sandbox-configs",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxConfigHandler).Create-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sandbox-configs/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxConfigHandler).Delete-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sandbox-configs/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxConfigHandler).Get-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/sandbox-configs/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxConfigHandler).Update-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sandbox-configs/:id/sandboxes",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxConfigHandler).Inventory-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sandbox-configs/:id/skills",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).List-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sandbox-configs/:id/skills",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).Upload-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sandbox-configs/:id/skills/:skillId",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).Delete-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sandbox-configs/:id/skills/:skillId",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).Get-fm"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/sandbox-configs/:id/skills/:skillId",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).Patch-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sandbox-configs/:id/skills/:skillId/files",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).ListFiles-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sandbox-configs/:id/skills/:skillId/files/content",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).GetFile-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sandbox-configs/:id/skills/:skillId/install-events",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).InstallEvents-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sandbox-configs/:id/skills/:skillId/reinstall",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).Reinstall-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sandbox-configs/:id/skills/:skillId/stop",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).Stop-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sandbox-configs/:id/skills/:skillId/transcript",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxSkillHandler).InstallTranscript-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sandbox-configs/templates/query",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxConfigHandler).QueryTemplates-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/sandbox-configs/workspace-policy",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SandboxConfigHandler).SetWorkspacePolicy-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).GetSessionsByTenant-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sessions",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).CreateSession-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sessions/:id",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).DeleteSession-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/:id",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).GetSession-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/sessions/:id",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).UpdateSession-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/:id/artifacts",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).ListSessionArtifacts-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/:id/attachments",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).ListTemporaryDocuments-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sessions/:id/attachments/:attachment_id",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).DeleteTemporaryDocument-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/:id/attachments/:attachment_id",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).GetTemporaryDocument-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/:id/attachments/:attachment_id/preview",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).PreviewTemporaryDocument-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sessions/:id/messages",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).ClearSessionMessages-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/:id/messages/:message_id/artifacts",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).ListMessageArtifacts-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/:id/messages/:message_id/artifacts/:index/download",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).DownloadMessageArtifact-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/:id/messages/:message_id/files",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/router.serveMessageScopedFiles.newMessageScopedFileServeHandler.func1"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/:id/messages/:message_id/suggestions",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MessageSuggestionHandler).Get-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sessions/:id/pin",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).UnpinSession-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sessions/:session_id/attachments",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).UploadTemporaryDocument-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sessions/:session_id/generate_title",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).GenerateTitle-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sessions/:session_id/messages/:message_id/suggestions",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MessageSuggestionHandler).Ensure-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sessions/:session_id/pin",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).PinSession-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sessions/:session_id/stop",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).StopSession-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sessions/:session_id/suggestion-events",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*MessageSuggestionHandler).RecordEvent-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sessions/batch",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).BatchDeleteSessions-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sessions/continue-stream/:session_id",
+      "disposition": "native",
+      "checks": [
+        "scope_session",
+        "models_upload"
+      ],
+      "baseline_rule": "guard-conversations",
+      "handler": "github.com/Tencent/WeKnora/internal/handler/session.(*Handler).ContinueStream-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/shared-agents",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListSharedAgents-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/shared-agents/disabled",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).SetSharedAgentDisabledByMe-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/shared-knowledge-bases",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*OrganizationHandler).ListSharedKnowledgeBases-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/skills",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-skills-catalog",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SkillHandler).ListSkills-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/skills/catalog",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SkillHandler).ListCatalog-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/skills/catalog",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SkillHandler).RegisterCatalog-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/skills/catalog/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SkillHandler).DeleteCatalog-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/skills/catalog/:id/files",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SkillHandler).ListCatalogFiles-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/skills/catalog/:id/files/content",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SkillHandler).GetCatalogFile-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/skills/catalog/:id/install",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SkillHandler).InstallCatalog-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/storage-backends",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*StorageBackendHandler).List-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/storage-backends",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*StorageBackendHandler).Create-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/storage-backends/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*StorageBackendHandler).Delete-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/storage-backends/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*StorageBackendHandler).Get-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/storage-backends/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*StorageBackendHandler).Update-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/storage-backends/:id/default",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*StorageBackendHandler).SetDefault-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/storage-backends/:id/test",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*StorageBackendHandler).TestByID-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/storage-backends/test",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*StorageBackendHandler).TestRaw-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/storage-backends/types",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*StorageBackendHandler).Types-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/admin/api-keys",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).ListPlatformAPIKeys-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/admin/api-keys",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).CreatePlatformAPIKey-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/system/admin/api-keys/:key_id",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).DeletePlatformAPIKey-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/admin/audit-log",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuditLogHandler).ListSystemAuditLog-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/admin/list",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).ListSystemAdmins-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/admin/promote",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).PromoteUserToSystemAdmin-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/admin/revoke",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).RevokeSystemAdmin-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/admin/runtime/queues",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).GetRuntimeQueues-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/system/admin/runtime/queues/:queue/archived",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).PurgeArchivedRuntimeTasks-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/admin/runtime/queues/:queue/tasks",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).ListRuntimeTasks-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/admin/runtime/queues/:queue/tasks/:task_id/actions/:action",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).MutateRuntimeTask-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/admin/settings",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).ListSystemSettings-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/system/admin/settings/:key",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).ResetSystemSetting-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/admin/settings/:key",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).GetSystemSetting-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/system/admin/settings/:key",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).UpdateSystemSetting-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/admin/tenants/apply-default-storage-quota",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).ApplyDefaultStorageQuotaToAllTenants-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/admin/users/create",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).CreateSystemUser-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/admin/users/reset-password",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).ResetUserPassword-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/capabilities",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).GetDeploymentCapabilities-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/docreader/reconnect",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).ReconnectDocReader-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/info",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).GetSystemInfo-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/parser-engines",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).ListParserEngines-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/parser-engines/check",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).CheckParserEngines-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/sandbox-check",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-sandbox-catalog-memory-and-local-user-create",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).CheckSandboxConfig-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system/storage-engine-check",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).CheckStorageEngine-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/storage-engine-status",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*SystemHandler).GetStorageEngineStatus-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).ListTenants-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).CreateTenant-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/tenants/:id",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).DeleteTenant-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/:id",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).GetTenant-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/:id",
+      "disposition": "native",
+      "checks": [
+        "feature_settings",
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).UpdateTenant-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/:id/api-keys",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).ListAPIKeys-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/:id/api-keys",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).CreateAPIKey-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/tenants/:id/api-keys/:key_id",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).DeleteAPIKey-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/:id/api-keys/:key_id",
+      "disposition": "native",
+      "checks": [
+        "feature_settings",
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).UpdateAPIKey-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/:id/api-principal-config",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).GetAPIPrincipalConfig-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/:id/api-principal-config",
+      "disposition": "native",
+      "checks": [
+        "feature_settings",
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).UpdateAPIPrincipalConfig-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/:id/api-principal-test-token",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).CreateAPIPrincipalTestToken-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/:id/audit-log",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*AuditLogHandler).ListTenantAuditLog-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/:id/invitations",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantInvitationHandler).ListTenantInvitations-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/:id/invitations",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantInvitationHandler).CreateInvitation-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/tenants/:id/invitations/:inv_id",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantInvitationHandler).RevokeInvitation-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/:id/invite-links",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantInvitationHandler).CreateInviteLink-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/:id/leave",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantMemberHandler).LeaveTenant-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/:id/members",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantMemberHandler).ListMembers-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenants/:id/members",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantMemberHandler).AddMember-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/tenants/:id/members/:user_id",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantMemberHandler).RemoveMember-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/:id/members/:user_id",
+      "disposition": "native",
+      "checks": [
+        "feature_settings",
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantMemberHandler).UpdateMemberRole-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/all",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).ListAllTenants-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/kv/:key",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).GetTenantKV-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenants/kv/:key",
+      "disposition": "native",
+      "checks": [
+        "feature_settings",
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).UpdateTenantKV-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenants/search",
+      "disposition": "native",
+      "checks": [
+        "enterprise"
+      ],
+      "baseline_rule": "pass-phase1-auth-and-membership",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*TenantHandler).SearchTenants-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/favorites",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*UserResourceFavoriteHandler).ListFavorites-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/user/favorites",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*UserResourceFavoriteHandler).AddFavorite-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/user/favorites/:type/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "guard-agents-and-selections",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*UserResourceFavoriteHandler).RemoveFavorite-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vector-stores",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*VectorStoreHandler).ListStores-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vector-stores",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*VectorStoreHandler).CreateStore-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/vector-stores/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*VectorStoreHandler).DeleteStore-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vector-stores/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*VectorStoreHandler).GetStore-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/vector-stores/:id",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*VectorStoreHandler).UpdateStore-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vector-stores/:id/test",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*VectorStoreHandler).TestStoreByID-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vector-stores/test",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*VectorStoreHandler).TestStoreRaw-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vector-stores/types",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-phase1-platform-infrastructure",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*VectorStoreHandler).ListStoreTypes-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/web-search-providers",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderHandler).ListProviders-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/web-search-providers",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderHandler).CreateProvider-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/web-search-providers/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderHandler).DeleteProvider-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/web-search-providers/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderHandler).GetProvider-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/web-search-providers/:id",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderHandler).UpdateProvider-fm"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/web-search-providers/:id/credentials",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderCredentialsHandler).Put-fm"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/web-search-providers/:id/credentials/:field",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderCredentialsHandler).DeleteField-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/web-search-providers/:id/test",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderHandler).TestProviderByID-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/web-search-providers/test",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderHandler).TestProviderRaw-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/web-search-providers/types",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchProviderHandler).ListProviderTypes-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/web-search/providers",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-web-search",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WebSearchHandler).GetProviders-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/wechat/qrcode",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).WeChatGetQRCode-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/wechat/qrcode/status",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-im-and-wechat",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*IMHandler).WeChatPollQRCodeStatus-fm"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/weknoracloud/credentials",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-weknora-cloud",
+      "handler": "github.com/Tencent/WeKnora/internal/handler.(*WeKnoraCloudHandler).SaveCredentials-fm"
+    },
+    {
+      "method": "GET",
+      "path": "/files",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-raw-and-capability-files",
+      "handler": "github.com/Tencent/WeKnora/internal/router.newFileServeHandler.func1"
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "disposition": "native",
+      "checks": [],
+      "baseline_rule": "pass-health",
+      "handler": "github.com/Tencent/WeKnora/internal/router.mindCreekUpstreamRoutes.func1"
+    },
+    {
+      "method": "GET",
+      "path": "/r/:token",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-raw-and-capability-files",
+      "handler": ""
+    },
+    {
+      "method": "HEAD",
+      "path": "/r/:token",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-raw-and-capability-files",
+      "handler": ""
+    },
+    {
+      "method": "GET",
+      "path": "/swagger/*any",
+      "disposition": "disabled",
+      "checks": [],
+      "baseline_rule": "disable-development-swagger",
+      "handler": "github.com/Tencent/WeKnora/internal/router.mindCreekUpstreamRoutes.func2"
+    }
+  ]
+}

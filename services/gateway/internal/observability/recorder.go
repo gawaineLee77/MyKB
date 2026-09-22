@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/diagnostics"
 )
 
 type logger interface {
@@ -67,7 +69,8 @@ func (r *Recorder) Wrap(next http.Handler) http.Handler {
 		event, _ := json.Marshal(map[string]any{
 			"duration_ms": duration.Milliseconds(), "event": "http_request", "level": level(capture.status),
 			"method": request.Method, "request_id": request.Header.Get("X-Request-ID"),
-			"route_class": route, "status": capture.status,
+			"route_class": route, "path": diagnostics.PathLabel(request.URL.Path), "status": capture.status,
+			"context_state": diagnostics.ErrorKind(request.Context().Err()),
 		})
 		r.logger.Println(string(event))
 	})

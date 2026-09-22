@@ -11,7 +11,7 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
 )
 
-const supportedCommit = "3d5d8bfcdfeeea266b292b71cea616847af28d0f"
+const supportedCommit = "1edcd54b43606d9079bb36650efe3f68707a79ea"
 
 type document struct {
 	SchemaVersion        int    `json:"schema_version"`
@@ -52,8 +52,8 @@ func Load(filename, upstreamVersion string) (*Policy, error) {
 		return nil, fmt.Errorf("route-action policy must contain one JSON document")
 	}
 	if value.SchemaVersion != 1 || value.UpstreamTag != upstreamVersion ||
-		value.UpstreamCommit != supportedCommit || value.ExpectedKBRouteCount != 166 {
-		return nil, fmt.Errorf("route-action policy does not match the verified WeKnora v0.7.2 contract")
+		value.UpstreamCommit != supportedCommit || value.ExpectedKBRouteCount != 170 {
+		return nil, fmt.Errorf("route-action policy does not match the verified WeKnora v0.8.0 contract")
 	}
 	if len(value.Rules) == 0 {
 		return nil, fmt.Errorf("route-action policy has no rules")

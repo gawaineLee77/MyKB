@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-22",
+  "upstream_commit": "1edcd54b43606d9079bb36650efe3f68707a79ea",
+  "r4_evidence_sha256": {
+    "r4-api-probe.json": "f41bf4e3d65a0bb3dbe068868b6296ba1f6d9464e4afd809995c950c359599de",
+    "r4-browser.json": "0d93865c3e3b267e4d6fa205bbadf65d9ea09d246c6abf4e7752846bbc6e67d3",
+    "r4-checks.json": "524da2456775dfc29789939ea5df4431d46fe4fdbc6996f070af848c525a3095",
+    "r4-ui-build.json": "75f5d73a745d898b80e6a13899d6911232246dd902e3c9675c186ad762351897",
+    "r4-baseline.json": "eb0ebeb339c874d783d7727dfa1ac92c6303e016fcb823c975b4653953f9c7d1"
+  },
+  "scope": "Preserve R4 evidence before R5 acceptance. Existing product worktree retained; no company services or credentials used."
+}

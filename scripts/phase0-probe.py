@@ -299,7 +299,7 @@ def main() -> int:
         )
 
     report = {
-        "baseline": "WeKnora v0.7.2",
+        "baseline": "WeKnora v0.8.0",
         "synthetic_run": nonce,
         "cross_workspace_detail_status": cross_status,
         "same_workspace_list_exposes_owner_kb": same_workspace_list_visible,

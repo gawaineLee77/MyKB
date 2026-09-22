@@ -65,3 +65,33 @@ func TestPersonalNotesNeverEnablesManagedVLM(t *testing.T) {
 		t.Fatalf("personal notes unexpectedly enabled VLM: %+v", request.VLMConfig)
 	}
 }
+
+func TestFAQUsesWeKnoraNativeTypeAndDefaults(t *testing.T) {
+	definition, err := BuildWithManagedModels(profile.ModeRAG, "embedding-1", "chat-1", "rerank-1", "vlm-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	definition, err = definition.ForKnowledgeBaseType(KBTypeFAQ)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := definition.UpstreamRequest("kb-faq", "Support FAQ", "Synthetic")
+	if definition.Config.KnowledgeBaseType != KBTypeFAQ || definition.Config.Models.VLMModelID != "" ||
+		request.Type != KBTypeFAQ || request.VLMConfig.Enabled || request.FAQConfig == nil ||
+		request.FAQConfig.IndexMode != "question_only" || request.FAQConfig.QuestionIndexMode != "separate" {
+		t.Fatalf("FAQ preset = %+v request=%+v", definition.Config, request)
+	}
+	if definition.Config.ProfileID != "plain" || definition.Mode != profile.ModeRAG {
+		t.Fatalf("FAQ escaped the governed RAG product mode: %+v", definition)
+	}
+}
+
+func TestFAQIsRejectedForPersonalNotes(t *testing.T) {
+	definition, err := Build(profile.ModePersonalNotes, "embedding-1", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := definition.ForKnowledgeBaseType(KBTypeFAQ); err == nil {
+		t.Fatal("FAQ was accepted for Personal Notes")
+	}
+}

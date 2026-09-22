@@ -2,7 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE5_IMPLEMENTATION_PLAN.md"
+PLAN="$ROOT/docs/archive/phase5/PHASE5_IMPLEMENTATION_PLAN.md"
 LEDGER="$ROOT/docs/UPSTREAM_PATCHES.md"
 
 fail() { echo "Phase 5 Gate D check failed: $*" >&2; exit 1; }
@@ -21,10 +21,10 @@ for file in \
   scripts/phase5-clean-copy-check.sh \
   scripts/phase5-compose-from-phase0.sh \
   scripts/phase5-server-reset.sh \
-  docs/PHASE5_PILOT.md \
-  docs/PHASE5_OPERATIONS.md \
-  docs/PHASE5_FRESH_SERVER_INSTALL.md \
-  docs/PHASE5_GATE_D.md \
+  docs/guides/PHASE5_PILOT.md \
+  docs/guides/PHASE5_OPERATIONS.md \
+  docs/guides/PHASE5_FRESH_SERVER_INSTALL.md \
+  docs/archive/phase5/PHASE5_GATE_D.md \
   tools/frontend-overlay/product/mindcreek/RAGWorkspace.vue; do
   [ -f "$ROOT/$file" ] || fail "missing $file"
 done

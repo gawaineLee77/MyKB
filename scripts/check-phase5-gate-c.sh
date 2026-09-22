@@ -2,7 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE5_IMPLEMENTATION_PLAN.md"
+PLAN="$ROOT/docs/archive/phase5/PHASE5_IMPLEMENTATION_PLAN.md"
 
 fail() { echo "Phase 5 Gate C check failed: $*" >&2; exit 1; }
 
@@ -21,10 +21,10 @@ for file in \
   scripts/phase5-failure-recovery-probe.sh \
   scripts/phase5-security-scan.sh \
   services/gateway/internal/observability/recorder.go \
-  docs/PHASE5_SECRETS.md \
-  docs/PHASE5_BACKUP_RECOVERY.md \
-  docs/PHASE5_OBSERVABILITY.md \
-  docs/PHASE5_GATE_C.md; do
+  docs/guides/PHASE5_SECRETS.md \
+  docs/guides/PHASE5_BACKUP_RECOVERY.md \
+  docs/guides/PHASE5_OBSERVABILITY.md \
+  docs/archive/phase5/PHASE5_GATE_C.md; do
   [ -f "$ROOT/$file" ] || fail "missing $file"
 done
 

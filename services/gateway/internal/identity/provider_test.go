@@ -33,7 +33,7 @@ func TestOAuth2ProviderMapsCorporateUserInfo(t *testing.T) {
 	settings := config.IdentityConfig{
 		Enabled: true, Protocol: config.IdentityProtocolOAuth2, Issuer: "https://identity.example",
 		AuthorizationURL: authorizationURL, TokenURL: tokenURL, UserInfoURL: userInfoURL,
-		ClientID: "mindcreek", ClientSecret: "corporate-secret-value", ClientAuthMethod: "client_secret_post",
+		ClientID: "mindcreek", ClientSecret: "short+&/=", ClientAuthMethod: "client_secret_post",
 		AuthorizationMethod: http.MethodPost, AuthorizationGrant: "authorization_code", AuthorizationDisplay: "page",
 		TokenRequestFormat: "json", StateRequired: false, UserInfoTokenTransport: "query",
 		CallbackURL: "https://mindcreek.example/api/v1/mindcreek/oidc/callback", CorporateRedirectURI: "https://mindcreek.example",
@@ -53,7 +53,7 @@ func TestOAuth2ProviderMapsCorporateUserInfo(t *testing.T) {
 			if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
 				t.Fatal(err)
 			}
-			if payload["client_id"] != "mindcreek" || payload["client_secret"] != "corporate-secret-value" ||
+			if payload["client_id"] != "mindcreek" || payload["client_secret"] != settings.ClientSecret ||
 				payload["grant_type"] != "authorization_code" || payload["code"] != "corporate-code" ||
 				payload["redirect_uri"] != "https://mindcreek.example" || payload["code_verifier"] != "" {
 				t.Fatalf("token payload=%v", payload)
@@ -101,7 +101,7 @@ func TestOAuth2ProviderRejectsUnapprovedEmployeeType(t *testing.T) {
 	settings := config.IdentityConfig{
 		Enabled: true, Protocol: config.IdentityProtocolOAuth2, Issuer: "https://identity.example",
 		AuthorizationURL: endpoint, TokenURL: endpoint, UserInfoURL: endpoint,
-		ClientID: "mindcreek", ClientSecret: "corporate-secret-value", ClientAuthMethod: "client_secret_basic",
+		ClientID: "mindcreek", ClientSecret: "short+&/=", ClientAuthMethod: "client_secret_basic",
 		AuthorizationMethod: http.MethodGet, AuthorizationGrant: "authorization_code", TokenRequestFormat: "form",
 		UserInfoTokenTransport: "bearer", CallbackURL: "https://mindcreek.example/api/v1/mindcreek/oidc/callback",
 		CorporateRedirectURI: "https://mindcreek.example/api/v1/mindcreek/oidc/callback",

@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/diagnostics"
+
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
 )
 
@@ -110,7 +112,7 @@ func (p *OAuth2Provider) Authenticate(ctx context.Context, code, verifier, _ str
 	if p.settings.ClientAuthMethod == "client_secret_basic" {
 		request.SetBasicAuth(p.settings.ClientID, p.settings.ClientSecret)
 	}
-	response, err := p.client.Do(request)
+	response, err := diagnostics.HTTP(ctx, p.client, request, "corporate_token")
 	if err != nil {
 		return Claims{}, fmt.Errorf("exchange corporate OAuth2 authorization code: %w", err)
 	}
@@ -125,11 +127,13 @@ func (p *OAuth2Provider) Authenticate(ctx context.Context, code, verifier, _ str
 		Scope       string `json:"scope"`
 	}
 	if err := decodeLimitedJSON(response.Body, &token); err != nil {
+		diagnostics.Event(ctx, "identity_response_rejected", map[string]any{"stage": "corporate_token", "reason": "invalid_json"})
 		return Claims{}, fmt.Errorf("corporate OAuth2 token response is invalid")
 	}
 	accessToken := strings.TrimSpace(token.AccessToken)
 	if accessToken == "" || len(accessToken) > 8192 ||
 		(token.TokenType != "" && !strings.EqualFold(token.TokenType, "bearer")) {
+		diagnostics.Event(ctx, "identity_response_rejected", map[string]any{"stage": "corporate_token", "reason": "invalid_token_fields", "access_token_present": accessToken != ""})
 		return Claims{}, fmt.Errorf("corporate OAuth2 token response is invalid")
 	}
 	scope := strings.TrimSpace(token.Scope)
@@ -137,6 +141,7 @@ func (p *OAuth2Provider) Authenticate(ctx context.Context, code, verifier, _ str
 		scope = strings.Join(p.settings.Scopes, " ")
 	}
 	if len(scope) > 4096 {
+		diagnostics.Event(ctx, "identity_response_rejected", map[string]any{"stage": "corporate_token", "reason": "invalid_scope"})
 		return Claims{}, fmt.Errorf("corporate OAuth2 token response is invalid")
 	}
 	return p.loadClaims(ctx, accessToken, scope)
@@ -163,7 +168,7 @@ func (p *OAuth2Provider) loadClaims(ctx context.Context, accessToken, scope stri
 		request.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 	request.Header.Set("Accept", "application/json")
-	response, err := p.client.Do(request)
+	response, err := diagnostics.HTTP(ctx, p.client, request, "corporate_userinfo")
 	if err != nil {
 		if p.settings.UserInfoTokenTransport == "query" {
 			return Claims{}, fmt.Errorf("load corporate OAuth2 UserInfo")
@@ -177,15 +182,18 @@ func (p *OAuth2Provider) loadClaims(ctx context.Context, accessToken, scope stri
 	}
 	var document map[string]any
 	if err := decodeLimitedJSON(response.Body, &document); err != nil {
+		diagnostics.Event(ctx, "identity_response_rejected", map[string]any{"stage": "corporate_userinfo", "reason": "invalid_json"})
 		return Claims{}, fmt.Errorf("decode corporate OAuth2 UserInfo: %w", err)
 	}
 	userInfo, err := objectAtPath(document, p.settings.UserInfoDataPath)
 	if err != nil {
+		diagnostics.Event(ctx, "identity_response_rejected", map[string]any{"stage": "corporate_userinfo", "reason": "invalid_data_path"})
 		return Claims{}, err
 	}
 	globalUserID := claimText(userInfo[p.settings.SubjectClaim])
 	tenantID := claimText(userInfo[p.settings.TenantClaim])
 	if globalUserID == "" || (p.settings.SubjectTenantScoped && tenantID == "") {
+		diagnostics.Event(ctx, "identity_response_rejected", map[string]any{"stage": "corporate_userinfo", "reason": "stable_identity_missing", "subject_present": globalUserID != "", "tenant_present": tenantID != ""})
 		return Claims{}, fmt.Errorf("corporate OAuth2 UserInfo is missing its stable identity")
 	}
 	subject := globalUserID

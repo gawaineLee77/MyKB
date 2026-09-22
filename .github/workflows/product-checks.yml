@@ -1,0 +1,89 @@
+name: MindCreek Product Checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".gitmodules"
+      - "upstream/weknora"
+      - "services/**"
+      - "config/**"
+      - "tools/**"
+      - "deploy/**"
+      - "branding/**"
+      - "images/**"
+      - "!images/archives/**"
+      - "scripts/**"
+      - "testdata/**"
+      - "docs/archive/phase*/**"
+      - "docs/reference/PHASE*.md"
+      - "docs/guides/PHASE*.md"
+      - "docs/OVERALL_DESIGN*.md"
+      - "docs/UPSTREAM_PATCHES.md"
+      - "docs/assets/**"
+      - "Makefile"
+      - ".github/workflows/product-checks.yml"
+  pull_request:
+    paths:
+      - ".gitmodules"
+      - "upstream/weknora"
+      - "services/**"
+      - "config/**"
+      - "tools/**"
+      - "deploy/**"
+      - "branding/**"
+      - "images/**"
+      - "!images/archives/**"
+      - "scripts/**"
+      - "testdata/**"
+      - "docs/archive/phase*/**"
+      - "docs/reference/PHASE*.md"
+      - "docs/guides/PHASE*.md"
+      - "docs/OVERALL_DESIGN*.md"
+      - "docs/UPSTREAM_PATCHES.md"
+      - "docs/assets/**"
+      - "Makefile"
+      - ".github/workflows/product-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  product-contracts:
+    name: Gateway, authorization, and deployment contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+          cache-dependency-path: |
+            services/gateway/go.sum
+            upstream/weknora/go.sum
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      # phase5-check includes phase1-gateway-test and inherited product contracts.
+      # Deployment checks render synthetic configuration; they do not deploy.
+      - run: make phase5-check stage1-check
+
+  product-frontend:
+    name: MindCreek frontend tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: upstream/weknora/frontend/package-lock.json
+      - run: make product-test-frontend

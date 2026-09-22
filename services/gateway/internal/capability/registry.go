@@ -90,12 +90,19 @@ func Load(filename string) (*Registry, error) {
 }
 
 func (r *Registry) validate() error {
-	if r.SchemaVersion != 1 || (r.Phase != "phase4" && r.Phase != "phase5") {
+	if r.SchemaVersion != 1 || (r.Phase != "phase4" && r.Phase != "phase5" && r.Phase != "r3") {
 		return fmt.Errorf("capability registry must use schema_version 1 and a supported phase")
 	}
 	expected := releaseValues
 	if r.Phase == "phase4" {
 		expected = phase4Values
+	}
+	if r.Phase == "r3" {
+		expected = make(map[string]bool, len(releaseValues))
+		for key, value := range releaseValues {
+			expected[key] = value
+		}
+		expected["kb_personal_notes"] = false
 	}
 	if len(r.Capabilities) != len(expected) {
 		return fmt.Errorf("capability registry has %d flags; expected %d", len(r.Capabilities), len(expected))
@@ -105,7 +112,7 @@ func (r *Registry) validate() error {
 		if !ok {
 			return fmt.Errorf("capability registry is missing %q", key)
 		}
-		if key != "user_model_overrides" && actual != expectedValue {
+		if key != "user_model_overrides" && !(r.Phase == "r3" && key == "rag_graph") && actual != expectedValue {
 			return fmt.Errorf("capability %q must be %t in the %s release", key, expectedValue, r.Phase)
 		}
 	}

@@ -1,0 +1,148 @@
+{
+  "time": "2026-09-22T02:43:33.337892+00:00",
+  "status": "passed",
+  "gateway_source_sha256": "657540b22325cbec0e5f7dd973ae2ecbd52d8e26cd46586f606e542b9b9e3067",
+  "ui_source_sha256": "e31d4f2a3ffd6bcce3c964fe41c7ecdde6f6fd4f335532650c3b250a7cf3b517",
+  "checks": [
+    {
+      "name": "gateway-uncached",
+      "command": [
+        "go",
+        "-C",
+        "services/gateway",
+        "test",
+        "-count=1",
+        "./..."
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.01,
+      "log_sha256": "27a62579c1d8b3069573a74ee2c58ba8158988b854b14e568854f3ab512b0b13"
+    },
+    {
+      "name": "gateway-race",
+      "command": [
+        "go",
+        "-C",
+        "services/gateway",
+        "test",
+        "-race",
+        "-count=1",
+        "./internal/assistant",
+        "./internal/nativeaccess",
+        "./internal/mcp",
+        "./internal/enterprise",
+        "./internal/identity",
+        "./internal/weknora",
+        "./internal/server"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.25,
+      "log_sha256": "60ed6cad14c0bd2b8fdaafd3db44f29e7955d5c90950ef2649112842ef40c4e8"
+    },
+    {
+      "name": "phase0",
+      "command": [
+        "make",
+        "phase0-check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.36,
+      "log_sha256": "9f77bfefe1cd4b69937629a106e3316c7d7558e22c4b0405e5e71eeb8125fb0b"
+    },
+    {
+      "name": "phase5",
+      "command": [
+        "make",
+        "phase5-check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 31.49,
+      "log_sha256": "f512fe6bebd48780a4c9ebd2c68da350b2c7e2b3dafa46e5b2ee5493fdec721d"
+    },
+    {
+      "name": "stage1",
+      "command": [
+        "make",
+        "stage1-check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.83,
+      "log_sha256": "bbcb7f2a1d539a3dbdb4eb758974a993e049c05e420fdcdbcff3e3069d97868b"
+    },
+    {
+      "name": "frontend-node24",
+      "command": [
+        "sh",
+        "scripts/r5-build-ui.sh"
+      ],
+      "exit_code": 0,
+      "evidence": "r5-ui-build.json",
+      "log_sha256": "1aa567d319f9f803a1cab010b3915c96949aef8d4bb42ef6be0bc8ca7f6f13f6"
+    },
+    {
+      "name": "importer-python312",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "-v",
+        "/Users/gawaine/Desktop/KnowledgeBase/tools/community-import:/work:ro",
+        "-w",
+        "/work",
+        "sha256:78e98729f8fc4099e53cffb3fe59fd15b18dfa4ace8c914dee0cefa5320068eb",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.26,
+      "log_sha256": "b92cd0d9f6f9497e1e8a41e0dec0176137faa909a676cfec15c84c7ea5546cab"
+    },
+    {
+      "name": "r3-route-manifest",
+      "command": [
+        "python3",
+        "tools/redesign/r3_routes.py",
+        "--inventory",
+        ".local/redesign-r3/upstream-routes.json",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.07,
+      "log_sha256": "6a02ed52fd698e015ccccfe226311dd8339790dadeb8a2eeef6b3789e2854410"
+    },
+    {
+      "name": "r5-compose",
+      "command": [
+        "scripts/r4-compose.sh",
+        "config",
+        "--quiet"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.28,
+      "log_sha256": "45f69703121f8415a452a0ceca9e17377b391a8aa8a56b26a636f64d9f6b1bbf"
+    },
+    {
+      "name": "r5-shell",
+      "command": [
+        "sh",
+        "-n",
+        "scripts/r5-build-ui.sh",
+        "scripts/r4-compose.sh",
+        "scripts/r2-install.sh"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.01,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Synthetic executable regression; R5 native UI checks. Actual synthetic browser/API evidence is recorded separately; no production deployment acceptance.",
+  "node": "v24.21.0",
+  "upstream_clean": true,
+  "screenshots_inspected": true
+}

@@ -1,0 +1,651 @@
+{
+  "services": {
+    "postgres": {
+      "environment": {
+        "POSTGRES_USER": "${DB_USER}",
+        "POSTGRES_PASSWORD": "${DB_PASSWORD}",
+        "POSTGRES_DB": "${DB_NAME}"
+      },
+      "healthcheck": {
+        "interval": "10s",
+        "retries": 18,
+        "start_period": "90s",
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""
+        ],
+        "timeout": "10s"
+      },
+      "image": "paradedb/paradedb:v0.22.2-pg17",
+      "restart": "unless-stopped",
+      "stop_grace_period": "1m",
+      "platform": "linux/amd64",
+      "pull_policy": "never",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "volumes": [
+        "postgres-data:/var/lib/postgresql/data"
+      ]
+    },
+    "redis": {
+      "command": [
+        "sh",
+        "-c",
+        "exec redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""
+      ],
+      "image": "redis:7.0-alpine",
+      "restart": "unless-stopped",
+      "platform": "linux/amd64",
+      "pull_policy": "never",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "environment": {
+        "REDIS_PASSWORD": "${REDIS_PASSWORD:?required}"
+      },
+      "volumes": [
+        "redis-data:/data"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "REDISCLI_AUTH=\"$${REDIS_PASSWORD}\" redis-cli ping | grep -q PONG"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 12
+      }
+    },
+    "docreader": {
+      "environment": {
+        "TZ": "${TZ:-Asia/Shanghai}",
+        "LOG_LEVEL": "${LOG_LEVEL:-warn}",
+        "DOCREADER_IMAGE_OUTPUT_DIR": "/tmp/docreader",
+        "MAX_FILE_SIZE_MB": "${MAX_FILE_SIZE_MB:-500}",
+        "SSRF_WHITELIST": "${SSRF_WHITELIST:-}",
+        "SSRF_WHITELIST_EXTRA": "${SSRF_WHITELIST_EXTRA:-}",
+        "GRPC_TLS_ENABLED": "${GRPC_TLS_ENABLED:-false}",
+        "GRPC_TLS_CERT": "${GRPC_TLS_CERT:-}",
+        "GRPC_TLS_KEY": "${GRPC_TLS_KEY:-}",
+        "GRPC_TLS_CA": "${GRPC_TLS_CA:-}",
+        "GRPC_TLS_SERVER_NAME": "${GRPC_TLS_SERVER_NAME:-}",
+        "GRPC_MTLS_REQUIRE_CLIENT_CERT": "${GRPC_MTLS_REQUIRE_CLIENT_CERT:-false}",
+        "GRPC_AUTH_TOKEN": "${GRPC_AUTH_TOKEN:-}",
+        "DOCREADER_GRPC_MAX_WORKERS": "${DOCREADER_GRPC_MAX_WORKERS:-4}",
+        "DOCREADER_GRPC_MAX_FILE_SIZE_MB": "${DOCREADER_GRPC_MAX_FILE_SIZE_MB:-${MAX_FILE_SIZE_MB:-500}}",
+        "DOCREADER_GRPC_PORT": "${DOCREADER_GRPC_PORT:-50051}",
+        "DOCREADER_DOCX_MAX_PAGES": "${DOCREADER_DOCX_MAX_PAGES:-0}",
+        "DOCREADER_MARKITDOWN_MAX_WORKERS": "${DOCREADER_MARKITDOWN_MAX_WORKERS:-1}",
+        "DOCREADER_EXTERNAL_HTTP_PROXY": "${DOCREADER_EXTERNAL_HTTP_PROXY:-}",
+        "DOCREADER_EXTERNAL_HTTPS_PROXY": "${DOCREADER_EXTERNAL_HTTPS_PROXY:-}",
+        "DOCREADER_ODL_MAX_WORKERS": "${DOCREADER_ODL_MAX_WORKERS:-1}",
+        "DOCREADER_ODL_HYBRID": "${DOCREADER_ODL_HYBRID:-off}",
+        "DOCREADER_ODL_HYBRID_URL": "${DOCREADER_ODL_HYBRID_URL:-http://odl-hybrid:5002}",
+        "DOCREADER_ODL_HYBRID_MODE": "${DOCREADER_ODL_HYBRID_MODE:-auto}",
+        "DOCREADER_ODL_HYBRID_FALLBACK": "${DOCREADER_ODL_HYBRID_FALLBACK:-false}",
+        "DOCREADER_ODL_MARKDOWN_WITH_HTML": "${DOCREADER_ODL_MARKDOWN_WITH_HTML:-false}",
+        "DOCREADER_PDF_RENDER_MAX_WORKERS": "${DOCREADER_PDF_RENDER_MAX_WORKERS:-1}",
+        "DOCREADER_PDF_RENDER_PARALLELISM": "${DOCREADER_PDF_RENDER_PARALLELISM:-}",
+        "DOCREADER_PDF_RENDER_DPI": "${DOCREADER_PDF_RENDER_DPI:-200}",
+        "DOCREADER_PDF_JPEG_QUALITY": "${DOCREADER_PDF_JPEG_QUALITY:-85}",
+        "DOCREADER_PDF_RENDER_MAX_EDGE": "${DOCREADER_PDF_RENDER_MAX_EDGE:-2000}",
+        "DOCREADER_PDF_FORCE_SCANNED": "${DOCREADER_PDF_FORCE_SCANNED:-false}",
+        "DOCREADER_PDF_WORD_GAP_WIDTH_RATIO": "${DOCREADER_PDF_WORD_GAP_WIDTH_RATIO:-0.4}",
+        "DOCREADER_PDF_MARGIN_COL_WIDTH_RATIO": "${DOCREADER_PDF_MARGIN_COL_WIDTH_RATIO:-0.12}",
+        "DOCREADER_PDF_MIN_HEADING_LINE_CHARS": "${DOCREADER_PDF_MIN_HEADING_LINE_CHARS:-8}",
+        "DOCREADER_PDF_SANITIZE_TEXT": "${DOCREADER_PDF_SANITIZE_TEXT:-true}",
+        "DOCREADER_PDF_STRIP_CHART_DEBRIS": "${DOCREADER_PDF_STRIP_CHART_DEBRIS:-true}",
+        "DOCREADER_PDF_RENDER_VECTOR_FIGURES": "${DOCREADER_PDF_RENDER_VECTOR_FIGURES:-true}",
+        "DOCREADER_PDF_DETECT_HEADINGS": "${DOCREADER_PDF_DETECT_HEADINGS:-}",
+        "DOCREADER_PDF_LAYOUT_ORDERING": "${DOCREADER_PDF_LAYOUT_ORDERING:-}",
+        "DOCREADER_PDF_FILTER_HIDDEN_TEXT": "${DOCREADER_PDF_FILTER_HIDDEN_TEXT:-}",
+        "DOCREADER_PDF_SCAN_IMAGE_RATIO": "${DOCREADER_PDF_SCAN_IMAGE_RATIO:-}",
+        "DOCREADER_PDF_SCAN_MIN_CHARS": "${DOCREADER_PDF_SCAN_MIN_CHARS:-}",
+        "DOCREADER_PDF_EXTRACT_EMBEDDED_IMAGES": "${DOCREADER_PDF_EXTRACT_EMBEDDED_IMAGES:-}",
+        "DOCREADER_PDF_EMBED_MIN_PIXELS": "${DOCREADER_PDF_EMBED_MIN_PIXELS:-}",
+        "DOCREADER_PDF_EMBED_MIN_AREA_RATIO": "${DOCREADER_PDF_EMBED_MIN_AREA_RATIO:-}",
+        "DOCREADER_PDF_EMBED_REPEAT_PAGE_FRAC": "${DOCREADER_PDF_EMBED_REPEAT_PAGE_FRAC:-}",
+        "DOCREADER_PDF_EMBED_MAX_IMAGES": "${DOCREADER_PDF_EMBED_MAX_IMAGES:-}",
+        "DOCREADER_PDF_MIN_CHART_REGION_AREA": "${DOCREADER_PDF_MIN_CHART_REGION_AREA:-}",
+        "DOCREADER_PDF_MIN_CHART_REGION_CHARS": "${DOCREADER_PDF_MIN_CHART_REGION_CHARS:-}",
+        "DOCREADER_PDF_MAX_CHART_REGION_AREA": "${DOCREADER_PDF_MAX_CHART_REGION_AREA:-}",
+        "DOCREADER_PDF_MAX_FIGURE_HEIGHT_RATIO": "${DOCREADER_PDF_MAX_FIGURE_HEIGHT_RATIO:-}",
+        "SSL_CERT_FILE": "/etc/mindcreek-ca.pem",
+        "REQUESTS_CA_BUNDLE": "/etc/mindcreek-ca.pem",
+        "CURL_CA_BUNDLE": "/etc/mindcreek-ca.pem"
+      },
+      "expose": [
+        "50051"
+      ],
+      "healthcheck": {
+        "interval": "10s",
+        "retries": 18,
+        "start_period": "90s",
+        "test": [
+          "CMD",
+          "grpc_health_probe",
+          "-addr=localhost:50051"
+        ],
+        "timeout": "10s"
+      },
+      "image": "wechatopenai/weknora-docreader:v0.8.0",
+      "restart": "unless-stopped",
+      "platform": "linux/amd64",
+      "pull_policy": "never",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "volumes": [
+        "${MINDCREEK_STATE_DIR}/runtime/ca-bundle.pem:/etc/mindcreek-ca.pem:ro",
+        "docreader-tmp:/tmp/docreader"
+      ]
+    },
+    "app": {
+      "depends_on": {
+        "docreader": {
+          "condition": "service_healthy",
+          "required": true
+        },
+        "postgres": {
+          "condition": "service_healthy",
+          "required": true
+        },
+        "redis": {
+          "condition": "service_started",
+          "required": true
+        }
+      },
+      "environment": {
+        "LOG_LEVEL": "${LOG_LEVEL:-warn}",
+        "LOG_PATH": "${LOG_PATH:-}",
+        "LOG_FORMAT": "${LOG_FORMAT:-}",
+        "LLM_DEBUG_LOG": "${LLM_DEBUG_LOG:-false}",
+        "GIN_MODE": "${GIN_MODE:-release}",
+        "TZ": "${TZ:-Asia/Shanghai}",
+        "WEKNORA_LANGUAGE": "${WEKNORA_LANGUAGE:-}",
+        "WEKNORA_SANDBOX_DOCKER_ENABLED": "false",
+        "AUTO_MIGRATE": "${AUTO_MIGRATE:-true}",
+        "FRONTEND_BASE_URL": "${MINDCREEK_EXTERNAL_ORIGIN}",
+        "DISABLE_REGISTRATION": "${MINDCREEK_INSTALL_REGISTRATION_DISABLED:-true}",
+        "WEKNORA_AUTH_COMPLEX_PASSWORD_ENABLED": "${WEKNORA_AUTH_COMPLEX_PASSWORD_ENABLED:-false}",
+        "WEKNORA_AUTH_DEFAULT_TENANT_MODE": "tenantless",
+        "WEKNORA_TENANT_SELF_SERVICE_CREATION_ENABLED": "true",
+        "WEKNORA_TENANT_ENABLE_CROSS_TENANT_ACCESS": "false",
+        "WEKNORA_TENANT_DEFAULT_STORAGE_QUOTA_GB": "${WEKNORA_TENANT_DEFAULT_STORAGE_QUOTA_GB:-10}",
+        "WEKNORA_INVITATION_TTL": "${WEKNORA_INVITATION_TTL:-168h}",
+        "WEKNORA_AUDIT_RETENTION_DAYS": "${WEKNORA_AUDIT_RETENTION_DAYS:-90}",
+        "DB_DRIVER": "postgres",
+        "DB_HOST": "postgres",
+        "DB_PORT": "5432",
+        "DB_USER": "${DB_USER:-}",
+        "DB_PASSWORD": "${DB_PASSWORD:-}",
+        "DB_NAME": "${DB_NAME:-}",
+        "RETRIEVE_DRIVER": "postgres",
+        "DOCREADER_ADDR": "${DOCREADER_ADDR:-docreader:50051}",
+        "DOCREADER_TRANSPORT": "${DOCREADER_TRANSPORT:-grpc}",
+        "STORAGE_TYPE": "local",
+        "LOCAL_STORAGE_BASE_DIR": "${LOCAL_STORAGE_BASE_DIR:-/data/files}",
+        "AUTO_RECOVER_DIRTY": "${AUTO_RECOVER_DIRTY:-true}",
+        "OLLAMA_OPTIONAL": "true",
+        "WEKNORA_LLM_STREAM_RAW_DUMP": "false",
+        "WEKNORA_LLM_STREAM_RAW_DUMP_DIR": "${WEKNORA_LLM_STREAM_RAW_DUMP_DIR:-}",
+        "STREAM_MANAGER_TYPE": "redis",
+        "REDIS_ADDR": "${REDIS_ADDR:-redis:6379}",
+        "REDIS_PASSWORD": "${REDIS_PASSWORD:-}",
+        "REDIS_DB": "${REDIS_DB:-}",
+        "REDIS_PREFIX": "mindcreek-r4:",
+        "WEKNORA_REDIS_NAMESPACE": "${WEKNORA_REDIS_NAMESPACE:-}",
+        "WEKNORA_REDIS_OP_TIMEOUT_MS": "${WEKNORA_REDIS_OP_TIMEOUT_MS:-}",
+        "NEO4J_ENABLE": "false",
+        "SYSTEM_AES_KEY": "${SYSTEM_AES_KEY:-}",
+        "SSRF_WHITELIST_EXTRA": "gateway,${SSRF_WHITELIST_EXTRA:-}",
+        "CONCURRENCY_POOL_SIZE": "${CONCURRENCY_POOL_SIZE:-5}",
+        "JWT_SECRET": "${JWT_SECRET:-}",
+        "MAX_FILE_SIZE_MB": "${MAX_FILE_SIZE_MB:-500}",
+        "WEKNORA_DOCUMENT_PROCESS_TIMEOUT": "${WEKNORA_DOCUMENT_PROCESS_TIMEOUT:-}",
+        "WEKNORA_DOCREADER_CALL_TIMEOUT": "${WEKNORA_DOCREADER_CALL_TIMEOUT:-}",
+        "WEKNORA_HOUSEKEEPING_ENABLED": "${WEKNORA_HOUSEKEEPING_ENABLED:-}",
+        "WEKNORA_SKILLS_DIR": "${WEKNORA_SKILLS_DIR:-}",
+        "WEKNORA_CHAT_ATTACHMENT_TTL_HOURS": "${WEKNORA_CHAT_ATTACHMENT_TTL_HOURS:-24}",
+        "WEKNORA_CHAT_ATTACHMENT_WAIT_TIMEOUT_SEC": "${WEKNORA_CHAT_ATTACHMENT_WAIT_TIMEOUT_SEC:-60}",
+        "WEKNORA_CHAT_ATTACHMENT_OCR_CONCURRENCY": "${WEKNORA_CHAT_ATTACHMENT_OCR_CONCURRENCY:-8}",
+        "WEKNORA_CHAT_ATTACHMENT_OCR_MAX_PAGES": "${WEKNORA_CHAT_ATTACHMENT_OCR_MAX_PAGES:-8}",
+        "WEKNORA_AGENT_LLM_TIMEOUT": "${WEKNORA_AGENT_LLM_TIMEOUT:-}",
+        "WEKNORA_AGENT_TOOL_APPROVAL_TIMEOUT": "${WEKNORA_AGENT_TOOL_APPROVAL_TIMEOUT:-}",
+        "WEKNORA_AGENT_TOOL_APPROVAL_FAIL_OPEN": "${WEKNORA_AGENT_TOOL_APPROVAL_FAIL_OPEN:-}",
+        "WEKNORA_TENANT_ENABLE_RBAC": "true",
+        "WEKNORA_TENANT_MAX_OWNED_PER_USER": "${WEKNORA_TENANT_MAX_OWNED_PER_USER:-}",
+        "WEKNORA_TENANT_AUTO_CREATE_API_KEY": "false",
+        "WEKNORA_ASYNQ_CORE_CONCURRENCY": "${WEKNORA_ASYNQ_CORE_CONCURRENCY:-8}",
+        "WEKNORA_ASYNQ_POSTPROCESS_CONCURRENCY": "${WEKNORA_ASYNQ_POSTPROCESS_CONCURRENCY:-2}",
+        "WEKNORA_ASYNQ_ENRICHMENT_CONCURRENCY": "${WEKNORA_ASYNQ_ENRICHMENT_CONCURRENCY:-12}",
+        "WEKNORA_ASYNQ_MAINTENANCE_CONCURRENCY": "${WEKNORA_ASYNQ_MAINTENANCE_CONCURRENCY:-4}",
+        "WEKNORA_ASYNQ_SHARED_CONCURRENCY": "${WEKNORA_ASYNQ_SHARED_CONCURRENCY:-6}",
+        "WEKNORA_WIKI_ASYNQ_CONCURRENCY": "${WEKNORA_WIKI_ASYNQ_CONCURRENCY:-8}",
+        "WEKNORA_MODEL_MAX_CONCURRENCY": "${WEKNORA_MODEL_MAX_CONCURRENCY:-32}",
+        "WEKNORA_BOOTSTRAP_SYSTEM_ADMIN_EMAIL": "${MINDCREEK_INSTALL_BOOTSTRAP_EMAIL:-}",
+        "OIDC_AUTH_ENABLE": "true",
+        "OIDC_AUTH_ISSUER_URL": "${MINDCREEK_EXTERNAL_ORIGIN:-}/api/v1/mindcreek/oidc",
+        "OIDC_AUTH_DISCOVERY_URL": "http://gateway:8080/api/v1/mindcreek/oidc/.well-known/openid-configuration",
+        "OIDC_AUTH_PROVIDER_DISPLAY_NAME": "${MINDCREEK_IDENTITY_PROVIDER_NAME:-Corporate account}",
+        "OIDC_AUTH_CLIENT_ID": "${MINDCREEK_BROKER_CLIENT_ID:-mindcreek-weknora}",
+        "OIDC_AUTH_CLIENT_SECRET": "${MINDCREEK_BROKER_CLIENT_SECRET:-}",
+        "OIDC_AUTH_AUTHORIZATION_ENDPOINT": "http://gateway:8080/api/v1/mindcreek/oidc/authorize",
+        "OIDC_AUTH_TOKEN_ENDPOINT": "http://gateway:8080/api/v1/mindcreek/oidc/token",
+        "OIDC_AUTH_USER_INFO_ENDPOINT": "http://gateway:8080/api/v1/mindcreek/oidc/userinfo",
+        "OIDC_AUTH_JWKS_URI": "http://gateway:8080/api/v1/mindcreek/oidc/jwks",
+        "OIDC_AUTH_SCOPES": "openid profile email groups",
+        "OIDC_USER_INFO_MAPPING_USER_NAME": "preferred_username",
+        "OIDC_USER_INFO_MAPPING_EMAIL": "email",
+        "BUILTIN_MODELS_CONFIG": "/app/config/builtin_models.yaml",
+        "MINDCREEK_MANAGED_EMBEDDING_API_KEY": "${MINDCREEK_MANAGED_EMBEDDING_API_KEY:?required}",
+        "MINDCREEK_MANAGED_EMBEDDING_BASE_URL": "${MINDCREEK_MANAGED_EMBEDDING_BASE_URL:?required}",
+        "MINDCREEK_MANAGED_EMBEDDING_NAME": "${MINDCREEK_MANAGED_EMBEDDING_NAME:?required}",
+        "MINDCREEK_MANAGED_EMBEDDING_PROVIDER": "${MINDCREEK_MANAGED_EMBEDDING_PROVIDER:?required}",
+        "MINDCREEK_MANAGED_LLM_API_KEY": "${MINDCREEK_MANAGED_LLM_API_KEY:?required}",
+        "MINDCREEK_MANAGED_LLM_BASE_URL": "${MINDCREEK_MANAGED_LLM_BASE_URL:?required}",
+        "MINDCREEK_MANAGED_LLM_NAME": "${MINDCREEK_MANAGED_LLM_NAME:?required}",
+        "MINDCREEK_MANAGED_LLM_PROVIDER": "${MINDCREEK_MANAGED_LLM_PROVIDER:?required}",
+        "MINDCREEK_MANAGED_RERANK_API_KEY": "${MINDCREEK_MANAGED_RERANK_API_KEY:?required}",
+        "MINDCREEK_MANAGED_RERANK_BASE_URL": "${MINDCREEK_MANAGED_RERANK_BASE_URL:?required}",
+        "MINDCREEK_MANAGED_RERANK_NAME": "${MINDCREEK_MANAGED_RERANK_NAME:?required}",
+        "MINDCREEK_MANAGED_RERANK_PROVIDER": "${MINDCREEK_MANAGED_RERANK_PROVIDER:?required}",
+        "MINDCREEK_MANAGED_VLM_API_KEY": "${MINDCREEK_MANAGED_VLM_API_KEY:-}",
+        "MINDCREEK_MANAGED_VLM_BASE_URL": "${MINDCREEK_MANAGED_VLM_BASE_URL:-}",
+        "MINDCREEK_MANAGED_VLM_ENABLED": "${MINDCREEK_MANAGED_VLM_ENABLED:-false}",
+        "MINDCREEK_MANAGED_VLM_NAME": "${MINDCREEK_MANAGED_VLM_NAME:-}",
+        "MINDCREEK_MANAGED_VLM_PROVIDER": "${MINDCREEK_MANAGED_VLM_PROVIDER:-}",
+        "SSL_CERT_FILE": "/etc/mindcreek-ca.pem",
+        "REQUESTS_CA_BUNDLE": "/etc/mindcreek-ca.pem",
+        "CURL_CA_BUNDLE": "/etc/mindcreek-ca.pem",
+        "LANGFUSE_ENABLED": "false"
+      },
+      "healthcheck": {
+        "interval": "10s",
+        "retries": 18,
+        "start_period": "90s",
+        "test": [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8080/health"
+        ],
+        "timeout": "10s"
+      },
+      "image": "wechatopenai/weknora-app:v0.8.0",
+      "restart": "unless-stopped",
+      "platform": "linux/amd64",
+      "pull_policy": "never",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "volumes": [
+        "${MINDCREEK_STATE_DIR}/runtime/ca-bundle.pem:/etc/mindcreek-ca.pem:ro",
+        "data-files:/data/files",
+        "docreader-tmp:/tmp/docreader:ro",
+        "./config/upstream.yaml:/app/config/config.yaml:ro",
+        "./config/builtin_agents.yaml:/app/config/builtin_agents.yaml:ro",
+        "${MINDCREEK_STATE_DIR}/runtime/builtin_models.yaml:/app/config/builtin_models.yaml:ro"
+      ]
+    },
+    "gateway": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "depends_on": {
+        "app": {
+          "condition": "service_healthy",
+          "required": true
+        },
+        "postgres": {
+          "condition": "service_healthy",
+          "required": true
+        }
+      },
+      "environment": {
+        "MINDCREEK_CAPABILITIES_FILE": "/etc/mindcreek/r3-capabilities.json",
+        "MINDCREEK_DATABASE_URL": "postgres://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT:-5432}/${DB_NAME}?sslmode=disable",
+        "MINDCREEK_LISTEN_ADDR": ":8080",
+        "MINDCREEK_ROUTE_ACTIONS_FILE": "/etc/mindcreek/phase2-route-actions.json",
+        "MINDCREEK_ROUTE_POLICY_FILE": "/etc/mindcreek/phase1-route-policy.json",
+        "MINDCREEK_UPSTREAM_TIMEOUT": "${MINDCREEK_UPSTREAM_TIMEOUT:-120s}",
+        "MINDCREEK_UPSTREAM_URL": "http://app:8080",
+        "MINDCREEK_UPSTREAM_VERSION": "v0.8.0",
+        "MINDCREEK_VERSION": "${MINDCREEK_RELEASE}",
+        "MAX_FILE_SIZE_MB": "${MAX_FILE_SIZE_MB:-500}",
+        "MINDCREEK_MODEL_OVERRIDE_ALLOW_HTTP": "${MINDCREEK_MODEL_OVERRIDE_ALLOW_HTTP:-false}",
+        "MINDCREEK_MODEL_OVERRIDE_HOSTS": "${MINDCREEK_MODEL_OVERRIDE_HOSTS:-}",
+        "MINDCREEK_MODEL_OVERRIDE_PROVIDERS": "${MINDCREEK_MODEL_OVERRIDE_PROVIDERS:-generic,openai}",
+        "MINDCREEK_USER_MODEL_OVERRIDES": "${MINDCREEK_USER_MODEL_OVERRIDES:-false}",
+        "MINDCREEK_BREAK_GLASS_USER_IDS": "${MINDCREEK_BREAK_GLASS_USER_IDS:-}",
+        "MINDCREEK_BROKER_CLIENT_ID": "${MINDCREEK_BROKER_CLIENT_ID:-mindcreek-weknora}",
+        "MINDCREEK_BROKER_CLIENT_SECRET": "${MINDCREEK_BROKER_CLIENT_SECRET:-}",
+        "MINDCREEK_EXTERNAL_ORIGIN": "${MINDCREEK_EXTERNAL_ORIGIN:-}",
+        "MINDCREEK_IDENTITY_ALLOWED_EMPLOYEE_TYPES": "${MINDCREEK_IDENTITY_ALLOWED_EMPLOYEE_TYPES:-}",
+        "MINDCREEK_IDENTITY_ALLOW_INSECURE_HTTP": "${MINDCREEK_IDENTITY_ALLOW_INSECURE_HTTP:-false}",
+        "MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY": "${MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY:-page}",
+        "MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE": "${MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE:-authorization_code}",
+        "MINDCREEK_IDENTITY_AUTHORIZATION_METHOD": "${MINDCREEK_IDENTITY_AUTHORIZATION_METHOD:-POST}",
+        "MINDCREEK_IDENTITY_AUTHORIZATION_URL": "${MINDCREEK_IDENTITY_AUTHORIZATION_URL:-}",
+        "MINDCREEK_IDENTITY_CLIENT_AUTH_METHOD": "${MINDCREEK_IDENTITY_CLIENT_AUTH_METHOD:-client_secret_post}",
+        "MINDCREEK_IDENTITY_CLIENT_ID": "${MINDCREEK_IDENTITY_CLIENT_ID:-}",
+        "MINDCREEK_IDENTITY_CLIENT_SECRET": "${MINDCREEK_IDENTITY_CLIENT_SECRET:-}",
+        "MINDCREEK_IDENTITY_DISCOVERY_URL": "${MINDCREEK_IDENTITY_DISCOVERY_URL:-}",
+        "MINDCREEK_IDENTITY_DISPLAY_NAME_CLAIM": "${MINDCREEK_IDENTITY_DISPLAY_NAME_CLAIM:-}",
+        "MINDCREEK_IDENTITY_EMAIL_CLAIM": "${MINDCREEK_IDENTITY_EMAIL_CLAIM:-}",
+        "MINDCREEK_IDENTITY_EMPLOYEE_TYPE_CLAIM": "${MINDCREEK_IDENTITY_EMPLOYEE_TYPE_CLAIM:-}",
+        "MINDCREEK_IDENTITY_ENABLED": "true",
+        "MINDCREEK_IDENTITY_GROUP_CLAIM": "${MINDCREEK_IDENTITY_GROUP_CLAIM:-}",
+        "MINDCREEK_IDENTITY_ISSUER": "${MINDCREEK_IDENTITY_ISSUER:-}",
+        "MINDCREEK_IDENTITY_PKCE_ENABLED": "${MINDCREEK_IDENTITY_PKCE_ENABLED:-true}",
+        "MINDCREEK_IDENTITY_PROTOCOL": "${MINDCREEK_IDENTITY_PROTOCOL:-oidc}",
+        "MINDCREEK_IDENTITY_PROVIDER_NAME": "${MINDCREEK_IDENTITY_PROVIDER_NAME:-Corporate account}",
+        "MINDCREEK_IDENTITY_REDIRECT_URI": "${MINDCREEK_IDENTITY_REDIRECT_URI:-}",
+        "MINDCREEK_IDENTITY_REFRESH_URL": "${MINDCREEK_IDENTITY_REFRESH_URL:-}",
+        "MINDCREEK_IDENTITY_REQUIRED_GROUPS": "${MINDCREEK_IDENTITY_REQUIRED_GROUPS:-}",
+        "MINDCREEK_IDENTITY_SCOPES": "${MINDCREEK_IDENTITY_SCOPES:-}",
+        "MINDCREEK_IDENTITY_STATE_REQUIRED": "${MINDCREEK_IDENTITY_STATE_REQUIRED:-true}",
+        "MINDCREEK_IDENTITY_SUBJECT_CLAIM": "${MINDCREEK_IDENTITY_SUBJECT_CLAIM:-}",
+        "MINDCREEK_IDENTITY_SUBJECT_TENANT_SCOPED": "${MINDCREEK_IDENTITY_SUBJECT_TENANT_SCOPED:-true}",
+        "MINDCREEK_IDENTITY_TENANT_CLAIM": "${MINDCREEK_IDENTITY_TENANT_CLAIM:-}",
+        "MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT": "${MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT:-json}",
+        "MINDCREEK_IDENTITY_TOKEN_URL": "${MINDCREEK_IDENTITY_TOKEN_URL:-}",
+        "MINDCREEK_IDENTITY_USERINFO_DATA_PATH": "${MINDCREEK_IDENTITY_USERINFO_DATA_PATH:-}",
+        "MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT": "${MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT:-bearer}",
+        "MINDCREEK_IDENTITY_USERINFO_URL": "${MINDCREEK_IDENTITY_USERINFO_URL:-}",
+        "MINDCREEK_IDENTITY_USERNAME_CLAIM": "${MINDCREEK_IDENTITY_USERNAME_CLAIM:-}",
+        "MINDCREEK_IDENTITY_UUID_CLAIM": "${MINDCREEK_IDENTITY_UUID_CLAIM:-}",
+        "MINDCREEK_DEFAULT_SPACE_DESCRIPTION": "${MINDCREEK_DEFAULT_SPACE_DESCRIPTION:-企业默认知识空间}",
+        "MINDCREEK_DEFAULT_SPACE_NAME": "${MINDCREEK_DEFAULT_SPACE_NAME:-默认空间}",
+        "MINDCREEK_ENTERPRISE_ENABLED": "true",
+        "MINDCREEK_INSTALL_ADMIN_EMAIL": "${MINDCREEK_INSTALL_ADMIN_EMAIL:?set installation admin email}",
+        "MINDCREEK_INSTALL_ADMIN_PASSWORD_FILE": "/run/mindcreek-enterprise/admin-password",
+        "MINDCREEK_INSTALL_ADMIN_USERNAME": "${MINDCREEK_INSTALL_ADMIN_USERNAME:-admin}",
+        "MINDCREEK_MEMBER_KEY_FILE": "/run/mindcreek-enterprise/member-key",
+        "MINDCREEK_RECOVERY_OWNER_BEARER_FILE": "/run/mindcreek-enterprise/recovery-owner-bearer",
+        "MINDCREEK_GRAPH_ENABLED": "false",
+        "MINDCREEK_NATIVE_ROUTES_FILE": "/etc/mindcreek/r3-routes.json",
+        "MINDCREEK_NATIVE_WORKSPACE_ENABLED": "true",
+        "MINDCREEK_EMPLOYEE_ASSISTANT_ENABLED": "${MINDCREEK_EMPLOYEE_ASSISTANT_ENABLED:-false}",
+        "SSL_CERT_FILE": "/etc/mindcreek-ca.pem",
+        "REQUESTS_CA_BUNDLE": "/etc/mindcreek-ca.pem",
+        "CURL_CA_BUNDLE": "/etc/mindcreek-ca.pem"
+      },
+      "expose": [
+        "8080"
+      ],
+      "image": "mindcreek-gateway:${MINDCREEK_RELEASE:?required}",
+      "read_only": true,
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "tmpfs": [
+        "/tmp"
+      ],
+      "platform": "linux/amd64",
+      "pull_policy": "never",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "volumes": [
+        "${MINDCREEK_STATE_DIR}/runtime/ca-bundle.pem:/etc/mindcreek-ca.pem:ro",
+        "./config/phase1-route-policy.json:/etc/mindcreek/phase1-route-policy.json:ro",
+        "./config/phase2-route-actions.json:/etc/mindcreek/phase2-route-actions.json:ro",
+        "./config/r3-routes.json:/etc/mindcreek/r3-routes.json:ro",
+        "./config/r3-capabilities.json:/etc/mindcreek/r3-capabilities.json:ro",
+        "${MINDCREEK_STATE_DIR}/secrets:/run/mindcreek-enterprise:ro"
+      ],
+      "user": "${MINDCREEK_UID:?required}:${MINDCREEK_GID:?required}",
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "/mindcreek-gateway",
+          "healthcheck"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "start_period": "30s",
+        "retries": 18
+      }
+    },
+    "frontend": {
+      "depends_on": {
+        "gateway": {
+          "condition": "service_healthy",
+          "required": true
+        }
+      },
+      "environment": {
+        "MAX_FILE_SIZE_MB": "${MAX_FILE_SIZE_MB:-500}",
+        "MAX_SKILL_BUNDLE_SIZE_MB": "${MAX_SKILL_BUNDLE_SIZE_MB:-256}",
+        "DEFAULT_LOCALE": "${DEFAULT_LOCALE:-zh-CN}",
+        "APP_HOST": "gateway",
+        "APP_PORT": "8080",
+        "APP_SCHEME": "http"
+      },
+      "image": "mindcreek-ui:${MINDCREEK_RELEASE:?required}",
+      "restart": "unless-stopped",
+      "platform": "linux/amd64",
+      "pull_policy": "never",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "ports": [
+        "${FRONTEND_BIND_IP:-127.0.0.1}:${FRONTEND_PORT:-18080}:80"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "wget",
+          "-q",
+          "--spider",
+          "http://127.0.0.1:80/"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 12
+      }
+    },
+    "ops": {
+      "image": "python:3.12-alpine",
+      "platform": "linux/amd64",
+      "pull_policy": "never",
+      "profiles": [
+        "tools"
+      ],
+      "entrypoint": [
+        "python3"
+      ],
+      "volumes": [
+        "data-files:/data/files",
+        "${MINDCREEK_STATE_DIR}/backup:/backup",
+        "redis-data:/redis-data"
+      ],
+      "restart": "no"
+    },
+    "tls": {
+      "image": "nginx:1.30.3-alpine",
+      "platform": "linux/amd64",
+      "pull_policy": "never",
+      "profiles": [
+        "tls"
+      ],
+      "restart": "unless-stopped",
+      "ports": [
+        "${TLS_BIND_IP:-0.0.0.0}:${TLS_PORT:-443}:443"
+      ],
+      "volumes": [
+        "./config/tls.conf:/etc/nginx/conf.d/default.conf:ro",
+        "${MINDCREEK_STATE_DIR}/tls:/etc/nginx/tls:ro"
+      ],
+      "depends_on": {
+        "frontend": {
+          "condition": "service_healthy"
+        }
+      },
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      }
+    },
+    "installer": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "depends_on": {
+        "app": {
+          "condition": "service_healthy",
+          "required": true
+        },
+        "postgres": {
+          "condition": "service_healthy",
+          "required": true
+        }
+      },
+      "environment": {
+        "MINDCREEK_CAPABILITIES_FILE": "/etc/mindcreek/r3-capabilities.json",
+        "MINDCREEK_DATABASE_URL": "postgres://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT:-5432}/${DB_NAME}?sslmode=disable",
+        "MINDCREEK_LISTEN_ADDR": ":8080",
+        "MINDCREEK_ROUTE_ACTIONS_FILE": "/etc/mindcreek/phase2-route-actions.json",
+        "MINDCREEK_ROUTE_POLICY_FILE": "/etc/mindcreek/phase1-route-policy.json",
+        "MINDCREEK_UPSTREAM_TIMEOUT": "${MINDCREEK_UPSTREAM_TIMEOUT:-120s}",
+        "MINDCREEK_UPSTREAM_URL": "http://app:8080",
+        "MINDCREEK_UPSTREAM_VERSION": "v0.8.0",
+        "MINDCREEK_VERSION": "${MINDCREEK_RELEASE}",
+        "MAX_FILE_SIZE_MB": "${MAX_FILE_SIZE_MB:-500}",
+        "MINDCREEK_MODEL_OVERRIDE_ALLOW_HTTP": "${MINDCREEK_MODEL_OVERRIDE_ALLOW_HTTP:-false}",
+        "MINDCREEK_MODEL_OVERRIDE_HOSTS": "${MINDCREEK_MODEL_OVERRIDE_HOSTS:-}",
+        "MINDCREEK_MODEL_OVERRIDE_PROVIDERS": "${MINDCREEK_MODEL_OVERRIDE_PROVIDERS:-generic,openai}",
+        "MINDCREEK_USER_MODEL_OVERRIDES": "${MINDCREEK_USER_MODEL_OVERRIDES:-false}",
+        "MINDCREEK_BREAK_GLASS_USER_IDS": "${MINDCREEK_BREAK_GLASS_USER_IDS:-}",
+        "MINDCREEK_BROKER_CLIENT_ID": "${MINDCREEK_BROKER_CLIENT_ID:-mindcreek-weknora}",
+        "MINDCREEK_BROKER_CLIENT_SECRET": "${MINDCREEK_BROKER_CLIENT_SECRET:-}",
+        "MINDCREEK_EXTERNAL_ORIGIN": "${MINDCREEK_EXTERNAL_ORIGIN:-}",
+        "MINDCREEK_IDENTITY_ALLOWED_EMPLOYEE_TYPES": "${MINDCREEK_IDENTITY_ALLOWED_EMPLOYEE_TYPES:-}",
+        "MINDCREEK_IDENTITY_ALLOW_INSECURE_HTTP": "${MINDCREEK_IDENTITY_ALLOW_INSECURE_HTTP:-false}",
+        "MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY": "${MINDCREEK_IDENTITY_AUTHORIZATION_DISPLAY:-page}",
+        "MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE": "${MINDCREEK_IDENTITY_AUTHORIZATION_GRANT_TYPE:-authorization_code}",
+        "MINDCREEK_IDENTITY_AUTHORIZATION_METHOD": "${MINDCREEK_IDENTITY_AUTHORIZATION_METHOD:-POST}",
+        "MINDCREEK_IDENTITY_AUTHORIZATION_URL": "${MINDCREEK_IDENTITY_AUTHORIZATION_URL:-}",
+        "MINDCREEK_IDENTITY_CLIENT_AUTH_METHOD": "${MINDCREEK_IDENTITY_CLIENT_AUTH_METHOD:-client_secret_post}",
+        "MINDCREEK_IDENTITY_CLIENT_ID": "${MINDCREEK_IDENTITY_CLIENT_ID:-}",
+        "MINDCREEK_IDENTITY_CLIENT_SECRET": "${MINDCREEK_IDENTITY_CLIENT_SECRET:-}",
+        "MINDCREEK_IDENTITY_DISCOVERY_URL": "${MINDCREEK_IDENTITY_DISCOVERY_URL:-}",
+        "MINDCREEK_IDENTITY_DISPLAY_NAME_CLAIM": "${MINDCREEK_IDENTITY_DISPLAY_NAME_CLAIM:-}",
+        "MINDCREEK_IDENTITY_EMAIL_CLAIM": "${MINDCREEK_IDENTITY_EMAIL_CLAIM:-}",
+        "MINDCREEK_IDENTITY_EMPLOYEE_TYPE_CLAIM": "${MINDCREEK_IDENTITY_EMPLOYEE_TYPE_CLAIM:-}",
+        "MINDCREEK_IDENTITY_ENABLED": "true",
+        "MINDCREEK_IDENTITY_GROUP_CLAIM": "${MINDCREEK_IDENTITY_GROUP_CLAIM:-}",
+        "MINDCREEK_IDENTITY_ISSUER": "${MINDCREEK_IDENTITY_ISSUER:-}",
+        "MINDCREEK_IDENTITY_PKCE_ENABLED": "${MINDCREEK_IDENTITY_PKCE_ENABLED:-true}",
+        "MINDCREEK_IDENTITY_PROTOCOL": "${MINDCREEK_IDENTITY_PROTOCOL:-oidc}",
+        "MINDCREEK_IDENTITY_PROVIDER_NAME": "${MINDCREEK_IDENTITY_PROVIDER_NAME:-Corporate account}",
+        "MINDCREEK_IDENTITY_REDIRECT_URI": "${MINDCREEK_IDENTITY_REDIRECT_URI:-}",
+        "MINDCREEK_IDENTITY_REFRESH_URL": "${MINDCREEK_IDENTITY_REFRESH_URL:-}",
+        "MINDCREEK_IDENTITY_REQUIRED_GROUPS": "${MINDCREEK_IDENTITY_REQUIRED_GROUPS:-}",
+        "MINDCREEK_IDENTITY_SCOPES": "${MINDCREEK_IDENTITY_SCOPES:-}",
+        "MINDCREEK_IDENTITY_STATE_REQUIRED": "${MINDCREEK_IDENTITY_STATE_REQUIRED:-true}",
+        "MINDCREEK_IDENTITY_SUBJECT_CLAIM": "${MINDCREEK_IDENTITY_SUBJECT_CLAIM:-}",
+        "MINDCREEK_IDENTITY_SUBJECT_TENANT_SCOPED": "${MINDCREEK_IDENTITY_SUBJECT_TENANT_SCOPED:-true}",
+        "MINDCREEK_IDENTITY_TENANT_CLAIM": "${MINDCREEK_IDENTITY_TENANT_CLAIM:-}",
+        "MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT": "${MINDCREEK_IDENTITY_TOKEN_REQUEST_FORMAT:-json}",
+        "MINDCREEK_IDENTITY_TOKEN_URL": "${MINDCREEK_IDENTITY_TOKEN_URL:-}",
+        "MINDCREEK_IDENTITY_USERINFO_DATA_PATH": "${MINDCREEK_IDENTITY_USERINFO_DATA_PATH:-}",
+        "MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT": "${MINDCREEK_IDENTITY_USERINFO_TOKEN_TRANSPORT:-bearer}",
+        "MINDCREEK_IDENTITY_USERINFO_URL": "${MINDCREEK_IDENTITY_USERINFO_URL:-}",
+        "MINDCREEK_IDENTITY_USERNAME_CLAIM": "${MINDCREEK_IDENTITY_USERNAME_CLAIM:-}",
+        "MINDCREEK_IDENTITY_UUID_CLAIM": "${MINDCREEK_IDENTITY_UUID_CLAIM:-}",
+        "MINDCREEK_DEFAULT_SPACE_DESCRIPTION": "${MINDCREEK_DEFAULT_SPACE_DESCRIPTION:-企业默认知识空间}",
+        "MINDCREEK_DEFAULT_SPACE_NAME": "${MINDCREEK_DEFAULT_SPACE_NAME:-默认空间}",
+        "MINDCREEK_ENTERPRISE_ENABLED": "true",
+        "MINDCREEK_INSTALL_ADMIN_EMAIL": "${MINDCREEK_INSTALL_ADMIN_EMAIL:?set installation admin email}",
+        "MINDCREEK_INSTALL_ADMIN_PASSWORD_FILE": "/run/mindcreek-enterprise/admin-password",
+        "MINDCREEK_INSTALL_ADMIN_USERNAME": "${MINDCREEK_INSTALL_ADMIN_USERNAME:-admin}",
+        "MINDCREEK_MEMBER_KEY_FILE": "/run/mindcreek-enterprise/member-key",
+        "MINDCREEK_RECOVERY_OWNER_BEARER_FILE": "/run/mindcreek-enterprise/recovery-owner-bearer",
+        "MINDCREEK_GRAPH_ENABLED": "false",
+        "MINDCREEK_NATIVE_ROUTES_FILE": "/etc/mindcreek/r3-routes.json",
+        "MINDCREEK_NATIVE_WORKSPACE_ENABLED": "true",
+        "MINDCREEK_EMPLOYEE_ASSISTANT_ENABLED": "${MINDCREEK_EMPLOYEE_ASSISTANT_ENABLED:-false}",
+        "SSL_CERT_FILE": "/etc/mindcreek-ca.pem",
+        "REQUESTS_CA_BUNDLE": "/etc/mindcreek-ca.pem",
+        "CURL_CA_BUNDLE": "/etc/mindcreek-ca.pem"
+      },
+      "expose": [
+        "8080"
+      ],
+      "image": "mindcreek-gateway:${MINDCREEK_RELEASE:?required}",
+      "read_only": true,
+      "restart": "no",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "tmpfs": [
+        "/tmp"
+      ],
+      "platform": "linux/amd64",
+      "pull_policy": "never",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "volumes": [
+        "${MINDCREEK_STATE_DIR}/runtime/ca-bundle.pem:/etc/mindcreek-ca.pem:ro",
+        "./config/phase1-route-policy.json:/etc/mindcreek/phase1-route-policy.json:ro",
+        "./config/phase2-route-actions.json:/etc/mindcreek/phase2-route-actions.json:ro",
+        "./config/r3-routes.json:/etc/mindcreek/r3-routes.json:ro",
+        "./config/r3-capabilities.json:/etc/mindcreek/r3-capabilities.json:ro",
+        "${MINDCREEK_STATE_DIR}/secrets:/run/mindcreek-enterprise:rw"
+      ],
+      "user": "${MINDCREEK_UID:?required}:${MINDCREEK_GID:?required}",
+      "healthcheck": {
+        "disable": true
+      },
+      "profiles": [
+        "tools"
+      ],
+      "command": [
+        "install",
+        "status"
+      ]
+    }
+  },
+  "volumes": {
+    "postgres-data": {},
+    "redis-data": {},
+    "docreader-tmp": {},
+    "data-files": {}
+  }
+}

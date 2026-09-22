@@ -99,7 +99,7 @@ case "$operation" in
       gateway_tag=phase4
       gateway_version=${MINDCREEK_VERSION:-0.5.0-phase4}
     fi
-    upstream_version=${WEKNORA_VERSION:-v0.7.2}
+    upstream_version=${WEKNORA_VERSION:-v0.8.0}
     docker buildx build \
       --platform "$platform" \
       --load \

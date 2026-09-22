@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "enabled": false,
+  "links": {
+    "help": "",
+    "project": "",
+    "rbac": "",
+    "builtinModels": "",
+    "api": "",
+    "knowledgeGraph": "",
+    "migration": "",
+    "feedback": "",
+    "integration": "",
+    "sandbox": ""
+  }
+}

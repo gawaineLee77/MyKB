@@ -20,6 +20,7 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/catalog"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
 	productdb "github.com/gawaineLee77/MyKB/services/gateway/internal/database"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/enterprise"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/identity"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/ingestion"
@@ -73,6 +74,24 @@ func main() {
 		log.Fatalf("product migration error: %v", err)
 	}
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
+		return
+	}
+	enterpriseService := &enterprise.Service{Store: enterprise.NewRepository(db), Upstream: adapter}
+	enterpriseService.Identities, err = identity.NewRepository(db)
+	if err != nil {
+		log.Fatal("enterprise identity repository unavailable")
+	}
+	if len(os.Args) > 1 && os.Args[1] == "install" {
+		if err := handleInstallCommand(context.Background(), enterpriseService, os.Args[2:]); err != nil {
+			log.Printf("installation stopped: %s", enterprise.PublicError(err))
+			os.Exit(1)
+		}
+		return
+	}
+	if cfg.NativeWorkspaceEnabled {
+		if err := runNativeGateway(cfg, db, adapter, enterpriseService); err != nil {
+			log.Fatalf("native gateway stopped: %v", err)
+		}
 		return
 	}
 	profiles, err := profile.NewRepository(db)
@@ -248,6 +267,9 @@ func main() {
 		Subscriptions: subscriptionService, AgentScopes: agentScopeResolver, Models: modelService, MCP: hostedMCP,
 		IdentityBroker: identityBroker, IdentityGate: identityGate, IdentityAdmin: identityAdmin,
 		Observability: telemetry,
+	}
+	if cfg.EnterpriseEnabled {
+		dependencies.Enterprise = enterpriseService
 	}
 	if err := http.ListenAndServe(cfg.ListenAddr, server.NewGateway(cfg, capabilities, routePolicy, dependencies)); err != nil {
 		log.Fatalf("gateway stopped: %v", err)

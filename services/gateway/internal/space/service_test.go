@@ -143,6 +143,56 @@ func TestPlainRAGPassesManagedVLMToUpstream(t *testing.T) {
 	}
 }
 
+func TestFAQCreationUsesNativeUpstreamTypeInsideRAGMode(t *testing.T) {
+	profiles := &fakeProfileStore{items: map[string]profile.Profile{}}
+	upstream := &fakeUpstream{items: map[string]weknora.KnowledgeBase{}}
+	service, _ := NewService(&fakeRequests{}, profiles, upstream)
+	input := CreateInput{
+		Mode: "rag", KnowledgeBaseType: "faq", Name: "Support FAQ",
+		EmbeddingModelID: "embedding-1", SummaryModelID: "summary-1", VLMModelID: "vlm-1",
+	}
+	result, err := service.Create(context.Background(), input, "create-faq-0001", access.Identity{UserID: "alice", TenantID: 42}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored := profiles.items[result.KnowledgeBaseID]
+	var effective preset.EffectiveConfig
+	if err := json.Unmarshal(stored.EffectiveConfig, &effective); err != nil {
+		t.Fatal(err)
+	}
+	if result.ProductMode != profile.ModeRAG || result.KnowledgeBaseType != "faq" || stored.IndexProfile != "plain" ||
+		effective.KnowledgeBaseType != "faq" || upstream.lastCreate.Type != "faq" || upstream.lastCreate.FAQConfig == nil ||
+		upstream.lastCreate.FAQConfig.IndexMode != "question_only" || upstream.lastCreate.FAQConfig.QuestionIndexMode != "separate" ||
+		upstream.lastCreate.VLMConfig.Enabled {
+		t.Fatalf("result=%+v stored=%+v effective=%+v upstream=%+v", result, stored, effective, upstream.lastCreate)
+	}
+}
+
+func TestPersonalNotesRejectsFAQType(t *testing.T) {
+	service, _ := NewService(
+		&fakeRequests{},
+		&fakeProfileStore{items: map[string]profile.Profile{}},
+		&fakeUpstream{items: map[string]weknora.KnowledgeBase{}},
+	)
+	input := validCreateInput()
+	input.KnowledgeBaseType = "faq"
+	if _, err := service.Create(context.Background(), input, "create-note-faq-0001", access.Identity{UserID: "alice", TenantID: 42}, nil); errorCode(err) != "knowledge_mode.disabled" {
+		t.Fatalf("Personal Notes FAQ error = %v", err)
+	}
+}
+
+func TestRAGCreationRejectsUnsupportedUpstreamType(t *testing.T) {
+	service, _ := NewService(
+		&fakeRequests{},
+		&fakeProfileStore{items: map[string]profile.Profile{}},
+		&fakeUpstream{items: map[string]weknora.KnowledgeBase{}},
+	)
+	input := CreateInput{Mode: "rag", KnowledgeBaseType: "wiki", Name: "Unsupported", EmbeddingModelID: "embedding-1"}
+	if _, err := service.Create(context.Background(), input, "create-wiki-0001", access.Identity{UserID: "alice", TenantID: 42}, nil); errorCode(err) != "knowledge_mode.disabled" {
+		t.Fatalf("unsupported RAG type error = %v", err)
+	}
+}
+
 func validCreateInput() CreateInput {
 	return CreateInput{
 		Mode: "personal_notes", Name: "Alice Notes", Description: "Private notes",

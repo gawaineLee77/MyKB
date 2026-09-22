@@ -15,7 +15,7 @@ func TestVerifiedPolicyClassifiesBehaviorNotMethod(t *testing.T) {
 		t.Fatal("runtime.Caller failed")
 	}
 	filename := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../../config/phase2-route-actions.json"))
-	policy, err := Load(filename, "v0.7.2")
+	policy, err := Load(filename, "v0.8.0")
 	if err != nil {
 		t.Fatal(err)
 	}

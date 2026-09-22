@@ -16,7 +16,7 @@ COPY tools/frontend-overlay /product/tools/frontend-overlay
 
 ENV VITE_IS_DOCKER=true
 ENV NODE_OPTIONS=--max-old-space-size=4096
-ARG VITE_FRONTEND_COMMIT=weknora-v0.7.2-mindcreek-stage1
+ARG VITE_FRONTEND_COMMIT=weknora-v0.8.0-mindcreek-stage1
 ENV VITE_FRONTEND_COMMIT=${VITE_FRONTEND_COMMIT}
 
 RUN node /product/tools/frontend-overlay/apply.mjs /build/frontend /product/branding/mindcreek \

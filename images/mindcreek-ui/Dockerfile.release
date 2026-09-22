@@ -1,0 +1,14 @@
+# Build context is the verified, architecture-independent R4 frontend artifact.
+ARG NGINX_BASE=nginx:1.30.3-alpine
+FROM ${NGINX_BASE}
+ARG RELEASE_ID
+LABEL org.opencontainers.image.title="MindCreek R4 UI" \
+      org.opencontainers.image.version="${RELEASE_ID}"
+COPY dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY nginx-api-proxy.conf /etc/nginx/api-proxy.conf
+COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
+COPY LICENSE /usr/share/licenses/MindCreek/WeKnora-LICENSE
+ENV MAX_FILE_SIZE_MB=500
+EXPOSE 80
+ENTRYPOINT ["/docker-entrypoint.sh"]

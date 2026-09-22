@@ -1,0 +1,13 @@
+# Include public trust roots: the gateway calls enterprise OAuth HTTPS endpoints.
+ARG NGINX_BASE=nginx:1.30.3-alpine
+FROM ${NGINX_BASE} AS trust
+FROM scratch
+ARG RELEASE_ID
+LABEL org.opencontainers.image.title="MindCreek R4 Gateway" \
+      org.opencontainers.image.version="${RELEASE_ID}"
+COPY --from=trust /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY gateway /mindcreek-gateway
+USER 65532:65532
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=3s --retries=12 CMD ["/mindcreek-gateway", "healthcheck"]
+ENTRYPOINT ["/mindcreek-gateway"]

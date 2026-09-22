@@ -51,7 +51,7 @@ func loadRepositoryPolicy(t *testing.T) *Policy {
 		t.Fatal("runtime.Caller failed")
 	}
 	filename := filepath.Clean(filepath.Join(filepath.Dir(source), "../../../../config/phase1-route-policy.json"))
-	policy, err := Load(filename, "v0.7.2")
+	policy, err := Load(filename, "v0.8.0")
 	if err != nil {
 		t.Fatal(err)
 	}

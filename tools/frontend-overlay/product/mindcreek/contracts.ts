@@ -1,4 +1,5 @@
 export type KnowledgeModeID = 'personal_notes' | 'rag' | 'ontology'
+export type KnowledgeSpaceKind = 'personal_notes' | 'rag' | 'faq'
 export type KnowledgeRole = 'owner' | 'editor' | 'viewer'
 export type PublicationAccessMode = 'subscriber' | 'organization_public'
 
@@ -50,7 +51,7 @@ export interface CapabilityDocument {
 }
 
 export interface KnowledgeSpaceDraft {
-  mode: 'personal_notes' | 'rag'
+  mode: KnowledgeSpaceKind
   name: string
   description: string
   embeddingModelId: string
@@ -60,6 +61,7 @@ export interface KnowledgeSpaceDraft {
 export interface KnowledgeSpaceRequest {
   mode: 'personal_notes' | 'rag'
   index_profile: 'notes_plain' | 'plain'
+  knowledge_base_type: 'document' | 'faq'
   name: string
   description?: string
   embedding_model_id: string
@@ -114,7 +116,8 @@ export function isSelectionEnabled(
   document: CapabilityDocument,
   mode: KnowledgeSpaceDraft['mode'],
 ): boolean {
-  const capability = document.knowledge_modes.find(item => item.id === mode)
+  const productMode = mode === 'faq' ? 'rag' : mode
+  const capability = document.knowledge_modes.find(item => item.id === productMode)
   if (!capability?.enabled) return false
   if (mode === 'personal_notes') return true
   return capability.profiles?.some(profile => profile.id === 'plain' && profile.enabled) === true
@@ -133,8 +136,9 @@ export function buildKnowledgeSpaceRequest(
     throw new Error('Name and embedding model are required')
   }
   return {
-    mode: draft.mode,
+    mode: draft.mode === 'personal_notes' ? 'personal_notes' : 'rag',
     index_profile: draft.mode === 'personal_notes' ? 'notes_plain' : 'plain',
+    knowledge_base_type: draft.mode === 'faq' ? 'faq' : 'document',
     name,
     description: draft.description.trim() || undefined,
     embedding_model_id: embeddingModelId,

@@ -2,7 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PLAN="$ROOT/docs/PHASE4_IMPLEMENTATION_PLAN.md"
+PLAN="$ROOT/docs/archive/phase4/PHASE4_IMPLEMENTATION_PLAN.md"
 MIGRATION="$ROOT/services/gateway/internal/database/migrations/000009_phase4_agent_operations.up.sql"
 
 fail() {
@@ -18,7 +18,7 @@ for FILE in \
   "$ROOT/services/gateway/internal/access/gate.go" \
   "$MIGRATION" \
   "$ROOT/services/gateway/internal/database/migrations/000009_phase4_agent_operations.down.sql" \
-  "$ROOT/docs/PHASE4_GATE_A.md"; do
+  "$ROOT/docs/archive/phase4/PHASE4_GATE_A.md"; do
   [ -f "$FILE" ] || fail "missing ${FILE#$ROOT/}"
 done
 

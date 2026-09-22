@@ -1,0 +1,281 @@
+{
+  "time": "2026-09-15T08:49:20.786Z",
+  "probe_sha256": "9d85ee5055fe01d3a3374607d24aefb4851da7ff7990f4a019d727103c6354be",
+  "scope": "Real Vue pages with mocked HTTP responses; not real enterprise OAuth/browser deployment acceptance. Before: unchanged corporate login with R2 flag disabled; after: R2 enabled",
+  "checks": [
+    {
+      "name": "before.employee_login",
+      "passed": true,
+      "requests": [
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/oidc/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/oidc/config",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "name": "admin.login_and_setup",
+      "passed": true,
+      "requests": [
+        {
+          "path": "/api/v1/mindcreek/admin/auth/login",
+          "method": "POST"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/installation",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/me/invitations/pending-count",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "name": "employee.removed",
+      "passed": true,
+      "requests": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/me/invitations/pending-count",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "name": "employee.failed",
+      "passed": true,
+      "requests": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/me/invitations/pending-count",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "name": "admin.expiration_returns_admin_login",
+      "passed": true,
+      "requests": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/admin/auth/refresh",
+          "method": "POST"
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/admin/auth/refresh",
+          "method": "POST"
+        }
+      ]
+    },
+    {
+      "name": "root.starts_corporate_login",
+      "passed": true,
+      "requests": [
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/oidc/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/oidc/url",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/oidc/authorize",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "name": "employee.ready_enters_workspace",
+      "passed": true,
+      "requests": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/system/capabilities",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "name": "employee.pending_enters_workspace",
+      "passed": true,
+      "requests": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "POST"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/system/capabilities",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "name": "employee.signed_in_invitation",
+      "passed": true,
+      "requests": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/me/invitations/accept-by-token",
+          "method": "POST"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/system/capabilities",
+          "method": "GET"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    "docs/assets/r2/before-employee-login.png",
+    "docs/assets/r2/after-admin-login.png",
+    "docs/assets/r2/after-installation-status.png",
+    "docs/assets/r2/after-employee-removed.png",
+    "docs/assets/r2/after-employee-failed.png"
+  ],
+  "status": "passed"
+}

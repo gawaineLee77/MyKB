@@ -55,6 +55,17 @@
             <span><strong>{{ text.rag }}</strong><small>{{ text.ragHint }}</small></span>
             <em>{{ ragEnabled ? text.available : text.coming }}</em>
           </button>
+          <button
+            type="button"
+            class="mc-mode-card"
+            :class="{ selected: draft.mode === 'faq' }"
+            :disabled="!faqEnabled"
+            @click="draft.mode = 'faq'"
+          >
+            <span class="mc-mode-icon faq"><t-icon name="chat-bubble-help" /></span>
+            <span><strong>{{ faqName }}</strong><small>{{ text.faqHint }}</small></span>
+            <em>{{ faqEnabled ? text.available : text.coming }}</em>
+          </button>
         </div>
         <h3 class="mc-future-title">{{ text.futureProfiles }}</h3>
         <div class="mc-future-grid">
@@ -146,7 +157,7 @@ import { createKnowledgeSpace, getCreationModels, getKnowledgeModeCapabilities, 
 import { buildKnowledgeSpaceRequest, createIdempotencyKey, isSelectionEnabled, type CapabilityDocument } from './contracts'
 
 const router = useRouter()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const step = ref(1)
 const loading = ref(true)
 const submitting = ref(false)
@@ -158,7 +169,7 @@ const models = reactive<{ ready: boolean; overridesEnabled: boolean; embedding: 
   ready: false, overridesEnabled: false, embedding: [], summary: [], vlm: [],
 })
 const draft = reactive({
-  mode: 'personal_notes' as 'personal_notes' | 'rag',
+  mode: 'personal_notes' as 'personal_notes' | 'rag' | 'faq',
   name: '',
   description: '',
   embeddingModelId: '',
@@ -172,7 +183,7 @@ const copy = {
     back: 'Knowledge bases', title: 'Create a knowledge space', subtitle: 'Choose a focused workspace now; advanced profiles remain safely gated.',
     steps: ['Choose', 'Configure', 'Review'], loading: 'Loading approved capabilities…', loadFailed: 'The creation service is unavailable.', retry: 'Retry',
     chooseMode: 'What do you want to build?', chooseModeHint: 'Each space has one purpose and a controlled indexing profile.',
-    notes: 'Personal Notes', notesHint: 'Private Markdown and text notes for your daily work.', rag: 'Document RAG', ragHint: 'Multi-format documents with approved hybrid retrieval.',
+    notes: 'Personal Notes', notesHint: 'Private Markdown and text notes for your daily work.', rag: 'Document RAG', ragHint: 'Multi-format documents with approved hybrid retrieval.', faqHint: 'Structured questions and prepared answers using WeKnora native FAQ retrieval.',
     available: 'Available', coming: 'Coming later', futureProfiles: 'Future profiles', configure: 'Configure your space', name: 'Name', description: 'Description',
     namePlaceholder: 'For example: Research notes', embedding: 'Embedding model', summary: 'Chat and summary model',
     managedReady: 'Managed AI is ready', managedHint: 'MindCreek will use organization defaults. No API key or model setup is required.', managedUnavailable: 'Managed models are not ready. Contact your administrator.',
@@ -185,7 +196,7 @@ const copy = {
     back: '知识库', title: '创建知识空间', subtitle: '现在选择一个清晰用途；未来的高级能力仍由服务端安全管控。',
     steps: ['选择', '配置', '确认'], loading: '正在载入已批准能力…', loadFailed: '创建服务暂时不可用。', retry: '重试',
     chooseMode: '你想创建什么？', chooseModeHint: '每个空间只承担一种用途，并使用受控的索引配置。',
-    notes: '个人笔记', notesHint: '记录日常工作的私人 Markdown 与文本笔记。', rag: '文档 RAG', ragHint: '使用已批准混合检索的多格式文档知识库。',
+    notes: '个人笔记', notesHint: '记录日常工作的私人 Markdown 与文本笔记。', rag: '文档 RAG', ragHint: '使用已批准混合检索的多格式文档知识库。', faqHint: '使用 WeKnora 原生 FAQ 检索管理结构化问题与标准答案。',
     available: '可使用', coming: '后续开放', futureProfiles: '未来能力', configure: '配置知识空间', name: '名称', description: '描述',
     namePlaceholder: '例如：研究笔记', embedding: '向量模型', summary: '对话与摘要模型',
     managedReady: '托管 AI 已就绪', managedHint: 'MindCreek 将自动使用组织默认模型，无需填写 API 密钥或配置模型。', managedUnavailable: '托管模型尚未就绪，请联系管理员。',
@@ -196,13 +207,15 @@ const copy = {
   },
 }
 const text = computed(() => locale.value.startsWith('zh') ? copy.zh : copy.en)
+const faqName = computed(() => t('knowledgeEditor.basic.typeFAQ'))
 const notesEnabled = computed(() => capabilities.value ? isSelectionEnabled(capabilities.value, 'personal_notes') : false)
 const ragEnabled = computed(() => capabilities.value ? isSelectionEnabled(capabilities.value, 'rag') : false)
+const faqEnabled = computed(() => capabilities.value ? isSelectionEnabled(capabilities.value, 'faq') : false)
 const canContinue = computed(() => step.value === 1
-  ? (draft.mode === 'personal_notes' ? notesEnabled.value : ragEnabled.value)
+  ? (draft.mode === 'personal_notes' ? notesEnabled.value : draft.mode === 'faq' ? faqEnabled.value : ragEnabled.value)
   : draft.name.trim().length > 0 && draft.embeddingModelId.length > 0)
-const selectedModeName = computed(() => draft.mode === 'personal_notes' ? text.value.notes : text.value.rag)
-const selectedModeHint = computed(() => draft.mode === 'personal_notes' ? text.value.notesHint : text.value.ragHint)
+const selectedModeName = computed(() => draft.mode === 'personal_notes' ? text.value.notes : draft.mode === 'faq' ? faqName.value : text.value.rag)
+const selectedModeHint = computed(() => draft.mode === 'personal_notes' ? text.value.notesHint : draft.mode === 'faq' ? text.value.faqHint : text.value.ragHint)
 const selectedModelSummary = computed(() => {
   const embedding = models.embedding.find(model => model.id === draft.embeddingModelId)?.display_name || '—'
   const chat = models.summary.find(model => model.id === draft.summaryModelId)?.display_name || '—'
@@ -258,7 +271,9 @@ async function submit() {
     const result = await createKnowledgeSpace(request, idempotencyKey)
     const target = result.product_mode === 'personal_notes'
       ? `/platform/mindcreek/notes/${result.knowledge_base_id}`
-      : `/platform/mindcreek/rag/${result.knowledge_base_id}`
+      : result.knowledge_base_type === 'faq'
+        ? `/platform/knowledge-bases/${result.knowledge_base_id}`
+        : `/platform/mindcreek/rag/${result.knowledge_base_id}`
     await router.push(target)
   } catch (error) {
     submitError.value = messageOf(error)
@@ -285,11 +300,11 @@ onMounted(load)
 .mc-panel { max-width: 900px; margin: 0 auto; padding: 32px; border: 1px solid #dbe8e2; border-radius: 18px; background: rgba(255,255,255,.94); box-shadow: 0 18px 50px rgba(40,84,71,.08); }
 .mc-loading, .mc-error { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 180px; }.mc-error div { flex: 1; }.mc-error p { margin: 3px 0 0; color: #8b5353; }
 .mc-section-heading { display: flex; justify-content: space-between; gap: 24px; align-items: start; margin-bottom: 24px; }.mc-section-heading h2 { margin: 0 0 6px; font-size: 22px; }.mc-section-heading p { margin: 0; color: #70847e; }
-.mc-mode-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.mc-mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .mc-mode-card { position: relative; min-height: 144px; padding: 22px; display: grid; grid-template-columns: 46px 1fr; gap: 15px; text-align: left; border: 1px solid #d6e4df; border-radius: 14px; background: #fff; cursor: pointer; transition: .16s ease; }
 .mc-mode-card:hover:not(:disabled) { transform: translateY(-2px); border-color: #6db59f; box-shadow: 0 10px 25px rgba(37,112,88,.1); }.mc-mode-card.selected { border: 2px solid #258063; background: #f2fbf7; padding: 21px; }.mc-mode-card:disabled { cursor: not-allowed; opacity: .55; }
 .mc-mode-card strong, .mc-mode-card small { display: block; }.mc-mode-card strong { margin: 2px 0 8px; font-size: 17px; }.mc-mode-card small { color: #6d827b; line-height: 1.45; }.mc-mode-card em { position: absolute; right: 16px; bottom: 13px; color: #23775f; font-size: 11px; font-style: normal; text-transform: uppercase; letter-spacing: .7px; }
-.mc-mode-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; font-size: 22px; }.mc-mode-icon.notes { color: #7a6434; background: #fff1c9; }.mc-mode-icon.rag { color: #226e5b; background: #d9f2e9; }
+.mc-mode-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; font-size: 22px; }.mc-mode-icon.notes { color: #7a6434; background: #fff1c9; }.mc-mode-icon.rag { color: #226e5b; background: #d9f2e9; }.mc-mode-icon.faq { color: #315d87; background: #e3effb; }
 .mc-future-title { margin: 28px 0 12px; color: #6e837c; font-size: 12px; letter-spacing: .8px; text-transform: uppercase; }.mc-future-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }.mc-future-card { padding: 13px; display: grid; grid-template-columns: 24px 1fr 18px; gap: 8px; align-items: center; border-radius: 10px; background: #f5f8f7; color: #789088; }.mc-future-card strong, .mc-future-card small { display: block; }.mc-future-card small { margin-top: 2px; font-size: 11px; }
 .mc-pill { padding: 6px 12px; border-radius: 99px; color: #176b54; background: #def3ea; font-size: 12px; white-space: nowrap; }.mc-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }.mc-field { display: flex; flex-direction: column; gap: 8px; color: #436159; font-size: 13px; font-weight: 600; }.mc-field-wide { grid-column: 1 / -1; }.mc-inline-warning { margin-top: 20px; padding: 12px 14px; display: flex; gap: 8px; align-items: center; border-radius: 10px; background: #fff7e1; color: #7e6522; }
 .mc-managed-models { margin-top: 20px; padding: 14px; display: flex; gap: 10px; align-items: center; border-radius: 11px; color: #176b54; background: #edf9f4; }.mc-managed-models strong, .mc-managed-models small { display: block; }.mc-managed-models small { margin-top: 3px; color: #678078; }.mc-advanced { margin-top: 14px; border-top: 1px solid #e3ece8; padding-top: 12px; }.mc-advanced > button { display: flex; align-items: center; gap: 7px; padding: 5px 0; color: #58736b; border: 0; background: transparent; cursor: pointer; }.mc-advanced-fields { margin-top: 12px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; border-radius: 10px; background: #f5f8f7; }.mc-advanced-fields .t-button { grid-column: 1 / -1; justify-self: start; }
