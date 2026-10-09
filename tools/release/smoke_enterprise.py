@@ -17,7 +17,7 @@ import time
 import urllib.parse
 
 ROOT=Path(__file__).resolve().parents[2]
-LOCAL=ROOT/'.local/enterprise-amd64'
+LOCAL=Path(os.environ.get('MINDCREEK_RELEASE_WORKDIR', ROOT/'.local/enterprise-amd64'))
 PACKAGE=Path((LOCAL/'package-path').read_text().strip())
 STATE=Path(tempfile.mkdtemp(prefix='smoke-',dir=LOCAL))
 PROJECT='mindcreek-amd64-smoke-'+secrets.token_hex(4)
@@ -53,7 +53,8 @@ def init(self,*args,**kwargs):
 http.server.HTTPServer.__init__=init
 runpy.run_path('/fixture/mock_identity.py',run_name='__main__')
 ''')
-base={'image':'python:3.12-alpine','platform':'linux/amd64','pull_policy':'never','volumes':[str(fixture)+':/fixture:ro',str(STATE/'tls')+':/cert:ro']}
+# These stateless test servers have no business data or pending jobs to drain.
+base={'image':'python:3.12-alpine','platform':'linux/amd64','pull_policy':'never','stop_signal':'SIGKILL','volumes':[str(fixture)+':/fixture:ro',str(STATE/'tls')+':/cert:ro']}
 override={'services':{'identity':{**base,'command':['python','/fixture/identity_tls.py']},'models':{**base,'command':['python','/fixture/mock_openai.py','--host','0.0.0.0']}}}
 (STATE/'compose.override.json').write_text(json.dumps(override))
 report={'release':dep.release()['release'],'started_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'project':PROJECT,'platform':'linux/amd64','host_execution':'ARM64 Docker Desktop AMD64 emulation','scope':'Actual packaged installer and runtime; isolated synthetic OAuth HTTPS CA and model endpoints. No real corporate OAuth/model or physical x86 server acceptance.','checks':[],'requests':[],'images':dep.release()['images']}
@@ -107,6 +108,9 @@ def processing(kid,token,tenant):
   if doc['parse_status'] in ('completed','failed'):return doc
   time.sleep(2)
  raise AssertionError('Document processing timeout')
+if os.environ.get('MINDCREEK_UPGRADE_SMOKE') == 'true':
+ from current_smoke import prepare_old_addons
+ prepare_old_addons(globals())
 try:
  dep.validate();dep.verify_images();check('configuration_and_8_amd64_image_locks')
  dep.up_services(['identity','models'])
@@ -166,6 +170,9 @@ try:
  request('/api/v1/auth/register','POST',{'email':'forbidden@synthetic.test','password':password},expected=(403,404));check('public_password_registration_closed')
  dep.compose(['restart','gateway']);dep.up_services(['gateway'])
  request('/api/v1/auth/me',token=token,tenant=tenant);check('gateway_restart_preserves_admin_session')
+ if os.environ.get('MINDCREEK_CURRENT_SMOKE') == 'true':
+  from current_smoke import additional_checks
+  additional_checks(globals())
  # Use the packaged ops image and mounted data volume, proving backup helper availability.
  dep.compose(['stop','tls','frontend','gateway','app','docreader'])
  with (STATE/'backup/database.dump').open('wb') as out:

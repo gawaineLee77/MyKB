@@ -1,43 +1,33 @@
-# R4 AMD64 enterprise bundle
+# Current AMD64 enterprise bundle
 
-This directory defines the fresh-install enterprise runtime. It contains no
-synthetic identity/model endpoints, build dependencies, company credentials or
-legacy volumes. Use the [Chinese deployment guide](../../docs/guides/R4_AMD64_ENTERPRISE_DEPLOYMENT_ZH.md).
+The runtime supports fresh installations and controlled upgrades of the pinned
+WeKnora v0.8.0 workspace-centric enterprise deployment. It includes R5 employee
+assistants, the native graph browser and editable Word export. Use the
+[Chinese install/upgrade guide](../../docs/guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md).
 
-Build from a clean pinned upstream and the current verified Node 24 R4 UI artifact:
+The server needs Docker/Compose and Python 3.10+. All nine AMD64 images are
+included, including optional Neo4j/APOC; model weights and company secrets are
+not included. Existing Phase 5/v0.7.2 databases are not an in-place upgrade source.
 
-```sh
-python3 tools/release/build_enterprise.py
-# Export the public CA bundle from the exact Nginx image recorded in build.json.
-# This is automated by the package assembler when the cache file is absent.
-python3 tools/release/package_enterprise.py assemble
-python3 tools/release/package_enterprise.py export
-python3 tools/release/verify_archive.py
-python3 tools/release/smoke_enterprise.py
-python3 tools/release/verify_restore.py
-# The current ARM-host diagnostic additionally records the known failed AMD64
-# bin/check-database result, probe_bm25.py results and native ARM64 controls.
-# collect_enterprise.py is deliberately strict about these unresolved-check inputs.
-python3 tools/release/collect_enterprise.py
-python3 tools/release/package_enterprise.py finalize
-```
+## Release tooling
 
-Generated archives live under ignored `images/archives/`. Builds preserve existing
-images, data and prior archives. `finalize` requires a completed smoke report for the
-same runtime fingerprint, with any unresolved limitations recorded explicitly.
-The current package requires target-server BM25 preflight because the AMD64
-image aborts on a minimal keyword query under this host emulator. Run-time instance secrets must be outside the bundle, as described in
-the guide. The server only needs Docker/Compose and Python 3.10+.
+- `tools/release/build_current.py`: current verified Node 24 frontend and Go 1.26
+  sources, isolated image contexts, nine locked AMD64 images.
+- `tools/release/package_current.py assemble|export|finalize`: immutable package
+  with checksums, docs, CA roots, install/upgrade/recovery tools and evidence.
+- `tools/release/verify_archive.py`: reload the exported tar and check every image.
+- `tools/release/smoke_enterprise.py` with `MINDCREEK_CURRENT_SMOKE=true`: actual
+  images, isolated synthetic OAuth/model services and backup/recovery.
+- Current generated artifacts are under `.local/enterprise-current/` and ignored
+  `images/archives/`. Set `MINDCREEK_RELEASE_WORKDIR` to the current directory for
+  smoke/archive tools. Original R4/R5 reports and release archives stay intact.
 
-Images are built with the current worktree, not only HEAD. Release metadata records
-that fact and the gateway/UI content fingerprints. Go 1.26 and Node 24 remain build
-requirements. The offline builder uses cached AMD64 dependencies, a native Go
-cross-compile, and the already tested architecture-independent UI assets.
+`bin/release plan` is read-only. `upgrade` preflights configuration, stops the
+identified project, creates a cold backup, replaces only recognized historical
+image pins/policies and starts the new runtime. Backups include actual product
+images used by old add-ons. `restore` accepts only a new project/state and the
+matching release, and does not start services. No operation deletes live volumes.
 
-The current acceptance collector is specific to this release's diagnosed BM25
-failure. It expects `database-preflight.json`, `bm25-diagnostic.json`, and
-`bm25-diagnostic-arm64.json` under `.local/enterprise-amd64/`. Obtain the first
-with the packaged `bin/check-database --output ...`; run `probe_bm25.py` for the
-other two (`--platform linux/arm64 --image <cached ARM64 reference>` for the
-control). Record a different target-server outcome separately; do not copy a
-historical report or relax this collector to imply hybrid retrieval passed.
+Local synthetic acceptance is separate from R6 company deployment. In particular,
+physical AMD64 BM25/database checks, real OAuth/model services, proxy behavior and
+Word edit/save need target-environment acceptance; read the package's limitations.

@@ -96,6 +96,10 @@ Reuse the managed model service and stable `builtin-mindcreek-chat`, `builtin-mi
 
 ## 8. Architecture
 
+Single-answer Word export is a product frontend adapter for ordinary and agent answers. It converts already displayed Markdown to DOCX in the browser, including native editable tables and supported OMML equations; unsupported math stops export. It uses existing answer/reference data without extra business API calls, external conversion services or new permissions. See [export acceptance](plans/CHAT_WORD_EXPORT_ACCEPTANCE.md). Full-conversation export, assistant-page controls and image embedding are outside the first increment.
+
+E-01 adds a read-only entity graph tab for native Owner/Admin/Contributor members with KB read access in the owning workspace; Viewer and API keys are denied. A product gateway adapter checks native identity, KB and source-document access before returning bounded Neo4j results. It uses the pinned graph schema and fixed parameterized read queries because upstream has no persisted entity graph HTTP API. Browser credentials never include database secrets. Wiki links and entity graphs remain separate. See [graph browser acceptance](plans/KNOWLEDGE_GRAPH_BROWSER_ACCEPTANCE.md); upstream schema changes require adapter regression checks.
+
 ```mermaid
 flowchart LR
     E[Employee OAuth2] --> G[Product gateway]
@@ -160,6 +164,8 @@ Verify candidate tags/commits, native routes, models, membership, storage/index 
 Retain product-owned Compose wrappers and private App/database/Redis/storage topology. The default workspace must be ready before employee business traffic. Bootstrap has a distinct, closed installation window; transient registration must not be externally reachable.
 
 Use Go 1.26, Node 24 and Python 3.12/uv where applicable. Configure approved model endpoints, OAuth endpoints, TLS and worker/storage dependencies only in protected deployment configuration. R1 probes use cached images, isolated networks and synthetic identities without production endpoints.
+
+The current AMD64 offline bundle supports fresh installation and upgrades from the pinned v0.8.0 enterprise runtime. Upgrades preserve instance identity, model configuration and data, take a stopped-volume backup before forward migrations, and remove only recognized legacy image/policy overrides. Recovery uses the matching release in a new isolated project; legacy Phase 5 data is not imported automatically. See the [deployment and upgrade guide](guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md).
 
 ## 15. Security and configuration
 

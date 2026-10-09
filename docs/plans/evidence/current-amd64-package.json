@@ -1,0 +1,403 @@
+{
+  "release": "current-20261009-a86981ad",
+  "status": "passed_with_limitations",
+  "platform": "linux/amd64",
+  "time": "2026-10-09T01:15:15.983614+00:00",
+  "host_execution": "ARM64 Docker Desktop AMD64 emulation",
+  "package_runtime_sha256": "af768b771790eecb81cb4a0f41376cb8129ca2ff332ca22bbcb7ce51c6dcb8e8",
+  "images": [
+    {
+      "name": "mindcreek-ui:current-20261009-a86981ad",
+      "id": "sha256:1955541340d177f8885ce19e3b1e249b6f6fa03598046fd49accfdb779442274",
+      "os": "linux",
+      "architecture": "amd64",
+      "repo_digests": [
+        "mindcreek-ui@sha256:1955541340d177f8885ce19e3b1e249b6f6fa03598046fd49accfdb779442274"
+      ],
+      "config_digest": "sha256:e0595a6b6a4bc52e4a481f1813be2573f640a74c7af3df023a12451ed17cab43"
+    },
+    {
+      "name": "mindcreek-gateway:current-20261009-a86981ad",
+      "id": "sha256:c2c5d74ca0740c13d94c6aa818c9074dba401c5a928701293d3245d9ec1467b8",
+      "os": "linux",
+      "architecture": "amd64",
+      "repo_digests": [
+        "mindcreek-gateway@sha256:c2c5d74ca0740c13d94c6aa818c9074dba401c5a928701293d3245d9ec1467b8"
+      ],
+      "config_digest": "sha256:659ed03eac8af35dc3b20d7d68fa7f40060bc17eb231497089036e36f7fdec7b"
+    },
+    {
+      "name": "wechatopenai/weknora-app:v0.8.0",
+      "id": "sha256:d266bb3cb6b9de071b78d133e9b68592826d42be63bae7a6b4374b8d0ce1bdc5",
+      "os": "linux",
+      "architecture": "amd64",
+      "repo_digests": [
+        "wechatopenai/weknora-app@sha256:d266bb3cb6b9de071b78d133e9b68592826d42be63bae7a6b4374b8d0ce1bdc5"
+      ],
+      "config_digest": "sha256:254df7b8594d71884aae0fc96822d0a9b94b875d9cb14a4193238cbda58d1594"
+    },
+    {
+      "name": "wechatopenai/weknora-docreader:v0.8.0",
+      "id": "sha256:546aa7902310144e851a6e8dfd5a3e713aca4e7ca4456782a1efc69e7359708b",
+      "os": "linux",
+      "architecture": "amd64",
+      "repo_digests": [
+        "wechatopenai/weknora-docreader@sha256:546aa7902310144e851a6e8dfd5a3e713aca4e7ca4456782a1efc69e7359708b"
+      ],
+      "config_digest": "sha256:e32792dbbe3cf0f0222a5e64d968d0925b22e78deab12f0dcbe6351ba7852391"
+    },
+    {
+      "name": "paradedb/paradedb:v0.22.2-pg17",
+      "id": "sha256:cb2af8cbafea8c41cde450b7be845abfd74c014cb13e35e06677aad8aed0eba0",
+      "os": "linux",
+      "architecture": "amd64",
+      "repo_digests": [
+        "paradedb/paradedb@sha256:cb2af8cbafea8c41cde450b7be845abfd74c014cb13e35e06677aad8aed0eba0"
+      ],
+      "config_digest": "sha256:d6fb8f50e25ea880d20e3acad6862931f97cb23abf4efa9c6256d2e112ed8de4"
+    },
+    {
+      "name": "redis:7.0-alpine",
+      "id": "sha256:0a34d7c44fe60c6ba273c0cddc26d1571a5ccd69280623a66b70393231a9eed9",
+      "os": "linux",
+      "architecture": "amd64",
+      "repo_digests": [
+        "redis@sha256:0a34d7c44fe60c6ba273c0cddc26d1571a5ccd69280623a66b70393231a9eed9"
+      ],
+      "config_digest": "sha256:426f6fb54a1b82a2254bce70e5f4a72d15c14ecd3cc70d799465b956e7a32548"
+    },
+    {
+      "name": "python:3.12-alpine",
+      "id": "sha256:78e98729f8fc4099e53cffb3fe59fd15b18dfa4ace8c914dee0cefa5320068eb",
+      "os": "linux",
+      "architecture": "amd64",
+      "repo_digests": [
+        "python@sha256:78e98729f8fc4099e53cffb3fe59fd15b18dfa4ace8c914dee0cefa5320068eb"
+      ],
+      "config_digest": "sha256:28eb0cb65acb65b970e85c0dc57d10067868fae8dd00d072413df273132123ac"
+    },
+    {
+      "name": "nginx:1.30.3-alpine",
+      "id": "sha256:61f816887864af764259e28edb5331584ae2e42de57b3cb1e4f134d757559951",
+      "os": "linux",
+      "architecture": "amd64",
+      "repo_digests": [
+        "mindcreek-release-base@sha256:0d3b80406a13a767339fbe2f41406d6c7da727ab89cf8fae399e81f780f814d1",
+        "nginx@sha256:0d3b80406a13a767339fbe2f41406d6c7da727ab89cf8fae399e81f780f814d1"
+      ],
+      "config_digest": "sha256:d0701bd41f8279135aa6c81e23fbcdae7bcc3df591c47741405412a8dcdb2eab"
+    },
+    {
+      "name": "mindcreek-neo4j:2025.10.1-graph1",
+      "id": "sha256:eb831a7b2b8a2f8f3423ceafb3859ec05c6a1db3138d5788095e1412745d5c9a",
+      "os": "linux",
+      "architecture": "amd64",
+      "repo_digests": [
+        "mindcreek-neo4j@sha256:eb831a7b2b8a2f8f3423ceafb3859ec05c6a1db3138d5788095e1412745d5c9a"
+      ],
+      "config_digest": "sha256:ff2dec0f40ccf49304fd6319167d83a7884463fa9395431d1775bc359bde49ca"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "target_enterprise_acceptance_pending",
+      "impact": "Real company OAuth/models, physical AMD64 capacity and Word edit/save remain target-environment checks."
+    },
+    {
+      "code": "amd64_emulation_bm25_abort",
+      "status": "reproduced_in_this_release",
+      "impact": "BM25/hybrid retrieval is not accepted on this ARM host emulator. Run the included database preflight on physical AMD64 before importing business data; no default index configuration was changed.",
+      "evidence": "database-preflight.json"
+    }
+  ],
+  "fresh_checks": 32,
+  "upgrade_checks": 35,
+  "upgrade_from": "r4-20260916-118b8af3",
+  "frontend_tests": 608,
+  "python312_tests": 29,
+  "old_graph_survives_upgrade": true,
+  "pre_upgrade_cold_rollback_passed": true,
+  "checks": [
+    {
+      "name": "configuration_and_8_amd64_image_locks",
+      "passed": true
+    },
+    {
+      "name": "private_admin_bootstrap",
+      "passed": true
+    },
+    {
+      "name": "idempotent_admin_and_default_space",
+      "passed": true
+    },
+    {
+      "name": "six_runtime_services_healthy",
+      "passed": true
+    },
+    {
+      "name": "native_ui_admin_entry_retired_embed_and_tls",
+      "passed": true
+    },
+    {
+      "name": "admin_gateway_login_and_owner_membership",
+      "passed": true
+    },
+    {
+      "name": "oauth_over_custom_ca_and_first_viewer_onboarding",
+      "passed": true
+    },
+    {
+      "name": "native_kb_managed_model_defaults",
+      "passed": true
+    },
+    {
+      "name": "synthetic_kb_explicit_native_vector_only",
+      "passed": true
+    },
+    {
+      "name": "real_docreader_markdown_upload_and_processing",
+      "passed": true
+    },
+    {
+      "name": "real_docreader_text_pdf_upload_and_processing",
+      "passed": true
+    },
+    {
+      "name": "native_faq_create",
+      "passed": true
+    },
+    {
+      "name": "viewer_read_and_write_download_boundaries",
+      "passed": true
+    },
+    {
+      "name": "four_authenticated_mcp_tools",
+      "passed": true
+    },
+    {
+      "name": "employee_mcp_vector_only_model_answer_references",
+      "passed": true
+    },
+    {
+      "name": "legacy_business_retired",
+      "passed": true
+    },
+    {
+      "name": "public_password_registration_closed",
+      "passed": true
+    },
+    {
+      "name": "gateway_restart_preserves_admin_session",
+      "passed": true
+    },
+    {
+      "name": "current_optional_neo4j_apoc_healthy",
+      "passed": true
+    },
+    {
+      "name": "current_graph_browser_real_neo4j",
+      "passed": true
+    },
+    {
+      "name": "current_graph_viewer_denied",
+      "passed": true
+    },
+    {
+      "name": "current_r5_employee_channel_question_history",
+      "passed": true
+    },
+    {
+      "name": "current_r5_channel_history_not_visible_through_main_api",
+      "passed": true
+    },
+    {
+      "name": "current_r5_nginx_dynamic_frame_policy",
+      "passed": true
+    },
+    {
+      "name": "current_cold_backup_includes_all_volumes",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_installation",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_r5_bindings",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_graph",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_real_employee_document_and_history",
+      "passed": true
+    },
+    {
+      "name": "current_original_instance_can_resume_after_backup",
+      "passed": true
+    },
+    {
+      "name": "ops_quiesced_files_and_redis_backup",
+      "passed": true
+    },
+    {
+      "name": "database_backup_restore_native_and_product_schemas",
+      "passed": true
+    },
+    {
+      "name": "configuration_and_8_amd64_image_locks",
+      "passed": true
+    },
+    {
+      "name": "private_admin_bootstrap",
+      "passed": true
+    },
+    {
+      "name": "idempotent_admin_and_default_space",
+      "passed": true
+    },
+    {
+      "name": "six_runtime_services_healthy",
+      "passed": true
+    },
+    {
+      "name": "native_ui_admin_entry_retired_embed_and_tls",
+      "passed": true
+    },
+    {
+      "name": "admin_gateway_login_and_owner_membership",
+      "passed": true
+    },
+    {
+      "name": "oauth_over_custom_ca_and_first_viewer_onboarding",
+      "passed": true
+    },
+    {
+      "name": "native_kb_managed_model_defaults",
+      "passed": true
+    },
+    {
+      "name": "synthetic_kb_explicit_native_vector_only",
+      "passed": true
+    },
+    {
+      "name": "real_docreader_markdown_upload_and_processing",
+      "passed": true
+    },
+    {
+      "name": "real_docreader_text_pdf_upload_and_processing",
+      "passed": true
+    },
+    {
+      "name": "native_faq_create",
+      "passed": true
+    },
+    {
+      "name": "viewer_read_and_write_download_boundaries",
+      "passed": true
+    },
+    {
+      "name": "four_authenticated_mcp_tools",
+      "passed": true
+    },
+    {
+      "name": "employee_mcp_vector_only_model_answer_references",
+      "passed": true
+    },
+    {
+      "name": "legacy_business_retired",
+      "passed": true
+    },
+    {
+      "name": "public_password_registration_closed",
+      "passed": true
+    },
+    {
+      "name": "gateway_restart_preserves_admin_session",
+      "passed": true
+    },
+    {
+      "name": "upgrade_recognizes_old_graph_and_ui_pins",
+      "passed": true
+    },
+    {
+      "name": "upgrade_preserves_identity_models_password_graph_and_links",
+      "passed": true
+    },
+    {
+      "name": "upgrade_old_admin_employee_sessions_and_document_survive",
+      "passed": true
+    },
+    {
+      "name": "current_optional_neo4j_apoc_healthy",
+      "passed": true
+    },
+    {
+      "name": "current_graph_browser_real_neo4j",
+      "passed": true
+    },
+    {
+      "name": "current_graph_viewer_denied",
+      "passed": true
+    },
+    {
+      "name": "current_r5_employee_channel_question_history",
+      "passed": true
+    },
+    {
+      "name": "current_r5_channel_history_not_visible_through_main_api",
+      "passed": true
+    },
+    {
+      "name": "current_r5_nginx_dynamic_frame_policy",
+      "passed": true
+    },
+    {
+      "name": "current_cold_backup_includes_all_volumes",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_installation",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_r5_bindings",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_graph",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_real_employee_document_and_history",
+      "passed": true
+    },
+    {
+      "name": "current_original_instance_can_resume_after_backup",
+      "passed": true
+    },
+    {
+      "name": "ops_quiesced_files_and_redis_backup",
+      "passed": true
+    },
+    {
+      "name": "database_backup_restore_native_and_product_schemas",
+      "passed": true
+    }
+  ],
+  "evidence_sha256": {
+    "smoke.json": "6f3f81a21470e02675728c17abd2eb57e36fa796089065d6892f35d924402536",
+    "upgrade-smoke/smoke.json": "01c162049625a29cd866d7e6e40a6095e8d156bd32b4c4a0c651185999f34686",
+    "upgrade-marker.json": "42bde1afaae8c8efe2ddc953b7af052c3c9b551c5b0b510295ff7140ecbd8de1",
+    "cold-rollback.json": "a5dc07250d4c1012b4685585c2e9e3007312882d5d924492c332b903e91551c4",
+    "archive-check.json": "f99bf71e7526696395236226ad2936a4ac8aa5567db8dd96e5ac84c91f2fc1ae",
+    "database-preflight.json": "d23de4e2f3d2c3ef4760c905008c7a825ec253a6d3d63dafd5b7eaef5c11251f",
+    "gateway-tests.log": "683c3da453676132a75b48f0ec0376131366032f47d971e3599495ed90ec65e8",
+    "frontend-tests.log": "b82976d396edc3903e5ff6bf3ff236c2ac4a808f0d373fbea182469524c278e9",
+    "installer-python312.log": "f8d5b94f2fb633ec62fd7878afc5ae42c13a6c39cca7fbfdddc4b39c4f6903a0"
+  },
+  "upstream_clean": true,
+  "company_deployed": false
+}

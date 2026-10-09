@@ -98,5 +98,11 @@ class InstallerTests(unittest.TestCase):
             self.assertTrue(env['OIDC_AUTH_'+name].startswith('http://gateway:8080/api/v1/mindcreek/oidc/'))
         self.assertIn('${MINDCREEK_EXTERNAL_ORIGIN',env['OIDC_AUTH_ISSUER_URL'])
 
+    def test_up_reloads_frontend_then_tls_after_gateway_recreation(self):
+        with patch.object(m,'compose',side_effect=[None,'gateway\nfrontend\ntls\n',None,None]) as compose:
+            m.up_services(['gateway'],recreate=True)
+        self.assertEqual(compose.call_args_list[-2].args[0],['exec','-T','frontend','nginx','-s','reload'])
+        self.assertEqual(compose.call_args_list[-1].args[0],['exec','-T','tls','nginx','-s','reload'])
+
 
 if __name__=='__main__':unittest.main()

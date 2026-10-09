@@ -96,6 +96,10 @@ admin 日常登录、刷新、改密和退出经过产品网关。认证例外�
 
 ## 8. 系统架构
 
+单条回答 Word 导出采用产品前端适配，支持普通问答与智能体回答。浏览器将已显示的 Markdown 转为 DOCX，生成可编辑原生表格及支持的 OMML 公式；不支持的公式会停止导出。使用回答已有内容及引用，不增加业务 API 请求、外部转换服务或新权限。见[导出验收](plans/CHAT_WORD_EXPORT_ACCEPTANCE.md)。整段会话导出、小助手页面入口和图片嵌入不在首版范围。
+
+E-01 新增实体图谱只读页签，仅所属空间的原生 Owner/Admin/Contributor 成员且有 KB 读取权限可用；拒绝 Viewer 和 API Key。产品网关适配器核验原生身份、KB 和来源文档权限后，返回有数量上限的 Neo4j 结果。因上游没有已入库实体图 HTTP API，采用固定图谱结构和参数化只读查询。浏览器不接触数据库秘密，Wiki 链接图与实体图分开。见[图谱浏览验收](plans/KNOWLEDGE_GRAPH_BROWSER_ACCEPTANCE.md)；上游结构变化时必须重跑适配回归。
+
 ```mermaid
 flowchart LR
     E[员工 OAuth2] --> G[产品网关]
@@ -162,6 +166,8 @@ R3 独立运行组合退役 publication/catalog/subscription/note/grant/profile 
 保留产品 Compose 包装和私有 App/数据库/Redis/存储网络。默认空间就绪后才开放员工业务访问。初始化使用独立且关闭的安装窗口，临时注册能力不得对外暴露。
 
 采用 Go 1.26、Node 24 和适用场景的 Python 3.12/uv。批准的模型、OAuth、TLS、后台任务和存储配置仅放在受保护部署配置中。R1 探针使用缓存镜像、隔离网络及合成身份，不使用生产端点。
+
+当前 AMD64 完整离线包支持全新安装和锁定 v0.8.0 企业运行组合的升级。升级保留实例身份、模型配置和数据，在前向迁移前执行停机卷备份，仅移除已识别的历史镜像/策略覆盖。恢复使用匹配版本和新的隔离项目；不自动迁入旧 Phase 5 数据。参见[部署与升级指南](guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md)。
 
 ## 15. 安全与配置
 

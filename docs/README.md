@@ -12,7 +12,8 @@ R3 原生后端、四工具 MCP、退役接口与验证结果见 [R3 验收](pla
 
 | 目标 | 首选文档 |
 |---|---|
-| R4 企业内网 AMD64 离线部署与调测 | [AMD64 企业部署手册](guides/R4_AMD64_ENTERPRISE_DEPLOYMENT_ZH.md) / [构建与未通过项](plans/R4_AMD64_PACKAGE_ACCEPTANCE.md) |
+| 最新完整包全新安装、保留数据升级、隔离恢复 | [部署与升级指南](guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md) / [本次包验收](plans/CURRENT_AMD64_PACKAGE_ACCEPTANCE.md) |
+| 历史 R4 企业内网 AMD64 离线部署与调测 | [AMD64 企业部署手册](guides/R4_AMD64_ENTERPRISE_DEPLOYMENT_ZH.md) / [构建与未通过项](plans/R4_AMD64_PACKAGE_ACCEPTANCE.md) |
 | 历史运行组合部署、配置与排障 | [旧组合完整执行手册](guides/FULL_DEPLOYMENT_RUNBOOK_ZH.md) |
 | 了解现在实现了什么、有哪些限制 | [当前能力与交付状态](CURRENT_STATUS.md) |
 | 了解后续开发顺序和未关闭事项 | [后续开发与待办](ROADMAP.md) |
@@ -21,9 +22,13 @@ R3 原生后端、四工具 MCP、退役接口与验证结果见 [R3 验收](pla
 
 ## 当前指导文档
 
+- [回答导出 Word](guides/CHAT_WORD_EXPORT_ZH.md)：普通问答和智能体单条导出，可编辑表格及公式；[验收记录](plans/CHAT_WORD_EXPORT_ACCEPTANCE.md)。
+
+- [知识图谱只读浏览](guides/KNOWLEDGE_GRAPH_BROWSER_ZH.md)：三角色图谱入口、搜索/展开、权限和私有 Neo4j 连接配置；[本轮验收](plans/KNOWLEDGE_GRAPH_BROWSER_ACCEPTANCE.md)。
+
 | 主题 | 文档与用途 |
 |---|---|
-| 部署 | [R4 AMD64 企业内网部署](guides/R4_AMD64_ENTERPRISE_DEPLOYMENT_ZH.md)：当前镜像包安装、OAuth/模型/证书、备份与调测；[完整执行手册](guides/FULL_DEPLOYMENT_RUNBOOK_ZH.md)：当前旧运行组合的部署参考；新空间产品使用 R4 AMD64 手册，目标环境验收归 R6；[构建与局域网](guides/BUILD_AND_LAN_DEPLOYMENT.md)：开发构建和 LAN 补充说明 |
+| 部署 | [最新完整包安装与升级](guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md)；[历史 R4 AMD64 企业内网部署](guides/R4_AMD64_ENTERPRISE_DEPLOYMENT_ZH.md)：当前镜像包安装、OAuth/模型/证书、备份与调测；[完整执行手册](guides/FULL_DEPLOYMENT_RUNBOOK_ZH.md)：当前旧运行组合的部署参考；新空间产品使用 R4 AMD64 手册，目标环境验收归 R6；[构建与局域网](guides/BUILD_AND_LAN_DEPLOYMENT.md)：开发构建和 LAN 补充说明 |
 | 知识图谱 | [R4 离线启用与实际使用](guides/R4_KNOWLEDGE_GRAPH_ZH.md)：Neo4j/APOC、原生抽取、问答与停用恢复；[专项验收](plans/R4_KNOWLEDGE_GRAPH_ACCEPTANCE.md) |
 | 企业文档链接 | [隐藏上游入口与配置内部地址](guides/R4_ENTERPRISE_LINKS_ZH.md)：运行时开关及 AMD64 前端补丁；[专项验收](plans/R4_UI_LINKS_ACCEPTANCE.md) |
 | 日常运维 | [运维与事件处理](guides/PHASE5_OPERATIONS.md)：模型、VLM、上传限制和升级；[全新安装/清理](guides/PHASE5_FRESH_SERVER_INSTALL.md)：仅用于明确放弃旧数据的重装 |
@@ -37,7 +42,7 @@ R3 原生后端、四工具 MCP、退役接口与验证结果见 [R3 验收](pla
 ## 未来功能设计
 
 - [后续开发与待办](ROADMAP.md)：R6 企业交付、已取代的笔记/订阅事项、后置扩展和目标环境验收。
-- [R5、R6 收尾后的七项功能待办](plans/POST_R6_FEATURE_BACKLOG_ZH.md)：图谱展示与人工修订、知识版本、自动清洗、Wiki 下载、定时处理和聊天按钮配置；当前仅登记，主线收尾后再分步实现。
+- [R5、R6 收尾后的七项功能待办](plans/POST_R6_FEATURE_BACKLOG_ZH.md)：E-01 图谱只读展示已按后续明确要求提前实现；人工修订、知识版本、自动清洗、Wiki 下载、定时处理和聊天按钮配置仍在待办中。
 - [本地桌面端（中文）](plans/DESKTOP_LOCAL_DESIGN_ZH.md) / [English](plans/DESKTOP_LOCAL_DESIGN.md)：本地解析、存储、检索和 MCP，使用内部在线模型服务。
 - [智能体发布与企业渠道](plans/AGENT_PUBLISHING_CHANNELS_DESIGN_ZH.md)：历史候选渠道设计；员工网页部分以新 R5 为准，小程序等不在本次范围。
 

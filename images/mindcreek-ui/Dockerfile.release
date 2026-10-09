@@ -1,8 +1,8 @@
-# Build context is the verified, architecture-independent R4 frontend artifact.
+# Build context is the verified, architecture-independent product frontend.
 ARG NGINX_BASE=nginx:1.30.3-alpine
 FROM ${NGINX_BASE}
 ARG RELEASE_ID
-LABEL org.opencontainers.image.title="MindCreek R4 UI" \
+LABEL org.opencontainers.image.title="MindCreek UI" \
       org.opencontainers.image.version="${RELEASE_ID}"
 COPY dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/templates/default.conf.template

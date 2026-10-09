@@ -1,5 +1,11 @@
 # MindCreek 当前能力与交付状态
 
+2026-10-09 增量：当前完整 AMD64 包纳入 R5、知识图谱只读展示和 Word 导出，提供全新安装、v0.8.0 企业包保留数据升级、冷备份及隔离恢复工具。见[新部署指南](guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md)和[包验收](plans/CURRENT_AMD64_PACKAGE_ACCEPTANCE.md)。历史 R4 包/补丁保留；企业实际部署与物理 AMD64/BM25 验收仍待完成。
+
+2026-10-08 增量：[单条回答 Word 导出](guides/CHAT_WORD_EXPORT_ZH.md)已接入主站普通问答及智能体回答，四角色可导出已显示内容；表格与支持的公式保持原生可编辑。不支持的公式明确报错，不以图片降级。见[验收](plans/CHAT_WORD_EXPORT_ACCEPTANCE.md)。只需更新前端，无新增后端服务；本轮未构建镜像或部署。
+
+2026-10-08 增量：E-01 [知识图谱只读浏览](guides/KNOWLEDGE_GRAPH_BROWSER_ZH.md)已实现，Owner/Admin/Contributor 可查看有权访问的所属空间知识库图谱，Viewer 不可用。新增产品网关读取接口及前端页签，见[本轮验收](plans/KNOWLEDGE_GRAPH_BROWSER_ACCEPTANCE.md)。需升级网关/前端并配置私有 Neo4j 连接；尚未构建新离线镜像或部署企业服务器。
+
 2026-09-18 增量：企业文档链接采用默认隐藏、按项配置内部地址的运行时策略；需安装一次前端 `links1` 补丁，之后改配置并刷新即可生效。见[配置与部署指南](guides/R4_ENTERPRISE_LINKS_ZH.md)和[验收记录](plans/R4_UI_LINKS_ACCEPTANCE.md)。企业目标服务器尚未应用此补丁。
 
 更新日期：2026-09-22。当前进入企业部署调测阶段。R1 完成新设计；R2 已实现并完成合成验收。R3 已实现独立原生后端，验收见下；R4 页面实现与合成验收已完成；R5 实现与合成验收已完成；R6 待企业目标环境验收。历史运行组合仍保留。
@@ -15,11 +21,11 @@
 - **AMD64 企业调测包：**八个 AMD64 运行镜像、独立企业 Compose、安装工具、TLS/CA 与[详细部署手册](guides/R4_AMD64_ENTERPRISE_DEPLOYMENT_ZH.md)。本机 AMD64 模拟的 BM25 查询异常退出，目标物理 AMD64 必须先运行包内数据库预检；不宣称混合检索或 R6 生产验收通过。
 - **企业 Client Secret 修复：**取消外部 OAuth2/OIDC 凭证的 16 字符最小长度，保留非空检查；原 AMD64 完整包使用[独立网关补丁](guides/R4_OAUTH_CLIENT_SECRET_HOTFIX_ZH.md)。历史 R4 全量证据对应修复前指纹；补丁单独记录针对性验证。
 - **员工登录诊断：**[调用链日志补丁与 Phase 5 配置对照](guides/R4_IDENTITY_DIAGNOSTICS_ZH.md)区分 state/Cookie/事务问题和 TLS/接口错误，保留短密钥修复。当前企业模板与旧 Phase 5 的请求选项不同；R5 前端已补齐首页中转的 state 转发，并完成合成浏览器往返验证；历史网关日志补丁本身不包含此前端修复。
-- **首次安装优先：**没有现网用户数据迁移任务；现有本地开发数据和容器保持原状。真实企业 OAuth、模型、浏览器嵌入及生产验收留在后续对应阶段。
+- **安装与升级：**新包支持已有 v0.8.0 原生空间企业实例的受控升级；不迁入旧 Phase 5 发布订阅/笔记数据。本地历史开发数据和容器保持原状。真实企业 OAuth、模型、浏览器嵌入及生产验收留在后续对应阶段。
 
 ## 产品基线
 
-- 已导出的企业调测包基线为 R4；R5 源码与合成验收已交付，需另行构建并验证目标镜像；Phase 5 保留为历史运行组合；当前仓库批准的上游为未修改的 WeKnora **v0.8.0**，详见[升级记录](upgrades/WEKNORA_V0.8.0_UPGRADE.md)。
+- 当前完整企业包为 `current-*`，包含 R5、图谱浏览和 Word 导出；原 R4 包作为历史回退来源保留；Phase 5 保留为历史运行组合；当前仓库批准的上游为未修改的 WeKnora **v0.8.0**，详见[升级记录](upgrades/WEKNORA_V0.8.0_UPGRADE.md)。
 - Phase 0、Phase 1 Gates A–D 和 Phase 2–5 的工程记录已归档。Phase 1 可选/收尾任务、Phase 5 运维验收不能据此自动视为完成，见[待办](ROADMAP.md)。
 - WeKnora 负责文档解析、分块、索引、检索、重排与智能体执行；R3 MindCreek 提供原生权限前的身份/范围校验、模型和身份接入、产品 UI 与部署封装，不另造一套 Plain RAG 引擎。
 - 浏览器与 MCP 通过产品入口访问；网关、App 和存储组件不直接对外开放。

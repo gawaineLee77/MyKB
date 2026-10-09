@@ -35,6 +35,8 @@ def archive_configs(target, record):
 def assemble():
     record=json.loads((LOCAL/'build.json').read_text())
     target=ROOT/'images/archives'/('mindcreek-'+record['release']+'-amd64')
+    if target.with_suffix('.tar.gz').exists():
+        raise RuntimeError('Release already finalized; assemble a new release instead of overwriting it')
     target.mkdir(parents=True,exist_ok=True)
     for directory in ['bin','config','scripts','deploy/phase5','licenses','evidence']:
         (target/directory).mkdir(exist_ok=True,parents=True)
@@ -46,6 +48,8 @@ def assemble():
         'deploy/enterprise/enterprise.env.example':'enterprise.env.example',
         'deploy/enterprise/mindcreek.py':'bin/mindcreek',
         'deploy/enterprise/check_database.py':'bin/check-database',
+        'deploy/enterprise/release_ops.py':'bin/release',
+        'deploy/graph/graph.py':'bin/graph_support.py',
         'deploy/enterprise/tls.conf':'config/tls.conf',
         'deploy/enterprise/nginx.frontend.conf':'config/nginx.frontend.conf',
         'upstream/weknora/frontend/nginx-api-proxy.conf':'config/nginx-api-proxy.conf',
@@ -60,8 +64,15 @@ def assemble():
         mapping['config/'+name]='config/'+name
     for src,dest in mapping.items(): shutil.copy2(ROOT/src,target/dest)
     (target/'bin/mindcreek').chmod(0o755)
-    guide=ROOT/'docs/guides/R4_AMD64_ENTERPRISE_DEPLOYMENT_ZH.md'
-    if guide.exists(): shutil.copy2(guide,target/'DEPLOYMENT_ZH.md')
+    guide=ROOT/'docs/guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md'
+    if guide.exists():
+        (target/'DEPLOYMENT_ZH.md').write_text('# MindCreek 完整部署包\n\n'
+            '请阅读[全新安装、升级与恢复指南](docs/guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md)。\n\n'
+            '先执行 `python3 bin/mindcreek verify` 和 `python3 bin/mindcreek load`。\n'
+            '全新安装使用 `bin/mindcreek init`；已有实例使用 `bin/release plan` / `upgrade`，不要重新初始化。\n')
+    # Retain relative documentation links in the offline package.
+    shutil.copytree(ROOT/'docs', target/'docs', dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns('Archive.zip', '__pycache__'))
     for image in record['images']:
         # Docker save by tag restores an offline-usable name, including Nginx.
         image['name']=image['name'].split('@')[0]
@@ -77,7 +88,8 @@ in RELEASE.json. Original license notices remain inside the unmodified images.
 WeKnora source: https://github.com/Tencent/WeKnora (pinned commit in RELEASE.json).
 Other runtime projects: https://github.com/paradedb/paradedb,
 https://github.com/redis/redis (Redis 7.0), https://nginx.org,
-https://www.python.org, and their OS/transitive dependencies.
+https://www.python.org, https://github.com/neo4j/neo4j,
+https://github.com/neo4j/apoc, and their OS/transitive dependencies.
 The package contains no model weights. Review the upstream image notices for your
 organization's internal redistribution requirements.
 ''')

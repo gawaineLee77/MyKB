@@ -29,16 +29,16 @@ def inspect(name):
     return {'name': name, 'id': record['Id'], 'os': record['Os'], 'architecture': record['Architecture'],
             'repo_digests': record.get('RepoDigests', [])}
 
-def build(profile='r4'):
-    if profile == 'r5':
+def build(profile='r4', proof_path=None, ui_path=None):
+    if profile in ('r5', 'current'):
         from r5_evidence import ui_digest as current_ui_digest
     else:
         current_ui_digest = ui_digest
     LOCAL.mkdir(parents=True, exist_ok=True)
-    proof = json.loads((ROOT / f'docs/plans/evidence/{profile}-ui-build.json').read_text())
+    proof = json.loads((proof_path or ROOT / f'docs/plans/evidence/{profile}-ui-build.json').read_text())
     if proof['status'] != 'passed' or proof['ui_source_sha256'] != current_ui_digest():
         raise RuntimeError(f'Run Node 24 make {profile}-ui-build for the current sources first')
-    ui = Path((ROOT / f'.local/redesign-{profile}/ui-path').read_text().strip())
+    ui = ui_path or Path((ROOT / f'.local/redesign-{profile}/ui-path').read_text().strip())
     digest = hashlib.sha256()
     for path in sorted((ui / 'dist').rglob('*')):
         if path.is_file(): digest.update(str(path.relative_to(ui / 'dist')).encode() + b'\0' + path.read_bytes())
@@ -46,12 +46,18 @@ def build(profile='r4'):
     if subprocess.check_output(['git','-C','upstream/weknora','status','--porcelain'], cwd=ROOT, text=True).strip():
         raise RuntimeError('Pinned upstream must remain clean')
     release = profile + '-' + datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d') + '-' + source_digest()[:8]
+    finalized = ROOT/'images/archives'/('mindcreek-'+release+'-amd64.tar.gz')
+    if finalized.exists():
+        # A second current UI/deployment release on the same day must not reuse
+        # tags already referenced by an immutable delivered archive.
+        release += '-' + datetime.datetime.now(datetime.timezone.utc).strftime('%H%M%S')
     for name in EXTERNAL: inspect(name)  # Fail before build if an AMD64 dependency is missing.
     # A local tag avoids registry metadata resolution during the offline build.
     run(['docker', 'tag', NGINX, 'mindcreek-release-base:nginx-amd64'])
     run(['docker', 'tag', NGINX, 'nginx:1.30.3-alpine'])
-    context = LOCAL / 'ui'; context.mkdir(exist_ok=True)
-    shutil.copytree(ui / 'dist', context / 'dist', dirs_exist_ok=True)
+    context = LOCAL / 'image-ui'; context.mkdir(exist_ok=True)
+    if (context / 'dist').exists(): shutil.rmtree(context / 'dist')
+    shutil.copytree(ui / 'dist', context / 'dist')
     # The release uses the product Nginx template and the selected UI artifact.
     shutil.copy2(ROOT / 'deploy/enterprise/nginx.frontend.conf', context / 'nginx.conf')
     shutil.copy2(ROOT / 'upstream/weknora/frontend/nginx-api-proxy.conf', context)

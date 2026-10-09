@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Portable R4 deployment helper; requires Python 3.10+ and Docker Compose."""
+"""Portable enterprise deployment helper; requires Python 3.10+ and Docker Compose."""
 from __future__ import annotations
 import getpass
 import hashlib
@@ -112,7 +112,7 @@ def verify_images():
         # Containerd reports a platform manifest ID; classic Docker reports the config ID.
         if got['Id'] not in {wanted['id'],wanted.get('config_digest')} or (got['Os'],got['Architecture']) != ('linux','amd64'):
             raise ValueError('Image differs from the package lock: ' + wanted['name'])
-    print('All 8 runtime images match the AMD64 lock.')
+    print(f"All {len(release()['images'])} runtime images match the AMD64 lock.")
 
 
 def validate():
@@ -129,8 +129,8 @@ def validate():
     if values.get('MINDCREEK_DEPLOYMENT_ENV') not in ['staging','production']:
         raise ValueError('Enterprise bundle requires staging or production')
     origin = urlsplit(values.get('MINDCREEK_EXTERNAL_ORIGIN',''))
-    if origin.scheme != 'https' or not origin.hostname or origin.path not in ['', '/'] or origin.query or origin.fragment or origin.username:
-        raise ValueError('MINDCREEK_EXTERNAL_ORIGIN must be an HTTPS origin without a path')
+    if origin.scheme != 'https' or not origin.hostname or origin.path or origin.query or origin.fragment or origin.username:
+        raise ValueError('MINDCREEK_EXTERNAL_ORIGIN must be an HTTPS origin without a path or trailing slash')
     if '@' not in values.get('MINDCREEK_INSTALL_ADMIN_EMAIL',''):
         raise ValueError('Installation admin email required')
     for k in ['MINDCREEK_UID','MINDCREEK_GID']:
@@ -163,9 +163,23 @@ def validate():
 
 
 def up_services(names, extra=None, recreate=False):
+    names = list(names)
+    override = STATE/'compose.override.json'
+    if not recreate and 'app' in names and override.exists():
+        services = json.loads(override.read_text()).get('services', {})
+        if 'neo4j' in services and str(services.get('app', {}).get('environment', {}).get('NEO4J_ENABLE', 'false')).lower() == 'true' and 'neo4j' not in names:
+            names.insert(0, 'neo4j')
     args = ['up','-d','--pull','never','--no-build','--wait','--wait-timeout','600']
     if recreate: args += ['--no-deps','--force-recreate']
     compose(args+names, extra=extra)
+    # Nginx resolves Compose hostnames while loading its configuration. App /
+    # gateway recreation can recycle an IP; reload existing proxies only after
+    # the selected services are healthy, in frontend -> TLS order.
+    if any(n in names for n in ('app', 'gateway', 'frontend')):
+        running = compose(['ps', '--status', 'running', '--services'], True).splitlines()
+        for name in ('frontend', 'tls'):
+            if name in running:
+                compose(['exec', '-T', name, 'nginx', '-s', 'reload'])
 
 
 def install_command(args, capture=False):
@@ -227,9 +241,11 @@ def main():
     elif op == 'install': install(args)
     elif op == 'up':
         validate(); verify_images()
+        if args not in [[],['--tls']]: raise ValueError('Usage: up [--tls]')
+        # Status needs a running database even after a complete maintenance stop.
+        up_services(CORE)
         if json.loads(install_command(['status'],True))['stage'] != 'ready':
             raise ValueError('Finish install admin and install default-space before up')
-        if args not in [[],['--tls']]: raise ValueError('Usage: up [--tls]')
         if args:
             for n in ['fullchain.pem','privkey.pem']:
                 if not (STATE/'tls'/n).is_file(): raise ValueError('Missing TLS file: '+n)
