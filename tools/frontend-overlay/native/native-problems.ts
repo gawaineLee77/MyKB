@@ -7,6 +7,10 @@ export const nativeProblems: Record<string, string> = {
   'agent.tools_scope_unavailable': '此智能体需要配置明确的知识库或 Wiki 工具列表，请联系创建者。',
   'agent.source_ambiguous': '此智能体存在同 ID 的空间来源冲突，请选择唯一的自定义智能体。',
   'graph.dependencies_unavailable': '图谱依赖尚未就绪，请先完成服务配置。',
+  'graph.unavailable': '暂时无法连接图谱服务，请稍后重试。',
+  'graph.source_unavailable': '无法核验图谱来源文档，请稍后重试。',
+  'graph.role_denied': '当前角色无权查看知识图谱。',
+  'graph.invalid_query': '图谱查询条件无效，请调整后重试。',
   'member.account_not_registered': '该员工尚未通过企业登录开户，或邮箱映射存在冲突。',
   'workspace.owner_required': '此操作仅允许当前空间所有者执行。',
 }

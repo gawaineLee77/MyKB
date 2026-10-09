@@ -5,6 +5,25 @@ import (
 	"testing"
 )
 
+func TestGraphViewConnectionConfiguration(t *testing.T) {
+	t.Setenv("MINDCREEK_GRAPH_VIEW_USERNAME", "reader")
+	t.Setenv("MINDCREEK_GRAPH_VIEW_PASSWORD", "synthetic-secret")
+	for _, uri := range []string{"http://neo4j:7474", "bolt://reader:secret@neo4j:7687", "bolt://neo4j:7687/path", "bolt://neo4j:7687?x=1"} {
+		t.Setenv("MINDCREEK_GRAPH_VIEW_URI", uri)
+		if _, err := Load("test"); err == nil || strings.Contains(err.Error(), "synthetic-secret") {
+			t.Fatal("unsafe graph endpoint configuration")
+		}
+	}
+	t.Setenv("MINDCREEK_GRAPH_VIEW_URI", "bolt://neo4j:7687")
+	if _, err := Load("test"); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("MINDCREEK_GRAPH_VIEW_PASSWORD", "")
+	if _, err := Load("test"); err == nil {
+		t.Fatal("missing graph password accepted")
+	}
+}
+
 func TestLoadDefaults(t *testing.T) {
 	t.Setenv("MINDCREEK_LISTEN_ADDR", "")
 	t.Setenv("MINDCREEK_UPSTREAM_URL", "")

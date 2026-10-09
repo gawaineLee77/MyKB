@@ -44,6 +44,7 @@ type PrincipalResolver interface {
 type Dependencies struct {
 	Assistant      *assistant.Service
 	AssistantProxy http.Handler
+	GraphView      http.Handler
 	NativeAccess   *nativeaccess.Gate
 	NativeScopes   *nativeaccess.ScopeService
 	Principals     PrincipalResolver

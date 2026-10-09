@@ -14,6 +14,7 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/enterprise"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/graphview"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/identity"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/managedmodel"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/mcp"
@@ -21,6 +22,8 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/observability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/server"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
+	"github.com/neo4j/neo4j-go-driver/v6/neo4j"
+	neo4jconfig "github.com/neo4j/neo4j-go-driver/v6/neo4j/config"
 )
 
 // nativeDependencies is separate from the historical composition: no product
@@ -48,6 +51,20 @@ func nativeDependencies(cfg config.Config, db *sql.DB, adapter *weknora.Client, 
 	d := server.Dependencies{Principals: adapter, Enterprise: installation, Models: models, NativeAccess: &nativeaccess.Gate{Routes: routes, Principals: adapter}, Observability: observability.NewRecorder(log.New(os.Stdout, "", 0))}
 	scopes := &nativeaccess.ScopeService{Upstream: adapter, Store: &nativeaccess.Repository{DB: db}}
 	d.NativeScopes = scopes
+	graph := &graphview.Service{Enabled: cfg.GraphEnabled, Upstream: adapter}
+	if cfg.GraphEnabled && cfg.GraphViewURI != "" {
+		driver, err := neo4j.NewDriver(cfg.GraphViewURI, neo4j.BasicAuth(cfg.GraphViewUsername, cfg.GraphViewPassword, ""), func(c *neo4jconfig.Config) {
+			c.MaxConnectionPoolSize = 8
+			c.SocketConnectTimeout = 3 * time.Second
+			c.ConnectionAcquisitionTimeout = 3 * time.Second
+			c.MaxTransactionRetryTime = 0
+		})
+		if err != nil {
+			return d, nil, fmt.Errorf("invalid graph reader configuration")
+		}
+		graph.Reader = &graphview.Neo4j{Driver: driver, Database: cfg.GraphViewDatabase}
+	}
+	d.GraphView = graph
 	modelPolicy := &nativeaccess.ModelPolicy{Upstream: adapter, GraphEnabled: cfg.GraphEnabled, MaxFileBytes: cfg.MaxFileSizeMB << 20}
 	d.NativeAccess.ScopeCheck = scopes.Check
 	d.NativeAccess.ModelCheck = modelPolicy.Check

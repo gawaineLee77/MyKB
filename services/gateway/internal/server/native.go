@@ -8,6 +8,7 @@ import (
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/graphview"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/nativeaccess"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/policy"
 )
@@ -32,6 +33,9 @@ func newNativeHandler(cfg config.Config, caps *capability.Registry, d Dependenci
 	registerManagedModelRoutes(mux, d)
 	registerNativeScopeRoutes(mux, d)
 	registerMemberPreview(mux, d)
+	if d.GraphView != nil {
+		mux.Handle(graphview.Route, d.GraphView)
+	}
 	if d.Assistant != nil {
 		mux.Handle("/api/v1/mindcreek/assistant/", d.Assistant.Handler(d.AssistantProxy))
 		mux.HandleFunc("GET /api/v1/mindcreek/assistant-frame-policy", d.Assistant.FramePolicy)

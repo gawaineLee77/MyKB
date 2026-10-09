@@ -43,6 +43,10 @@ type Config struct {
 	NativeWorkspaceEnabled bool
 	NativeRoutesFile       string
 	GraphEnabled           bool
+	GraphViewURI           string
+	GraphViewUsername      string
+	GraphViewPassword      string
+	GraphViewDatabase      string
 	AssistantEnabled       bool
 }
 
@@ -101,13 +105,23 @@ type IdentityConfig struct {
 // Load reads and validates gateway configuration from the environment.
 func Load(buildVersion string) (Config, error) {
 	cfg := Config{
-		ListenAddr:       value("MINDCREEK_LISTEN_ADDR", defaultListenAddr),
-		ProductVersion:   value("MINDCREEK_VERSION", buildVersion),
-		UpstreamVersion:  value("MINDCREEK_UPSTREAM_VERSION", defaultUpstreamVersion),
-		RoutePolicyFile:  value("MINDCREEK_ROUTE_POLICY_FILE", defaultRoutePolicyFile),
-		RouteActionsFile: value("MINDCREEK_ROUTE_ACTIONS_FILE", defaultRouteActionsFile),
-		CapabilitiesFile: value("MINDCREEK_CAPABILITIES_FILE", defaultCapabilitiesFile),
-		DatabaseURL:      optionalValue("MINDCREEK_DATABASE_URL"),
+		ListenAddr:        value("MINDCREEK_LISTEN_ADDR", defaultListenAddr),
+		ProductVersion:    value("MINDCREEK_VERSION", buildVersion),
+		UpstreamVersion:   value("MINDCREEK_UPSTREAM_VERSION", defaultUpstreamVersion),
+		RoutePolicyFile:   value("MINDCREEK_ROUTE_POLICY_FILE", defaultRoutePolicyFile),
+		RouteActionsFile:  value("MINDCREEK_ROUTE_ACTIONS_FILE", defaultRouteActionsFile),
+		CapabilitiesFile:  value("MINDCREEK_CAPABILITIES_FILE", defaultCapabilitiesFile),
+		DatabaseURL:       optionalValue("MINDCREEK_DATABASE_URL"),
+		GraphViewURI:      optionalValue("MINDCREEK_GRAPH_VIEW_URI"),
+		GraphViewUsername: optionalValue("MINDCREEK_GRAPH_VIEW_USERNAME"),
+		GraphViewPassword: optionalValue("MINDCREEK_GRAPH_VIEW_PASSWORD"),
+		GraphViewDatabase: value("MINDCREEK_GRAPH_VIEW_DATABASE", "neo4j"),
+	}
+	if cfg.GraphViewURI != "" {
+		u, e := url.Parse(cfg.GraphViewURI)
+		if e != nil || u.Hostname() == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.Path != "" || (u.Scheme != "bolt" && u.Scheme != "bolt+s" && u.Scheme != "neo4j" && u.Scheme != "neo4j+s") || cfg.GraphViewUsername == "" || cfg.GraphViewPassword == "" {
+			return Config{}, fmt.Errorf("MINDCREEK_GRAPH_VIEW_URI requires a Bolt endpoint and separate username/password")
+		}
 	}
 
 	upstream, err := url.Parse(value("MINDCREEK_UPSTREAM_URL", defaultUpstreamURL))

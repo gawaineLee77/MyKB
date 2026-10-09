@@ -6,6 +6,8 @@ require github.com/jackc/pgx/v5 v5.9.2
 
 require github.com/DATA-DOG/go-sqlmock v1.5.2
 
+require github.com/neo4j/neo4j-go-driver/v6 v6.0.0
+
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

@@ -1,0 +1,122 @@
+{
+  "status": "passed",
+  "date": "2026-10-08",
+  "scope": "Local synthetic verification; compiled Vue + mocked HTTP and separate real disposable Neo4j tests. No enterprise OAuth/model/deployment acceptance.",
+  "source_sha256": "57bb425240ac3dc63499f564783b31d33e2926e7957bb59af298c1dd87ebac9c",
+  "base_commit": "158b684d65e01862b9d7c8d108823a7ec2e92730",
+  "upstream_commit": "1edcd54b43606d9079bb36650efe3f68707a79ea",
+  "upstream_clean": true,
+  "frontend_tests": 602,
+  "node": "v24.21.0",
+  "go": "go version go1.26.7 darwin/arm64",
+  "neo4j": "2025.10.1 / neo4j-go-driver v6.0.0",
+  "gateway_uncached_output": [
+    "?   \tgithub.com/gawaineLee77/MyKB/services/gateway/cmd/gateway\t[no test files]",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/access\t0.667s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/agentaudit\t1.056s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/agentscope\t1.468s",
+    "?   \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/apierror\t[no test files]",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/assistant\t1.944s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/audit\t2.322s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/authorization\t2.753s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/capability\t3.143s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/catalog\t3.581s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/config\t3.500s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/database\t3.512s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/diagnostics\t3.539s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/enterprise\t5.746s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/grant\t3.488s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/graphview\t3.835s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/identity\t4.053s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/ingestion\t3.340s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/library\t3.346s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/managedmodel\t3.353s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/mcp\t3.417s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/nativeaccess\t3.015s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/note\t2.424s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/notespolicy\t2.584s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/observability\t2.832s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/ownership\t3.103s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/policy\t3.455s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/preset\t3.546s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/profile\t3.432s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/publication\t3.395s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/revision\t3.441s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/routeaction\t3.401s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/server\t3.054s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/sessionscope\t3.136s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/space\t3.093s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/subscription\t3.116s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/weknora\t3.261s"
+  ],
+  "gateway_race_output": [
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/graphview\t1.863s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/config\t1.907s",
+    "ok  \tgithub.com/gawaineLee77/MyKB/services/gateway/internal/server\t2.084s"
+  ],
+  "log_sha256": {
+    "gateway-tests.log": "f26bac8ba307d61cb1637e31b90c67fe5f1dd5222f9b27e6180b9940c5e3527b",
+    "gateway-race.log": "0ee4b37cbf9082da43eeb68fc2f12f603c26f296f797256dad1de8ea5358d57b",
+    "frontend-tests.log": "615a1477cd84489d36416036dd654e49bb10cdf80b2c20f68d6341fbfd123c6f",
+    "typecheck.log": "a56bb276db4e129b0d23ef978a488dfc6f0845a00550a6cb828699323ac34625",
+    "build.log": "3d52997fc18439fb6d60f6d7ee69b24e1e1919f3ec5e465546f4fb5bf7220f52",
+    "engineering.log": "e95c0eb101d30b692f1a36150f574c2d541c2a8a8929a0473ef1b998f3ae67da",
+    "graph-config.log": "74c03fc16fde9a2dfeff03db0ec8f472a5a8dfed04e9e982a912b4b7f64faee3"
+  },
+  "browser": {
+    "scope": "Compiled Vue UI and synthetic API fixtures; no enterprise OAuth/model calls.",
+    "node": "v24.21.0",
+    "checks": [
+      {
+        "role": "owner",
+        "before": true,
+        "status": "passed"
+      },
+      {
+        "role": "owner",
+        "before": false,
+        "status": "passed"
+      },
+      {
+        "role": "admin",
+        "before": false,
+        "status": "passed"
+      },
+      {
+        "role": "contributor",
+        "before": false,
+        "status": "passed"
+      },
+      {
+        "role": "viewer",
+        "before": false,
+        "status": "passed"
+      }
+    ],
+    "screenshots": [
+      "docs/assets/graph-view/before-knowledge-base.png",
+      "docs/assets/graph-view/after-entity-details.png",
+      "docs/assets/graph-view/after-relation-details.png",
+      "docs/assets/graph-view/after-disabled.png",
+      "docs/assets/graph-view/after-empty.png",
+      "docs/assets/graph-view/after-error.png",
+      "docs/assets/graph-view/after-narrow.png",
+      "docs/assets/graph-view/viewer-chat.png"
+    ],
+    "status": "passed"
+  },
+  "screenshots_sha256": {
+    "docs/assets/graph-view/before-knowledge-base.png": "5efd682685d167d04a91ac1c87e2384833051259e267fceb8ce8647a88f599a3",
+    "docs/assets/graph-view/after-entity-details.png": "a9ca48d8c6b243280cc4c2e66aa2b6e1331a210773037348caa2e603af2ff26b",
+    "docs/assets/graph-view/after-relation-details.png": "6d4f44374a20d097f43974979b53998fb15d5cb0d39865a482c958dd6838af7e",
+    "docs/assets/graph-view/after-disabled.png": "648c7ba29cc23dfa5c59ec124b881ebcbd3d37bfad48ccf8ba4384b7a2106b6e",
+    "docs/assets/graph-view/after-empty.png": "aa4e4b9353306b011f8f8620872f633b1b31d7ab0e8091c4777b83b2833b5ef1",
+    "docs/assets/graph-view/after-error.png": "5f369c42f079f3033d9d263301c19467fd40abd7dd486ef52ce69b309f41ca32",
+    "docs/assets/graph-view/after-narrow.png": "3c5bf73eb6388ace36d4fc364da083b5abaded8ddbcc404c1bdf73d2ca1fda06",
+    "docs/assets/graph-view/viewer-chat.png": "f432d84d147e005f938bb33dd7dcabbc94324a32de04da8e07d93d0eac74d48d"
+  },
+  "pending": [
+    "Enterprise target deployment and real data quality/performance",
+    "New AMD64 offline image package"
+  ]
+}

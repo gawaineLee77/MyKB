@@ -5,7 +5,24 @@ export const retainedModules = [
   'model-selection.ts', 'model-selection.test.ts', 'api-problem.ts', 'api-problem.test.ts',
 ]
 
+export function applyGraphViewUI({ read, write, replaceExact: exact }) {
+  const kbPage = 'src/views/knowledge/KnowledgeBase.vue'
+  exact(kbPage, "import WikiBrowser from './wiki/WikiBrowser.vue';", "import WikiBrowser from './wiki/WikiBrowser.vue';\nimport KnowledgeGraph from '@/mindcreek/KnowledgeGraph.vue';\nimport { canBrowseGraph } from '@/mindcreek/knowledge-graph';")
+  exact(kbPage, "const validTabs = ['documents', 'wiki', 'graph'] as const", "const validTabs = ['documents', 'wiki', 'graph', 'knowledge-graph'] as const")
+  exact(kbPage, "const activeKbTab = ref<KbTab>(initTab);", "const activeKbTab = ref<KbTab>(initTab);\nconst canViewKnowledgeGraph = computed(() => canBrowseGraph(authStore.currentTenantRole));")
+  exact(kbPage, `              <span v-else class="breadcrumb-current">{{ $t('knowledgeEditor.document.title') }}</span>`, `              <button v-else type="button" :class="['breadcrumb-tab', { active: activeKbTab === 'documents' }]" @click="activeKbTab = 'documents'">{{ $t('knowledgeEditor.document.title') }}</button>
+              <template v-if="canViewKnowledgeGraph && !isFAQ">
+                <span class="breadcrumb-tab-sep">/</span>
+                <button type="button" :class="['breadcrumb-tab', { active: activeKbTab === 'knowledge-graph' }]" @click="activeKbTab = 'knowledge-graph'">知识图谱</button>
+              </template>`)
+  exact(kbPage, "{{ $t('knowledgeEditor.wikiBrowser.tabGraph') }}", "Wiki 链接图")
+  exact(kbPage, `      <template v-if="activeKbTab === 'documents' || !isWiki">`, `      <KnowledgeGraph v-if="activeKbTab === 'knowledge-graph' && canViewKnowledgeGraph && !isFAQ" :key="kbId" :knowledge-base-id="kbId" @open-source-doc="openSourceDoc" />
+      <template v-if="activeKbTab === 'documents' || (!isWiki && activeKbTab !== 'knowledge-graph')">`)
+  write(kbPage, read(kbPage) + '\n<style scoped>button.breadcrumb-tab { appearance: none; border: 0; background: transparent; font: inherit; padding: 0; cursor: pointer; } button.breadcrumb-tab:focus-visible { outline: 2px solid #1a9365; outline-offset: 4px; }</style>\n')
+}
+
 export function applyNativeUI({ read, write, replaceExact: exact, replaceRegex: regex }) {
+  applyGraphViewUI({ read, write, replaceExact: exact })
   for (const pattern of [/    location = \/weknora-widget\.js \{[\s\S]*?\n    \}/g, /    location = \/embed\.html \{[\s\S]*?\n    \}/g, /    location \^~ \/embed\/ \{[\s\S]*?\n    \}/g]) {
     regex('nginx.conf', pattern, match => match.slice(0, match.indexOf('{') + 1) + ' return 404; }')
   }
