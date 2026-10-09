@@ -21,6 +21,7 @@ const nativeRoot = resolve(scriptDir, 'native')
 import { applyNativeUI, retainedModules } from './apply-native.mjs'
 import { applyEnterpriseLinks } from './apply-links.mjs'
 import { applyEmployeeAssistant } from './apply-assistant.mjs'
+import { applyWordExport } from './apply-word-export.mjs'
 const marker = 'MindCreek Stage 1 product theme'
 
 if (!process.argv[2]) {
@@ -525,6 +526,7 @@ cpSync(nativeRoot, pathFor('src/mindcreek'), { recursive: true })
 applyNativeUI({ read, write, replaceExact, replaceRegex })
 applyEnterpriseLinks({ read, write, replaceExact, replaceRegex })
 applyEmployeeAssistant({ read, write, replaceExact, replaceRegex })
+applyWordExport({ read, write, replaceExact })
 copyFileSync(resolve(scriptDir, 'public/mindcreek-assistant.js'), pathFor('public/mindcreek-assistant.js'))
 copyFileSync(resolve(scriptDir, 'public/mindcreek-links.json'), pathFor('public/mindcreek-links.json'))
 copyFileSync(resolve(brandingRoot, 'assets/mindcreek-mark-ui.png'), pathFor('src/assets/img/mindcreek-mark.png'))

@@ -41,4 +41,10 @@ for (const file of ['components/UserMenu.vue', 'views/settings/TenantMembers.vue
   assert.doesNotMatch(read('src/' + file), /https:\/\/github.com\/(Tencent\/WeKnora|gawaineLee77\/MyKB)/, file)
 }
 assert.match(read('nginx.conf'), /location = \/mindcreek-links.json/)
+for (const path of ['src/views/chat/components/botmsg.vue', 'src/views/chat/components/AgentStreamDisplay.vue']) {
+  assert.equal((read(path).match(/<WordExportButton /g) || []).length, 1, 'Single-answer Word export entry')
+  assert.match(read(path), /:references="session.knowledge_references"/)
+}
+assert.equal(JSON.parse(read('package.json')).dependencies.jszip, '3.10.1')
+assert.equal(JSON.parse(read('package-lock.json')).packages[''].dependencies.jszip, '3.10.1')
 console.log('R4 native UI boundary, retirement, identity, models, scope and roles verified')
