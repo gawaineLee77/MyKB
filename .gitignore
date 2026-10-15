@@ -9,3 +9,5 @@ tmp/
 docs/Archive.zip
 __pycache__/
 *.py[cod]
+# Microsoft Office temporary lock files
+~$*

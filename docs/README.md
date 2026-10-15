@@ -12,6 +12,7 @@ R3 原生后端、四工具 MCP、退役接口与验证结果见 [R3 验收](pla
 
 | 目标 | 首选文档 |
 |---|---|
+| 创建知识库、维护知识、建设智能体、接入 MCP/API | [MindCreek 图文使用手册](guides/MINDCREEK_USER_MANUAL_ZH.md)：STE 原则中文稿，含合成截图和可运行请求示例 |
 | 最新完整包全新安装、保留数据升级、隔离恢复 | [部署与升级指南](guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md) / [本次包验收](plans/CURRENT_AMD64_PACKAGE_ACCEPTANCE.md) |
 | 历史 R4 企业内网 AMD64 离线部署与调测 | [AMD64 企业部署手册](guides/R4_AMD64_ENTERPRISE_DEPLOYMENT_ZH.md) / [构建与未通过项](plans/R4_AMD64_PACKAGE_ACCEPTANCE.md) |
 | 历史运行组合部署、配置与排障 | [旧组合完整执行手册](guides/FULL_DEPLOYMENT_RUNBOOK_ZH.md) |
