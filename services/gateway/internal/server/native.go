@@ -30,9 +30,15 @@ func newNativeHandler(cfg config.Config, caps *capability.Registry, d Dependenci
 		})
 	}
 	registerEnterpriseRoutes(mux, d)
+	registerBrandingRoutes(mux, d)
+	if d.AgentIcons != nil {
+		d.AgentIcons.RegisterRoutes(mux)
+	}
 	registerManagedModelRoutes(mux, d)
 	registerNativeScopeRoutes(mux, d)
 	registerMemberPreview(mux, d)
+	registerWorkspaceAdminRoutes(mux, d, fallback)
+	registerKnowledgePermissions(mux, d)
 	if d.GraphView != nil {
 		mux.Handle(graphview.Route, d.GraphView)
 	}
@@ -65,6 +71,11 @@ func newNativeHandler(cfg config.Config, caps *capability.Registry, d Dependenci
 		if nativeaccess.Retired(path) {
 			nativeaccess.WriteError(w, r, &nativeaccess.Error{Status: 410, Code: "feature.retired"})
 			return
+		}
+		if d.WorkspaceAdmin != nil && r.Header.Get("X-API-Key") != "" && (strings.HasPrefix(path, "/api/v1/") || path == "/mcp") {
+			if !checkWorkspaceKeyUse(w, r, d) {
+				return
+			}
 		}
 		// These inherited product facades authorize a human manager. Native
 		// auth/me may return a workspace Owner as the user for an API key, which

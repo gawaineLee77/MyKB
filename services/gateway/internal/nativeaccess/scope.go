@@ -24,10 +24,25 @@ type NativeReader interface {
 	ValidateSession(context.Context, string, http.Header) error
 }
 
+type ResourceStream interface {
+	Rewrite(any) error
+	Before(any) ([]any, error)
+	Flush() ([]any, error)
+}
+
 type ScopeService struct {
 	Upstream     NativeReader
 	Store        SessionStore
 	SessionGuard func(context.Context, string, Actor, http.Header) error
+	// Product ACL applies to every transport using this resolver (web, MCP,
+	// employee assistant and history), before native retrieval is invoked.
+	KnowledgeAccess  func(context.Context, string, http.Header) error
+	KnowledgeManage  func(context.Context, string, http.Header) error
+	PlainChatAllowed func(context.Context, http.Header) error
+	AgentAvatarCheck func(context.Context, http.Header, string, string) error
+	MessageResource  func(context.Context, http.Header, string, string, []string, string) error
+	RewriteResources func(context.Context, http.Header, any) error
+	StreamResources  func(context.Context, http.Header) ResourceStream
 }
 
 func (s *ScopeService) AgentConfig(ctx context.Context, id string, h http.Header) (map[string]any, error) {
@@ -119,6 +134,9 @@ func (s *ScopeService) CheckKB(ctx context.Context, id string, h http.Header) er
 	if !validID(id) {
 		return &Error{400, "scope.invalid_id"}
 	}
+	if s.KnowledgeAccess != nil {
+		return s.KnowledgeAccess(ctx, id, h)
+	}
 	value, err := s.data(ctx, "/api/v1/knowledge-bases/"+url.PathEscape(id), nil, h)
 	if err != nil {
 		return err
@@ -165,6 +183,14 @@ func (s *ScopeService) Defaults(ctx context.Context, h http.Header) ([]string, e
 	if err != nil {
 		return nil, err
 	}
+	if s.KnowledgeAccess != nil {
+		// Cross-workspace organization shares do not grant product KB access.
+		ids, err = s.available(ctx, ids, h)
+		if err == nil && len(ids) > MaxScope {
+			return nil, &Error{422, "scope.too_large"}
+		}
+		return ids, err
+	}
 	shared, err := s.listIDs(ctx, "/api/v1/shared-knowledge-bases", nil, h)
 	// Native tenant keys without manage_spaces cannot enumerate organization
 	// sharing. Their tenant-local list is already filtered by native KB scope.
@@ -183,8 +209,7 @@ func (s *ScopeService) available(ctx context.Context, ids []string, h http.Heade
 	result := []string{}
 	for _, id := range unique(ids) {
 		if err := s.CheckKB(ctx, id, h); err != nil {
-			var e *weknora.Error
-			if errors.As(err, &e) && (e.StatusCode == 403 || e.StatusCode == 404) {
+			if denied(err) {
 				continue
 			}
 			return nil, err
@@ -223,6 +248,19 @@ func (s *ScopeService) Resolve(ctx context.Context, ids []string, explicit bool,
 		if !ok {
 			return nil, &Error{502, "upstream.invalid_response"}
 		}
+		if s.KnowledgeAccess != nil && uintValue(agent["tenant_id"]) != actor.TenantID {
+			return nil, &Error{404, "agent.not_found"}
+		}
+		if s.KnowledgeAccess != nil {
+			if config["memory_enabled"] == nil {
+				if err := s.CheckPlainChat(ctx, h); err != nil {
+					return nil, err
+				}
+			}
+			if err := validateAgentIsolation(config); err != nil {
+				return nil, err
+			}
+		}
 		if config["memory_enabled"] == true {
 			return nil, &Error{403, "feature.disabled"}
 		}
@@ -234,6 +272,9 @@ func (s *ScopeService) Resolve(ctx context.Context, ids []string, explicit bool,
 			for _, tool := range tools {
 				if tool == "search_conversations" {
 					return nil, &Error{409, "history.vector_scope_unavailable"}
+				}
+				if s.KnowledgeAccess != nil && !scopedReadTools[tool] && !scopedWriteTools[tool] {
+					return nil, &Error{403, "agent.tool_scope_unavailable"}
 				}
 			}
 		}
@@ -265,6 +306,25 @@ func (s *ScopeService) Resolve(ctx context.Context, ids []string, explicit bool,
 		}
 		if explicit && !subset(ids, allowed) {
 			return nil, &Error{403, "agent.scope_denied"}
+		}
+		if s.KnowledgeAccess != nil {
+			for _, tool := range stringsValue(config["allowed_tools"]) {
+				if !scopedWriteTools[tool] {
+					continue
+				}
+				scope := allowed
+				if explicit {
+					scope = ids
+				}
+				if len(scope) == 0 || s.KnowledgeManage == nil {
+					return nil, &Error{403, "agent.write_scope_denied"}
+				}
+				for _, id := range scope {
+					if err := s.KnowledgeManage(ctx, id, h); err != nil {
+						return nil, &Error{403, "agent.write_scope_denied"}
+					}
+				}
+			}
 		}
 		if !explicit {
 			if only, _ := config["retrieve_kb_only_when_mentioned"].(bool); only {
@@ -304,6 +364,11 @@ func (s *ScopeService) CheckSession(ctx context.Context, id string, actor Actor,
 	if err := s.Upstream.ValidateSession(ctx, id, h); err != nil {
 		return Binding{}, err
 	}
+	if s.KnowledgeAccess != nil {
+		if err := s.checkSessionIsolation(ctx, id, h); err != nil {
+			return Binding{}, err
+		}
+	}
 	for _, kb := range binding.KBIDs {
 		if err := s.CheckKB(ctx, kb, h); err != nil {
 			return Binding{}, err
@@ -313,6 +378,11 @@ func (s *ScopeService) CheckSession(ctx context.Context, id string, actor Actor,
 }
 
 func (s *ScopeService) Check(ctx context.Context, r *http.Request, actor Actor) (err error) {
+	if s.KnowledgeAccess != nil {
+		if err := enforcePrivateResources(r); err != nil {
+			return err
+		}
+	}
 	state := &requestState{Actor: actor, Create: r.Method == "POST" && r.URL.Path == "/api/v1/sessions"}
 	*r = *r.WithContext(context.WithValue(r.Context(), scopeContextKey{}, state))
 	defer func() {
@@ -333,6 +403,20 @@ func (s *ScopeService) Check(ctx context.Context, r *http.Request, actor Actor) 
 	body, err := readObject(r)
 	if err != nil {
 		return err
+	}
+	if err := s.validateAgentAvatarMutation(ctx, r, body); err != nil {
+		return err
+	}
+	if s.KnowledgeAccess != nil {
+		if err := checkResourceInputs(body); err != nil {
+			return err
+		}
+		if err := validateAgentRequestIsolation(body); err != nil {
+			return err
+		}
+		if err := s.validateAgentMutation(ctx, r, body); err != nil {
+			return err
+		}
 	}
 	refs := references{}
 	collect(body, &refs)
@@ -406,6 +490,14 @@ func (s *ScopeService) Check(ctx context.Context, r *http.Request, actor Actor) 
 		state.KBIDs = append(state.KBIDs, binding.KBIDs...)
 		state.StrictScope = true
 	}
+	if s.KnowledgeAccess != nil && strings.HasPrefix(r.URL.Path, "/api/v1/sessions/") && strings.HasSuffix(r.URL.Path, "/files") {
+		if len(parts) != 7 || parts[4] != "messages" || !validID(parts[5]) || s.MessageResource == nil {
+			return &Error{409, "kb_acl.resource_binding_required"}
+		}
+		if err := s.MessageResource(ctx, r.Header, parts[3], parts[5], unique(state.KBIDs), r.URL.Query().Get("file_path")); err != nil {
+			return err
+		}
+	}
 	for _, id := range unique(refs.knowledge) {
 		kb, err := s.Upstream.KnowledgeBaseForKnowledge(ctx, id, r.Header)
 		if err != nil {
@@ -434,6 +526,11 @@ func (s *ScopeService) Check(ctx context.Context, r *http.Request, actor Actor) 
 		agentID := ""
 		if len(refs.agents) > 0 {
 			agentID = refs.agents[0]
+		}
+		if r.URL.Path != "/api/v1/knowledge-search" {
+			if err := s.CheckPlainChat(ctx, r.Header); err != nil {
+				return err
+			}
 		}
 		if source := uintValue(body["agent_source_tenant_id"]); source != 0 && agentID != "" {
 			value, e := s.agent(ctx, agentID, r.Header)
@@ -484,7 +581,7 @@ func collect(value any, refs *references) {
 		}
 		for key, item := range object {
 			switch key {
-			case "knowledge_base_id", "knowledge_base_ids", "knowledge_bases", "kb_id":
+			case "knowledge_base_id", "knowledge_base_ids", "knowledge_bases", "kb_id", "kb_ids":
 				refs.kbs = append(refs.kbs, stringsValue(item)...)
 			case "knowledge_id", "knowledge_ids":
 				refs.knowledge = append(refs.knowledge, stringsValue(item)...)

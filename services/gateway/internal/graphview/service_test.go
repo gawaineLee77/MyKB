@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/kbacl"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/weknora"
 )
 
@@ -60,6 +61,33 @@ func request(s *Service, path string, headers http.Header) *httptest.ResponseRec
 }
 
 const endpoint = "/api/v1/mindcreek/graph/knowledge-bases/kb-a"
+
+func TestProductACLPrecedesGraphQuery(t *testing.T) {
+	f := newFixture()
+	f.role = "contributor"
+	allowed := false
+	s := &Service{Enabled: true, Upstream: f, Reader: f, KnowledgeAccess: func(_ context.Context, kb string, h http.Header) error {
+		if kb != "kb-a" || h.Get("Authorization") != "Bearer human" {
+			t.Fatal("ACL lost original scope or actor")
+		}
+		if !allowed {
+			return &kbacl.Error{Status: 404, Code: "kb_acl.not_found"}
+		}
+		return nil
+	}}
+	h := http.Header{"Authorization": {"Bearer human"}}
+	if w := request(s, endpoint, h); w.Code != 404 || f.reads != 0 {
+		t.Fatal("private KB reached graph query")
+	}
+	allowed = true
+	if w := request(s, endpoint, h); w.Code != 200 || f.reads != 1 {
+		t.Fatal("visible KB cannot be read")
+	}
+	allowed = false
+	if w := request(s, endpoint+"?node_id=1", h); w.Code != 404 || f.reads != 1 {
+		t.Fatal("revoked graph expansion queried database")
+	}
+}
 
 func TestPermissionsBeforeDatabase(t *testing.T) {
 	for _, tc := range []struct {

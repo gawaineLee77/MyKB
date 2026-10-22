@@ -21,20 +21,20 @@ type MemberPreview struct {
 	Code   string `json:"code,omitempty"`
 }
 
-// PreviewMembers only resolves addresses supplied by a current workspace Owner.
+// PreviewMembers only resolves addresses supplied by a current workspace manager.
 // It performs no account/membership writes and forwards the human credential.
 func (s *Service) PreviewMembers(ctx context.Context, p weknora.Principal, h http.Header, emails []string) ([]MemberPreview, error) {
 	if h.Get("X-API-Key") != "" || h.Get("Authorization") == "" || p.User == nil || !p.User.IsActive || p.Tenant == nil {
-		return nil, failure("workspace.owner_required", 403)
+		return nil, failure("workspace.manager_required", 403)
 	}
 	owner := false
 	for _, m := range p.Memberships {
-		if m.TenantID == p.Tenant.ID && m.Role == "owner" {
+		if m.TenantID == p.Tenant.ID && (m.Role == "owner" || m.Role == "admin") {
 			owner = true
 		}
 	}
 	if !owner {
-		return nil, failure("workspace.owner_required", 403)
+		return nil, failure("workspace.manager_required", 403)
 	}
 	if len(emails) == 0 || len(emails) > 500 {
 		return nil, failure("member.batch_invalid", 400)

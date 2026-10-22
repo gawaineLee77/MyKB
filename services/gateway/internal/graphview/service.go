@@ -50,9 +50,10 @@ type Upstream interface {
 	KnowledgeBaseForKnowledge(context.Context, string, http.Header) (string, error)
 }
 type Service struct {
-	Enabled  bool
-	Upstream Upstream
-	Reader   Reader
+	Enabled         bool
+	Upstream        Upstream
+	Reader          Reader
+	KnowledgeAccess func(context.Context, string, http.Header) error
 }
 
 var identifier = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
@@ -116,6 +117,11 @@ func (s *Service) read(ctx context.Context, r *http.Request) (Graph, error) {
 		return empty, fail(400, "graph.invalid_query")
 	}
 	// Resolve the KB using the original human credential on every request.
+	if s.KnowledgeAccess != nil {
+		if err := s.KnowledgeAccess(ctx, q.KBID, r.Header); err != nil {
+			return empty, err
+		}
+	}
 	raw, err := s.Upstream.NativeRequest(ctx, "GET", "/api/v1/knowledge-bases/"+url.PathEscape(q.KBID), nil, r.Header, nil)
 	if err != nil {
 		return empty, err

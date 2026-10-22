@@ -163,11 +163,17 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	status, code := 503, "native.authorization_unavailable"
 	var nativeErr *Error
 	var upstreamErr *weknora.Error
+	var publicErr interface {
+		HTTPStatus() int
+		PublicCode() string
+	}
 	switch {
 	case errors.As(err, &nativeErr):
 		status, code = nativeErr.Status, nativeErr.Code
 	case errors.As(err, &upstreamErr):
 		status, code = upstreamErr.StatusCode, upstreamErr.Code
+	case errors.As(err, &publicErr):
+		status, code = publicErr.HTTPStatus(), publicErr.PublicCode()
 	}
 	apierror.Write(w, status, code, code, r.Header.Get("X-Request-ID"))
 }

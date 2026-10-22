@@ -2,7 +2,7 @@
   <section class="enterprise-members" data-testid="enterprise-members">
     <div class="operations">
       <t-button variant="outline" @click="batchOpen = !batchOpen">批量添加员工</t-button>
-      <t-button variant="outline" @click="openTransfer">移交空间所有者</t-button>
+      <t-button v-if="auth.currentTenantRole === 'owner'" variant="outline" @click="openTransfer">移交空间所有者</t-button>
     </div>
     <t-alert v-if="error" theme="error" :message="error" />
     <div v-if="batchOpen" class="batch-panel">
@@ -39,6 +39,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { canManageWorkspace } from './workspace-admin-policy'
 import type { TenantMember } from '@/api/tenant/members'
 import { batchJournal, parseMemberEmails, runMemberBatch, type BatchRole, type BatchRow } from './member-batch'
 import { addBatchMember, previewMembers, readMembers, transferState, transferStep, type TransferIntent } from './member-operations'
@@ -50,7 +51,7 @@ const error = ref(''), busy = ref(false), input = ref(''), batchOpen = ref(false
 const rows = ref<BatchRow[]>([]), summary = ref(''), previewText = ref(''), previewRole = ref(''), hasRun = ref(false)
 const previewCurrent = computed(() => previewText.value === input.value && previewRole.value === role.value)
 const labels: Record<string, string> = { ready: '待添加', existing: '已有成员，保留原角色', unregistered: '尚未开户或邮箱冲突', invalid: '邮箱无效', adding: '正在添加', added: '添加成功', failed: '添加失败', conflict: '冲突，请核对', unknown: '结果未知，重试前先核对' }
-function assertContext() { if (Number(auth.effectiveTenantId) !== tenant || auth.currentTenantRole !== 'owner' || auth.user?.id !== user) throw new Error('空间或角色已变化，请刷新页面。') }
+function assertContext() { if (Number(auth.effectiveTenantId) !== tenant || !canManageWorkspace(auth.currentTenantRole) || auth.user?.id !== user) throw new Error('空间或角色已变化，请刷新页面。') }
 async function loadFile(event: Event) { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (file.size > 131072) { error.value = 'CSV 不能超过 128 KiB。'; return }; input.value = await file.text() }
 async function preview() {
   busy.value = true; error.value = ''
@@ -79,6 +80,7 @@ async function advance() {
   busy.value = true; transferError.value = ''
   try {
     assertContext()
+    if (auth.currentTenantRole !== 'owner') throw new Error('仅 Owner 可以移交空间所有权。')
     if (!intent.value) { intent.value = { tenant, from: user, to: target.value }; sessionStorage.setItem(transferKey, JSON.stringify(intent.value)) }
     if (stage.value !== 'promote' && stage.value !== 'demote') return
     stage.value = await transferStep(intent.value, stage.value)
@@ -86,7 +88,7 @@ async function advance() {
     else await refreshTransfer()
   } catch (e: any) { transferError.value = e.message || '结果未知，请重新查询角色。' } finally { busy.value = false }
 }
-onMounted(() => { try { const saved = JSON.parse(sessionStorage.getItem(transferKey) || 'null'); if (saved?.tenant === tenant && saved?.from === user && typeof saved.to === 'string') { intent.value = saved; target.value = saved.to; void openTransfer() } } catch { sessionStorage.removeItem(transferKey) } })
+onMounted(() => { if (auth.currentTenantRole !== 'owner') return; try { const saved = JSON.parse(sessionStorage.getItem(transferKey) || 'null'); if (saved?.tenant === tenant && saved?.from === user && typeof saved.to === 'string') { intent.value = saved; target.value = saved.to; void openTransfer() } } catch { sessionStorage.removeItem(transferKey) } })
 </script>
 <style scoped>
 .enterprise-members { margin-bottom: 20px; }.operations { display: flex; gap: 10px; margin: 16px 0; flex-wrap: wrap; }.batch-panel { margin-top: 14px; border: 1px solid var(--td-component-border); border-radius: 10px; padding: 20px; background: var(--td-bg-color-container); }.field { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }.field textarea,.field select { padding: 10px; border: 1px solid var(--td-component-border); border-radius: 6px; background: var(--td-bg-color-container); color: var(--td-text-color-primary); font: inherit; }.result-scroll { max-height: 360px; overflow: auto; }table { width: 100%; border-collapse: collapse; }th,td { padding: 10px; text-align: left; border-bottom: 1px solid var(--td-component-border); }small { display: block; color: var(--td-text-color-secondary); }p { line-height: 1.7; margin: 14px 0; }

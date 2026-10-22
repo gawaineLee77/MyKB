@@ -283,6 +283,7 @@ func (h *Handler) discoveryResult() map[string]any {
 func (h *Handler) toolList(modern bool) map[string]any {
 	definitions := toolDefinitions()
 	if h.nativeTools != nil {
+		definitions = append(definitions, wikiToolDefinitions()...)
 		filtered := []map[string]any{}
 		for _, tool := range definitions {
 			name, _ := tool["name"].(string)
@@ -315,7 +316,7 @@ func (h *Handler) toolList(modern bool) map[string]any {
 
 func nativeToolName(name string) bool {
 	switch name {
-	case "list_knowledge_bases", "search_knowledge", "get_source_excerpt", "ask_knowledge_agent":
+	case "list_knowledge_bases", "search_knowledge", "get_source_excerpt", "ask_knowledge_agent", "wiki_search", "wiki_read_page":
 		return true
 	}
 	return false

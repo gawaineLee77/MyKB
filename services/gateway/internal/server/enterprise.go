@@ -182,7 +182,7 @@ func enterpriseIdentityMiddleware(next http.Handler, d Dependencies) http.Handle
 			apierror.Write(w, 400, "auth.ambiguous_credentials", "Use one authentication credential", requestID(r))
 			return
 		}
-		if (!strings.HasPrefix(path, "/api/v1/") && path != "/mcp") || path == "/api/v1/mindcreek/auth/config" || strings.HasPrefix(path, "/api/v1/mindcreek/admin/auth/") {
+		if (!strings.HasPrefix(path, "/api/v1/") && path != "/mcp") || publicBrandingRequest(r) || path == "/api/v1/mindcreek/auth/config" || strings.HasPrefix(path, "/api/v1/mindcreek/admin/auth/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -304,7 +304,7 @@ func closedEnterprisePasswordRoute(method, path string) bool {
 }
 func identityRecoveryRoute(r *http.Request) bool {
 	switch r.URL.Path {
-	case "/api/v1/auth/me", "/api/v1/auth/me/preferences", "/api/v1/auth/logout", "/api/v1/auth/validate", "/api/v1/auth/switch-tenant", "/api/v1/auth/invitations/lookup", "/api/v1/mindcreek/onboarding", "/api/v1/mindcreek/installation":
+	case "/api/v1/auth/me", "/api/v1/auth/me/preferences", "/api/v1/auth/logout", "/api/v1/auth/validate", "/api/v1/auth/switch-tenant", "/api/v1/auth/invitations/lookup", "/api/v1/mindcreek/onboarding", "/api/v1/mindcreek/installation", "/api/v1/mindcreek/branding":
 		return true
 	}
 	return r.URL.Path == "/api/v1/me/invitations" || strings.HasPrefix(r.URL.Path, "/api/v1/me/invitations/")
@@ -343,12 +343,12 @@ func mapEnterpriseMemberEmail(w http.ResponseWriter, r *http.Request, d Dependen
 	tenant, err := strconv.ParseUint(parts[0], 10, 64)
 	owner := false
 	for _, m := range p.Memberships {
-		if m.TenantID == tenant && m.Role == "owner" {
+		if m.TenantID == tenant && (m.Role == "owner" || (d.WorkspaceAdmin != nil && m.Role == "admin")) {
 			owner = true
 		}
 	}
 	if err != nil || p.Tenant == nil || p.Tenant.ID != tenant || !owner {
-		apierror.Write(w, 403, "workspace.owner_required", "Workspace Owner required", requestID(r))
+		apierror.Write(w, 403, "workspace.manager_required", "Workspace manager required", requestID(r))
 		return false
 	}
 	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 16384))

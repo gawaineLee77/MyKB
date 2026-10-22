@@ -12,7 +12,7 @@ import (
 // calls. Incoming arbitrary paths are handled separately by the exact manifest.
 func (c *Client) NativeRequest(ctx context.Context, method, path string, query url.Values, h http.Header, input any) (json.RawMessage, error) {
 	allowed := method == http.MethodGet && path == "/api/v1/system/info"
-	for _, prefix := range []string{"/api/v1/knowledge-bases", "/api/v1/shared-knowledge-bases", "/api/v1/shared-agents", "/api/v1/knowledge/", "/api/v1/chunks/", "/api/v1/agents", "/api/v1/sessions", "/api/v1/models", "/api/v1/embed-channels"} {
+	for _, prefix := range []string{"/api/v1/knowledge-bases", "/api/v1/knowledgebase/", "/api/v1/faq/", "/api/v1/shared-knowledge-bases", "/api/v1/shared-agents", "/api/v1/knowledge/", "/api/v1/chunks/", "/api/v1/agents", "/api/v1/sessions", "/api/v1/models", "/api/v1/embed-channels"} {
 		if path == strings.TrimSuffix(prefix, "/") || strings.HasPrefix(path, strings.TrimSuffix(prefix, "/")+"/") {
 			allowed = true
 		}

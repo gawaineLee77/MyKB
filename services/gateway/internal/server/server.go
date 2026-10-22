@@ -13,10 +13,12 @@ import (
 	"strings"
 
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/access"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/agenticon"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/agentscope"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/apierror"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/assistant"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/authorization"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/branding"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/capability"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/catalog"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/config"
@@ -24,6 +26,8 @@ import (
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/enterprise"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/grant"
 	corporateidentity "github.com/gawaineLee77/MyKB/services/gateway/internal/identity"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/kbacl"
+	"github.com/gawaineLee77/MyKB/services/gateway/internal/kbguard"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/library"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/managedmodel"
 	"github.com/gawaineLee77/MyKB/services/gateway/internal/nativeaccess"
@@ -66,6 +70,11 @@ type Dependencies struct {
 	IdentityGate   CorporateIdentityGate
 	IdentityAdmin  IdentityAdminService
 	Enterprise     *enterprise.Service
+	WorkspaceAdmin WorkspaceAdminService
+	KBPermissions  *kbacl.Service
+	KBGuard        *kbguard.Guard
+	Branding       *branding.Service
+	AgentIcons     *agenticon.Service
 	Observability  *observability.Recorder
 }
 
@@ -197,10 +206,36 @@ func NewGateway(cfg config.Config, capabilities *capability.Registry, routePolic
 		if dependencies.NativeAccess == nil {
 			panic("native authorization gate is required")
 		}
-		proxy.ModifyResponse = dependencies.NativeAccess.FilterResponse
+		proxy.ModifyResponse = func(response *http.Response) error {
+			// Scope and ACL response checks always see the original caller, even
+			// when the fixed collaborator write adapter used an internal key.
+			request := response.Request.Clone(response.Request.Context())
+			request.Header = kbguard.OriginalHeaders(response.Request)
+			response.Request = request
+			if dependencies.KBGuard != nil {
+				if err := dependencies.KBGuard.FilterResponse(response); err != nil {
+					return err
+				}
+			}
+			if dependencies.NativeScopes != nil {
+				if err := dependencies.NativeScopes.FilterAgentVisibility(response); err != nil {
+					return err
+				}
+				if err := dependencies.NativeScopes.FilterWorkspaceMetadata(response); err != nil {
+					return err
+				}
+			}
+			return dependencies.NativeAccess.FilterResponse(response)
+		}
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) { nativeaccess.WriteError(w, r, err) }
-		dependencies.AssistantProxy = proxy
-		fallback = dependencies.NativeAccess.Wrap(proxy)
+		content := http.Handler(proxy)
+		if dependencies.KBGuard != nil {
+			content = dependencies.KBGuard.Wrap(content)
+		}
+		// The assistant preflights its own session/model scope, but its rewritten
+		// content and file routes must still pass the shared KB action guard.
+		dependencies.AssistantProxy = content
+		fallback = dependencies.NativeAccess.Wrap(content)
 	} else if routePolicy != nil {
 		fallback = policyHandler(routePolicy, proxy, dependencies)
 	}

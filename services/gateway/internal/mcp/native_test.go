@@ -18,6 +18,30 @@ type nativeCallerCapture struct {
 	headers []http.Header
 }
 
+type nativeAuditOnlyStore struct{ nativeaccess.SessionStore }
+
+func (nativeAuditOnlyStore) Record(context.Context, nativeaccess.Actor, string, string, string, []string, string) error {
+	return nil
+}
+
+func TestPlainMCPAskCannotInheritWorkspaceMemory(t *testing.T) {
+	checks := 0
+	s := &NativeService{Scopes: &nativeaccess.ScopeService{
+		Store:           nativeAuditOnlyStore{},
+		KnowledgeAccess: func(context.Context, string, http.Header) error { return nil },
+		PlainChatAllowed: func(context.Context, http.Header) error {
+			checks++
+			return &nativeaccess.Error{Status: 403, Code: "kb_acl.workspace_memory_disabled_required"}
+		},
+	}}
+	for i, body := range []string{`{"query":"synthetic"}`, `{"query":"synthetic","agent_id":"agent"}`} {
+		_, err := s.CallNative(context.Background(), "ask_knowledge_agent", json.RawMessage(body), nativeaccess.Actor{ID: "user", Kind: "human", TenantID: 1}, http.Header{}, "request")
+		if err != ErrDenied || checks != i+1 {
+			t.Fatal("MCP ask did not fail before scope retrieval/model invocation", err, checks)
+		}
+	}
+}
+
 func TestReadOnlyMCPAgentCannotExecuteMutationTools(t *testing.T) {
 	for _, config := range []map[string]any{
 		{"allowed_tools": []any{"wiki_write_page"}},
@@ -55,7 +79,7 @@ func (l *nativeLimiterCapture) Allow(key string, _ time.Time) bool {
 	return true
 }
 
-func TestNativeMCPFourToolsAndMachineIdentity(t *testing.T) {
+func TestNativeMCPSixToolsAndMachineIdentity(t *testing.T) {
 	calls := &nativeCallerCapture{}
 	limiter := &nativeLimiterCapture{}
 	h, err := NewNativeHandler(nativeResolverStub{}, calls, limiter, "r3-test")
@@ -80,7 +104,7 @@ func TestNativeMCPFourToolsAndMachineIdentity(t *testing.T) {
 			} `json:"tools"`
 		} `json:"result"`
 	}
-	if json.Unmarshal(w.Body.Bytes(), &document) != nil || len(document.Result.Tools) != 4 {
+	if json.Unmarshal(w.Body.Bytes(), &document) != nil || len(document.Result.Tools) != 6 {
 		t.Fatal(w.Body.String())
 	}
 	for _, tool := range document.Result.Tools {

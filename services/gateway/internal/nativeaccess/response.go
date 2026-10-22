@@ -45,10 +45,23 @@ func (s *ScopeService) FilterResponse(response *http.Response) error {
 	if state == nil || response.StatusCode < 200 || response.StatusCode >= 300 {
 		return nil
 	}
+	if s.KnowledgeAccess != nil {
+		response.Header.Set("Cache-Control", "private, no-store")
+	}
 	if strings.HasPrefix(response.Header.Get("Content-Type"), "text/event-stream") {
-		response.Body = &checkedStream{source: response.Body, reader: bufio.NewReader(response.Body), check: func(v any) error {
+		stream := &checkedStream{source: response.Body, reader: bufio.NewReader(response.Body), check: func(v any) error {
 			return s.checkReferences(response.Request.Context(), v, state, response.Request.Header)
-		}}
+		}, transform: func(v any) error {
+			if s.RewriteResources != nil {
+				return s.RewriteResources(response.Request.Context(), response.Request.Header, v)
+			}
+			return nil
+		}, scrub: s.KnowledgeAccess != nil}
+		if s.StreamResources != nil && s.KnowledgeAccess != nil {
+			rewrite := s.StreamResources(response.Request.Context(), response.Request.Header)
+			stream.transform, stream.before, stream.flush = rewrite.Rewrite, rewrite.Before, rewrite.Flush
+		}
+		response.Body = stream
 		response.ContentLength = -1
 		response.Header.Del("Content-Length")
 		return nil
@@ -114,6 +127,15 @@ func (s *ScopeService) FilterResponse(response *http.Response) error {
 	if err := s.checkReferences(ctx, envelope["data"], state, h); err != nil {
 		return err
 	}
+	if s.KnowledgeAccess != nil {
+		if s.RewriteResources != nil {
+			if err := s.RewriteResources(ctx, h, envelope); err != nil {
+				return err
+			}
+		}
+		scrubPrivateResources(envelope)
+		response.Header.Set("Cache-Control", "private, no-store")
+	}
 	encoded, err := json.Marshal(envelope)
 	if err != nil {
 		return err
@@ -127,11 +149,15 @@ func (s *ScopeService) FilterResponse(response *http.Response) error {
 // Validate one complete SSE event before exposing any bytes of that event. A
 // rejected event ends this response; it does not retract earlier emitted data.
 type checkedStream struct {
-	source   io.ReadCloser
-	reader   *bufio.Reader
-	pending  []byte
-	check    func(any) error
-	finished bool
+	source    io.ReadCloser
+	reader    *bufio.Reader
+	pending   []byte
+	check     func(any) error
+	transform func(any) error
+	before    func(any) ([]any, error)
+	flush     func() ([]any, error)
+	scrub     bool
+	finished  bool
 }
 
 func (s *checkedStream) Close() error { return s.source.Close() }
@@ -192,6 +218,61 @@ func (s *checkedStream) Read(target []byte) (int, error) {
 		if err := s.check(value); err != nil {
 			return 0, err
 		}
+		if s.scrub {
+			var preceding []byte
+			if s.before != nil {
+				values, err := s.before(value)
+				if err != nil {
+					return 0, err
+				}
+				preceding, err = s.encodeReleased(values)
+				if err != nil {
+					return 0, err
+				}
+			}
+			if s.transform != nil {
+				if err := s.transform(value); err != nil {
+					return 0, err
+				}
+			}
+			scrubPrivateResources(value)
+			encoded, err := json.Marshal(value)
+			if err != nil {
+				return 0, err
+			}
+			// Preserve SSE event/id/retry/comment fields while replacing all data
+			// lines with one checked JSON payload, including multiline events.
+			var rewritten bytes.Buffer
+			rewritten.Write(preceding)
+			for _, line := range strings.Split(event.String(), "\n") {
+				line = strings.TrimSuffix(line, "\r")
+				if line != "" && !strings.HasPrefix(line, "data:") {
+					rewritten.WriteString(line + "\n")
+				}
+			}
+			rewritten.WriteString("data: ")
+			rewritten.Write(encoded)
+			rewritten.WriteString("\n\n")
+			event = rewritten
+		}
+	}
+	if s.scrub && s.flush != nil && (s.finished || data.String() == "[DONE]") {
+		values, err := s.flush()
+		if err != nil {
+			return 0, err
+		}
+		released, err := s.encodeReleased(values)
+		if err != nil {
+			return 0, err
+		}
+		if data.String() == "[DONE]" {
+			var flushed bytes.Buffer
+			flushed.Write(released)
+			flushed.Write(event.Bytes())
+			event = flushed
+		} else {
+			event.Write(released)
+		}
 	}
 	s.pending = event.Bytes()
 	if len(s.pending) == 0 {
@@ -200,7 +281,28 @@ func (s *checkedStream) Read(target []byte) (int, error) {
 	return s.Read(target)
 }
 
+func (s *checkedStream) encodeReleased(values []any) ([]byte, error) {
+	var out bytes.Buffer
+	for _, value := range values {
+		if err := s.check(value); err != nil {
+			return nil, err
+		}
+		scrubPrivateResources(value)
+		raw, err := json.Marshal(value)
+		if err != nil {
+			return nil, err
+		}
+		out.WriteString("event: message\ndata: ")
+		out.Write(raw)
+		out.WriteString("\n\n")
+	}
+	return out.Bytes(), nil
+}
 func denied(err error) bool {
+	var public interface{ HTTPStatus() int }
+	if errors.As(err, &public) {
+		return public.HTTPStatus() == 403 || public.HTTPStatus() == 404
+	}
 	var e *Error
 	if errors.As(err, &e) {
 		return e.Status == 403 || e.Status == 404

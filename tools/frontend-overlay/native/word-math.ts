@@ -8,6 +8,27 @@ const mathRun = (s: string, props = '') => `<m:r>${props ? `<m:rPr>${props}</m:r
 const slot = (name: string, content: string) => `<m:${name}>${content}</m:${name}>`
 const fail = (detail: string): never => { throw new Error(detail) }
 const operators = new Set(Array.from('∑∏∐∫∬∭∮∯∰⋂⋃⋀⋁'))
+const labelledArrows = new Set(['←', '→', '↔'])
+
+function labelledArrow(e: Element): string | undefined {
+  const c = children(e), base = c[0], tag = e.localName
+  if (!base || base.localName !== 'mo' || base.getAttribute('stretchy') !== 'true' || !labelledArrows.has(text(base))) return
+  if (c.length !== (tag === 'munderover' ? 3 : 2) || c.slice(1).some(label => label.localName !== 'mpadded')) return
+  const labels = c.slice(1).map(label => {
+    // Only KaTeX xArrow's symmetric horizontal label padding is supported.
+    // Other mpadded nodes may move, overlap or hide content and must still fail.
+    if (label.attributes.length !== 2 || label.getAttribute('width') !== '+0.6em' || label.getAttribute('lspace') !== '0.3em') fail('暂不支持此箭头标注的排版')
+    return row(children(label))
+  })
+  const above = tag === 'munder' ? '' : labels[tag === 'munderover' ? 1 : 0]!
+  const below = tag === 'mover' ? '' : labels[0]!
+  if (!above && !below) return mathRun(text(base))
+  // A grouping character stretches to its editable label; plain limits over
+  // a text arrow would leave a short glyph underneath a long annotation.
+  const pos = above ? 'bot' : 'top'
+  const group = `<m:groupChr><m:groupChrPr><m:chr m:val="${xml(text(base))}"/><m:pos m:val="${pos}"/><m:vertJc m:val="${pos}"/></m:groupChrPr>${slot('e', '<m:argPr><m:argSz m:val="-1"/></m:argPr>' + (above || below))}</m:groupChr>`
+  return above && below ? `<m:limLow>${slot('e', group)}${slot('lim', below)}</m:limLow>` : group
+}
 
 function nary(e: Element): { char: string; sub: string; sup: string; loc: string } | undefined {
   if (e.localName === 'mo' && operators.has(text(e))) return { char: text(e), sub: '', sup: '', loc: 'subSup' }
@@ -64,6 +85,8 @@ function convert(e: Element): string {
     case 'msup': return `<m:sSup>${slot('e', at(0))}${slot('sup', at(1))}</m:sSup>`
     case 'msubsup': return `<m:sSubSup>${slot('e', at(0))}${slot('sub', at(1))}${slot('sup', at(2))}</m:sSubSup>`
     case 'mover': case 'munder': case 'munderover': {
+      const arrow = labelledArrow(e)
+      if (arrow !== undefined) return arrow
       if (e.getAttribute('accent') === 'true' || e.getAttribute('accentunder') === 'true') {
         const accent = text(c[1]!)
         if (['¯', 'ˉ', '‾', '_', '―'].includes(accent)) return `<m:bar><m:barPr><m:pos m:val="${tag === 'munder' ? 'bot' : 'top'}"/></m:barPr>${slot('e', at(0))}</m:bar>`

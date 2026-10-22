@@ -121,6 +121,29 @@ func (r *Repository) GetByBrokerSubject(ctx context.Context, subject string) (Id
 	return scanIdentity(r.db.QueryRowContext(ctx, identitySelect+` WHERE broker_subject=$1`, strings.TrimSpace(subject)))
 }
 
+// CheckLocalUser checks the corporate account behind a managed machine key.
+// Machine auth itself has no human identity, so the gateway uses its trusted
+// key-creator binding and rechecks this state on every request.
+func (r *Repository) CheckLocalUser(ctx context.Context, userID string) error {
+	var count int
+	var active bool
+	if strings.TrimSpace(userID) == "" {
+		return ErrInvalid
+	}
+	err := r.db.QueryRowContext(ctx, `SELECT count(*), COALESCE(bool_and(status='active'),false)
+		FROM mindcreek.corporate_identities WHERE local_user_id=$1`, userID).Scan(&count, &active)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return ErrNotFound
+	}
+	if !active {
+		return ErrSuspended
+	}
+	return nil
+}
+
 func (r *Repository) BindLocalPrincipal(ctx context.Context, upstreamEmail, userID string, tenantID uint64) error {
 	if strings.TrimSpace(upstreamEmail) == "" || strings.TrimSpace(userID) == "" || tenantID == 0 {
 		return ErrInvalid

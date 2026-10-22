@@ -6,6 +6,21 @@ import (
 	"net/url"
 )
 
+// These pinned tools receive server-owned SearchTargets. Unclassified tools
+// cannot run under the product ACL, even if an old Agent configuration enables
+// them. Write tools additionally require KB management on the entire turn scope.
+var scopedReadTools = map[string]bool{
+	"thinking": true, "todo_write": true, "knowledge_search": true,
+	"grep_chunks": true, "list_knowledge_chunks": true, "get_document_info": true,
+	"query_knowledge_graph": true,
+	"data_schema":           true, "wiki_search": true, "wiki_read_page": true,
+	"wiki_read_source_doc": true, "wiki_read_issue": true,
+}
+var scopedWriteTools = map[string]bool{
+	"wiki_flag_issue": true, "wiki_write_page": true, "wiki_replace_text": true,
+	"wiki_rename_page": true, "wiki_delete_page": true, "wiki_update_issue": true,
+}
+
 // v0.8.0's agent all-mode applies this union of tool requirements before
 // choosing KBs (internal/agent/tools/capabilities.go). Scope expansion in the
 // product must preserve that selection when materializing an explicit list.

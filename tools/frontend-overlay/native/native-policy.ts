@@ -4,10 +4,13 @@ export const workspaceHome = (role: string | null) => ['owner', 'admin', 'contri
 
 export const SUPPORTED_AGENT_TOOLS = new Set([
   'thinking', 'todo_write', 'knowledge_search', 'grep_chunks', 'list_knowledge_chunks',
-  'query_knowledge_graph', 'get_document_info', 'database_query', 'data_analysis', 'data_schema', 'wiki_search', 'wiki_read_page',
-  'wiki_read_source_doc', 'wiki_flag_issue', 'wiki_write_page', 'wiki_replace_text',
-  'wiki_rename_page', 'wiki_delete_page', 'wiki_read_issue', 'wiki_update_issue',
+  'query_knowledge_graph', 'get_document_info', 'data_schema', 'wiki_search', 'wiki_read_page',
+  'wiki_read_source_doc', 'wiki_read_issue',
 ])
+
+export function restrictAgentExecution(config: Record<string, any>): void {
+  Object.assign(config, { mcp_selection_mode: 'none', mcp_services: [], skills_selection_mode: 'none', selected_skills: [], sandbox_config_id: '', web_search_enabled: false, web_fetch_enabled: false, memory_enabled: false })
+}
 
 export function agentConfigurationProblem(config: Record<string, any>): string {
   if (config.memory_enabled) return '此安装未启用记忆。请关闭已有配置的记忆后保存。'

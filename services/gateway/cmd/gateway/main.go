@@ -66,6 +66,13 @@ func main() {
 		log.Fatalf("product database error: %v", err)
 	}
 	defer db.Close()
+	if len(os.Args) > 1 && os.Args[1] == "image-resources" {
+		if err := handleImageResources(context.Background(), db, os.Args[2:], os.Stdin, os.Stdout); err != nil {
+			log.Printf("image resource operation stopped: %s", err)
+			os.Exit(1)
+		}
+		return
+	}
 	migrations, err := productdb.NewRunner(db)
 	if err != nil {
 		log.Fatalf("product migration configuration error: %v", err)

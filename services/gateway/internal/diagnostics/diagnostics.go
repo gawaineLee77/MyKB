@@ -45,6 +45,12 @@ func WithRequestID(ctx context.Context, id string) context.Context {
 	return context.WithValue(ctx, requestKey, id)
 }
 
+// RequestID returns the validated correlation ID attached by the HTTP boundary.
+func RequestID(ctx context.Context) string {
+	id, _ := ctx.Value(requestKey).(string)
+	return id
+}
+
 func WithFlow(ctx context.Context, instance, flow string) context.Context {
 	return context.WithValue(context.WithValue(ctx, instanceKey, instance), flowKey, flow)
 }

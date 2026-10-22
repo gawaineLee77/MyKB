@@ -923,7 +923,7 @@ func (c *Client) SearchKnowledge(ctx context.Context, input SearchRequest, inbou
 		Success bool           `json:"success"`
 		Data    []SearchResult `json:"data"`
 	}
-	if err := c.sendJSON(ctx, http.MethodPost, "/api/v1/knowledge-search", nil, inbound, input, &response); err != nil {
+	if err := c.sendJSON(ctx, http.MethodPost, "/api/v1/knowledge-search", url.Values{"resource_urls": {"handle"}}, inbound, input, &response); err != nil {
 		return nil, err
 	}
 	if !response.Success {
@@ -949,7 +949,7 @@ func (c *Client) GetChunkExcerpt(ctx context.Context, chunkID string, inbound ht
 		Success bool         `json:"success"`
 		Data    ChunkExcerpt `json:"data"`
 	}
-	if err := c.getJSON(ctx, "/api/v1/chunks/by-id/"+url.PathEscape(chunkID), inbound, &response); err != nil {
+	if err := c.getJSONQuery(ctx, "/api/v1/chunks/by-id/"+url.PathEscape(chunkID), url.Values{"resource_urls": {"handle"}}, inbound, &response); err != nil {
 		return ChunkExcerpt{}, err
 	}
 	if !response.Success || response.Data.ID != chunkID || response.Data.KnowledgeBaseID == "" || response.Data.KnowledgeID == "" {
@@ -1001,7 +1001,7 @@ func (c *Client) AskKnowledgeWithModel(ctx context.Context, sessionID, query, ag
 	if err != nil {
 		return AgentAnswer{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest, Err: err}
 	}
-	target := c.baseURL.ResolveReference(&url.URL{Path: path})
+	target := c.baseURL.ResolveReference(&url.URL{Path: path, RawQuery: "resource_urls=handle"})
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, target.String(), bytes.NewReader(encoded))
 	if err != nil {
 		return AgentAnswer{}, &Error{Code: "upstream.request_invalid", StatusCode: http.StatusBadRequest, Err: err}
@@ -1149,7 +1149,7 @@ func (c *Client) sendStreamWithClient(ctx context.Context, client *http.Client, 
 }
 
 func copyIdentityHeaders(destination, source http.Header) {
-	for _, name := range []string{"Authorization", "X-API-Key", "X-Tenant-ID", "X-Request-ID", "Accept-Language"} {
+	for _, name := range []string{"Authorization", "X-API-Key", "X-Tenant-ID", "X-External-User-ID", "X-External-User-Token", "X-Request-ID", "Accept-Language"} {
 		if value := strings.TrimSpace(source.Get(name)); value != "" {
 			destination.Set(name, value)
 		}
@@ -1203,8 +1203,15 @@ type User struct {
 }
 
 type Tenant struct {
-	ID   uint64 `json:"id"`
-	Name string `json:"name"`
+	ID           uint64        `json:"id"`
+	Name         string        `json:"name"`
+	MemoryConfig *MemoryConfig `json:"memory_config,omitempty"`
+}
+
+// The pinned native viewer-safe TenantResponse includes this switch for every
+// role. A nil stored config is omitted and means memory is disabled upstream.
+type MemoryConfig struct {
+	Enabled bool `json:"enabled"`
 }
 
 type Membership struct {

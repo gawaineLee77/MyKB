@@ -70,6 +70,7 @@ type nativeFixture struct {
 	requests    []string
 	agent       map[string]any
 	caps        map[string]map[string]any
+	sandboxPin  string
 }
 
 func (f *nativeFixture) NativeRequest(_ context.Context, method, path string, _ url.Values, h http.Header, _ any) (json.RawMessage, error) {
@@ -95,6 +96,8 @@ func (f *nativeFixture) NativeRequest(_ context.Context, method, path string, _ 
 		data = map[string]any{"id": id, "capabilities": f.caps[id]}
 	case strings.HasPrefix(path, "/api/v1/agents/"):
 		data = f.agent
+	case strings.HasPrefix(path, "/api/v1/sessions/"):
+		data = map[string]any{"id": strings.TrimPrefix(path, "/api/v1/sessions/"), "sandbox_config_id": f.sandboxPin}
 	case strings.HasPrefix(path, "/api/v1/models/"):
 		id := strings.TrimPrefix(path, "/api/v1/models/")
 		kind := map[string]string{"builtin-mindcreek-chat": "KnowledgeQA", "builtin-mindcreek-embedding": "Embedding", "builtin-mindcreek-rerank": "Rerank", "existing-model": "KnowledgeQA"}[id]

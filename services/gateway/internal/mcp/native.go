@@ -38,6 +38,7 @@ func (s *NativeService) CallNative(ctx context.Context, name string, arguments j
 		if err != nil {
 			var n *nativeaccess.Error
 			var w *weknora.Error
+			var public interface{ HTTPStatus() int }
 			if errors.As(err, &n) {
 				switch n.Status {
 				case 400, 413, 422:
@@ -53,9 +54,22 @@ func (s *NativeService) CallNative(ctx context.Context, name string, arguments j
 				} else {
 					err = ErrUnavailable
 				}
+			} else if errors.As(err, &public) {
+				switch public.HTTPStatus() {
+				case 400, 413, 422:
+					err = ErrInvalid
+				case 401, 403, 404:
+					err = ErrDenied
+				default:
+					err = ErrUnavailable
+				}
 			}
 		}
 	}()
+	if name == "wiki_search" || name == "wiki_read_page" {
+		result, ids, err = s.callWiki(ctx, name, arguments, actor, h)
+		return result, err
+	}
 	if name == "list_knowledge_bases" {
 		if err = decodeArguments(arguments, &struct{}{}); err != nil {
 			return nil, err
@@ -130,6 +144,11 @@ func (s *NativeService) CallNative(ctx context.Context, name string, arguments j
 	}
 	if input.Query == "" || utf8.RuneCountInString(input.Query) > maxQuery || len(input.KnowledgeIDs) > 64 {
 		return nil, ErrInvalid
+	}
+	if name == "ask_knowledge_agent" {
+		if err := s.Scopes.CheckPlainChat(ctx, h); err != nil {
+			return nil, err
+		}
 	}
 	if name == "ask_knowledge_agent" && input.AgentID != "" {
 		config, e := s.Scopes.AgentConfig(ctx, input.AgentID, h)

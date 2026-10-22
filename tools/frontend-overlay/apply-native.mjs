@@ -1,3 +1,8 @@
+import { applyWorkspaceAdminUI } from './apply-workspace-admin.mjs'
+import { applyKnowledgeBaseACL, applyKnowledgeKeyACL } from './apply-kb-acl.mjs'
+import { applyScopedImageAccess } from './apply-image-access.mjs'
+import { applyWorkspaceResourceCache } from './apply-workspace-resource-cache.mjs'
+
 // Exact-anchor adapters for the pinned v0.8.0 copy; never writes the submodule.
 export const retainedModules = [
   'AuthEntry.vue', 'SSOLogin.vue', 'AdminLogin.vue', 'EmployeeOnboarding.vue',
@@ -70,6 +75,7 @@ export function applyNativeUI({ read, write, replaceExact: exact, replaceRegex: 
     sandboxConfigs.value = []
     loadedAt.value.sandboxConfigs = Date.now()
   }`)
+  applyWorkspaceResourceCache({ replaceExact: exact })
   regex('src/components/menu.vue', /const loadSessionOriginMeta = async \(\) => \{[\s\S]*?\n\};/g, `const loadSessionOriginMeta = async () => {
     imPlatforms.value = [];
     embedChannelNames.value = {};
@@ -81,7 +87,7 @@ export function applyNativeUI({ read, write, replaceExact: exact, replaceRegex: 
   try { await refreshModelReadiness() } catch { MessagePlugin.error('模型列表加载失败，请重试。'); return }`)
   const agent = 'src/views/agent/AgentEditorModal.vue'
   exact(agent, '  return allTools.value.map(tool => {', '  return allTools.value.filter(tool => SUPPORTED_AGENT_TOOLS.has(tool.value)).map(tool => {')
-  exact(agent, '<script setup lang="ts">', `<script setup lang="ts">\nimport { SUPPORTED_AGENT_TOOLS, agentConfigurationProblem } from '@/mindcreek/native-policy';`)
+  exact(agent, '<script setup lang="ts">', `<script setup lang="ts">\nimport { SUPPORTED_AGENT_TOOLS, agentConfigurationProblem, restrictAgentExecution } from '@/mindcreek/native-policy';`)
   regex(agent, /                    <div class="setting-row">\n                      <div class="setting-info">\n                        <label>\{\{ \$t\('agent.editor.memoryEnabled'\)[\s\S]*?<\/div>\n                    <\/div>/g, '')
   exact(agent, '    memory_enabled: true,', '    memory_enabled: false,')
   exact(agent, 'if (agentData.config.memory_enabled == null) agentData.config.memory_enabled = true;', 'if (agentData.config.memory_enabled == null) agentData.config.memory_enabled = false;')
@@ -94,6 +100,7 @@ export function applyNativeUI({ read, write, replaceExact: exact, replaceRegex: 
                     </t-alert>
                     <div class="setting-row" data-guide="agent-create-name">`)
   exact(agent, 'const handleSave = async () => {', `const handleSave = async () => {
+  restrictAgentExecution(formData.value.config);
   const problem = agentConfigurationProblem(formData.value.config);
   if (problem) { MessagePlugin.error(problem); currentSection.value = 'tools'; return; }`)
   // Server fills absent models. Explicit selections are kept and validated there.
@@ -111,6 +118,10 @@ export function applyNativeUI({ read, write, replaceExact: exact, replaceRegex: 
   // Settings embeds the native roster and invitations plus enterprise operations.
   exact('src/views/settings/TenantMembers.vue', '<div class="tenant-members">', '<div class="tenant-members">\n    <EnterpriseMembers v-if="canManage" @changed="loadMembers" />')
   exact('src/views/settings/TenantMembers.vue', '<script setup lang="ts">', '<script setup lang="ts">\nimport EnterpriseMembers from \'@/mindcreek/EnterpriseMembers.vue\'')
+  applyWorkspaceAdminUI({ replaceExact: exact })
+  applyKnowledgeBaseACL({ read, write, replaceExact: exact, replaceRegex: regex })
+  applyKnowledgeKeyACL({ replaceExact: exact })
+  applyScopedImageAccess({ replaceExact: exact, replaceRegex: regex })
   // Keep only authenticated media routes; public capability URLs are not a fallback.
   exact('src/views/platform/index.vue', '<NewUserGuide />', '<NewUserGuide v-if="authStore.hasRole(\'contributor\')" />')
   // The settings route already renders Settings; mounting the global copy too

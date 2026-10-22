@@ -14,6 +14,31 @@ import (
 	"time"
 )
 
+func TestCurrentPrincipalPreservesWorkspaceMemorySwitch(t *testing.T) {
+	for _, tc := range []struct {
+		name, field string
+		enabled     bool
+	}{
+		{"unset native config", "", false},
+		{"explicitly disabled", `,"memory_config":{"enabled":false}`, false},
+		{"enabled", `,"memory_config":{"enabled":true}`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/api/v1/auth/me" {
+					t.Fatal(r.URL.Path)
+				}
+				_, _ = io.WriteString(w, `{"success":true,"data":{"user":{"id":"user"},"tenant":{"id":1`+tc.field+`}}}`)
+			}))
+			defer upstream.Close()
+			p, err := newTestClient(t, upstream.URL, time.Second).CurrentPrincipal(context.Background(), nil)
+			if err != nil || p.Tenant == nil || (p.Tenant.MemoryConfig != nil && p.Tenant.MemoryConfig.Enabled) != tc.enabled {
+				t.Fatal(p, err)
+			}
+		})
+	}
+}
+
 func TestManualKnowledgeContracts(t *testing.T) {
 	manualJSON := `{"id":"note-1","knowledge_base_id":"kb-notes","type":"manual","title":"Daily log","parse_status":"completed","metadata":{"content":"# Daily log\nHello","format":"markdown","status":"publish","version":2,"updated_at":"2026-08-26T08:00:00Z"}}`
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -306,6 +331,9 @@ func TestPhase4SearchExcerptAndAgentContracts(t *testing.T) {
 		}
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/knowledge-search":
+			if r.URL.Query().Get("resource_urls") != "handle" {
+				t.Error("machine search must not inherit public storage URL mode")
+			}
 			var input SearchRequest
 			if json.NewDecoder(r.Body).Decode(&input) != nil || input.Query != "river" || len(input.KnowledgeBaseIDs) != 1 || input.KnowledgeBaseIDs[0] != "kb-a" {
 				http.Error(w, "invalid search scope", http.StatusBadRequest)
@@ -317,6 +345,9 @@ func TestPhase4SearchExcerptAndAgentContracts(t *testing.T) {
 		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/sessions":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"id":"session-1"}}`))
 		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/knowledge-chat/session-1":
+			if r.URL.Query().Get("resource_urls") != "handle" {
+				t.Error("machine QA must not inherit public storage URL mode")
+			}
 			w.Header().Set("Content-Type", "text/event-stream")
 			_, _ = w.Write([]byte("data: {\"response_type\":\"references\",\"knowledge_references\":[{\"id\":\"chunk-1\",\"content\":\"grounded\",\"knowledge_base_id\":\"kb-a\",\"knowledge_id\":\"doc-1\"}]}\n\n"))
 			_, _ = w.Write([]byte("data: {\"response_type\":\"answer\",\"content\":\"The answer\"}\n\n"))

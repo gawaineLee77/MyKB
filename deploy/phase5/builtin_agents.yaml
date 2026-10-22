@@ -22,6 +22,12 @@ builtin_agents:
       max_completion_tokens: 2048
       kb_selection_mode: "all"
       retrieve_kb_only_when_mentioned: false
+      memory_enabled: false
+      mcp_selection_mode: "none"
+      mcp_services: []
+      skills_selection_mode: "none"
+      selected_skills: []
+      sandbox_config_id: ""
       web_search_enabled: false
       web_search_max_results: 0
       multi_turn_enabled: true
@@ -65,6 +71,12 @@ builtin_agents:
         - "list_knowledge_chunks"
         - "query_knowledge_graph"
         - "get_document_info"
+      memory_enabled: false
+      mcp_selection_mode: "none"
+      mcp_services: []
+      skills_selection_mode: "none"
+      selected_skills: []
+      sandbox_config_id: ""
       web_search_enabled: false
       web_search_max_results: 0
       reflection_enabled: false

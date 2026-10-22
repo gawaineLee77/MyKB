@@ -15,7 +15,7 @@ func registerMemberPreview(mux *http.ServeMux, d Dependencies) {
 			return
 		}
 		if r.Header.Get("X-API-Key") != "" || r.Header.Get("Authorization") == "" {
-			apierror.Write(w, 403, "auth.human_required", "Human Owner session required", requestID(r))
+			apierror.Write(w, 403, "auth.human_required", "Human manager session required", requestID(r))
 			return
 		}
 		p, err := d.Principals.CurrentPrincipal(r.Context(), r.Header)
