@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "release": "current-20261020-699031ce",
+  "archive": "/Users/gawaine/Desktop/KnowledgeBase/images/archives/mindcreek-current-20261020-699031ce-amd64.tar.gz",
+  "bytes": 3146664681,
+  "sha256": "542a0c72752a5fc35b5287ee4043919fd89f87a67d49fb3c012fbe22487e8432",
+  "verified_files": 375,
+  "outer_checksum": true,
+  "every_inner_file_checksum": true,
+  "limitation_evidence_present": true,
+  "instance_secrets_excluded": true
+}

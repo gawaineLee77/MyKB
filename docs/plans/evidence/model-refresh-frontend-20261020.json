@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-20",
+  "scope": "Actual compiled product Vue chat UI with synthetic API data; no deployed service or model provider is used.",
+  "success": true,
+  "browser_status": "passed",
+  "browser_checks": [
+    "before: returning to tab clears valid model cache, creates orange agent warnings; reselecting the same model restores UI without any configuration write",
+    "before: no model/agent configuration writes and no page errors",
+    "after: temporary model-catalog 503 retains the last successful list; successful empty catalog reflects real removal; later successful refresh restores the configured model",
+    "after: repeated focus, visibility and permission events retain configured models and ready agents; KB cache clears during revalidation and revoked selection is removed",
+    "after: Owner-to-Admin membership change still reloads the application and applies the new identity",
+    "after: no model/agent configuration writes and no page errors"
+  ],
+  "page_errors": [],
+  "unexpected_requests": [],
+  "screenshots_inspected": true,
+  "screenshots": [
+    "../../assets/model-refresh-20261020/before-initial-configured.png",
+    "../../assets/model-refresh-20261020/before-focus-false-model-warning.png",
+    "../../assets/model-refresh-20261020/before-reselect-model-recovers.png",
+    "../../assets/model-refresh-20261020/after-initial-configured.png",
+    "../../assets/model-refresh-20261020/after-refresh-model-and-agent-remain-ready.png",
+    "../../assets/model-refresh-20261020/after-model-catalog-503-retains-known-model.png",
+    "../../assets/model-refresh-20261020/after-authoritative-empty-catalog-is-unconfigured.png",
+    "../../assets/model-refresh-20261020/after-kb-revocation-model-remains-configured.png"
+  ],
+  "screenshot_sha256": {
+    "../../assets/model-refresh-20261020/before-initial-configured.png": "508a7e2f4c22ece6c055eff134ebbf47849b076043d93c0cdab956431382ffb9",
+    "../../assets/model-refresh-20261020/before-focus-false-model-warning.png": "de151af24fda98db22740660bad30a1b11e73c7501810eb29bb5c3d37338bb2d",
+    "../../assets/model-refresh-20261020/before-reselect-model-recovers.png": "ff76b1c17e29630bbe99cdccf70cfc95498caae56dec0ed57d0ed7e602dfad41",
+    "../../assets/model-refresh-20261020/after-initial-configured.png": "508a7e2f4c22ece6c055eff134ebbf47849b076043d93c0cdab956431382ffb9",
+    "../../assets/model-refresh-20261020/after-refresh-model-and-agent-remain-ready.png": "ff76b1c17e29630bbe99cdccf70cfc95498caae56dec0ed57d0ed7e602dfad41",
+    "../../assets/model-refresh-20261020/after-model-catalog-503-retains-known-model.png": "508a7e2f4c22ece6c055eff134ebbf47849b076043d93c0cdab956431382ffb9",
+    "../../assets/model-refresh-20261020/after-authoritative-empty-catalog-is-unconfigured.png": "752dab6d5fa4262b59b5cb52d0191ce4271824d694b422af79636c33e9935db1",
+    "../../assets/model-refresh-20261020/after-kb-revocation-model-remains-configured.png": "508a7e2f4c22ece6c055eff134ebbf47849b076043d93c0cdab956431382ffb9"
+  },
+  "source_sha256": {
+    "tools/frontend-overlay/native/native-context.ts": "a1866ed25fce361d2df629060c3903a416925c5a2f0a5c78767be6d77cb31f41",
+    "tools/frontend-overlay/apply-workspace-resource-cache.mjs": "cd8112ac95a15ca6188db708adbce19b31ef83a9f0f151162d434b33207352ab",
+    "tools/frontend-overlay/workspace-resource-cache.test.mjs": "0b6282a0acdc665f067206c7a01134edfc2e99642142655678d6bba0337731dc",
+    "tools/frontend-overlay/apply-native.mjs": "aff1b613f1d6e2d57c4feae6d950c7b9b343a1799c8379ba3ee058dd73d11066",
+    "tools/frontend-overlay/check-native.mjs": "ecab5085378ddb3ec3f7efceb0370fcf7ecedec2946dfa24ccc284e75326405d",
+    "tools/frontend-overlay/model-refresh-browser.mjs": "0895435357f79243b5ab4d70c32909948d27e67da036179aeb645c601767cb8f"
+  },
+  "build_sha256": {
+    "before": "e36eacf8fd11de64831370998ff182a1f667ea224f332e609f19362c163975a0",
+    "after": "a3a9fa9e82b5342933813acb5adf7955d7ce54e7f84b858c9f102fb16aae4f59"
+  },
+  "build_paths": {
+    "before": ".local/image-access-ui/after",
+    "after": ".local/model-refresh-ui/after"
+  },
+  "browser_harness_node": "v25.8.1",
+  "frontend": {
+    "type_check": "passed",
+    "production_build": "passed",
+    "logs": {
+      "typecheck.log": "a56bb276db4e129b0d23ef978a488dfc6f0845a00550a6cb828699323ac34625",
+      "build-final.log": "b7d874a1bd266fd6c707e6af47851b31ba45a527b3ebe054dee0aeec7e623366"
+    }
+  }
+}

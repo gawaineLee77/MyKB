@@ -1,0 +1,361 @@
+{
+  "date": "2026-10-22",
+  "scope": "Product overlay for ordinary HTML links in chat Markdown; no upstream source edit, package or deployment.",
+  "rootCause": "DOMPurify USE_PROFILES replaces ALLOWED_ATTR. The HTML profile drops the target attribute written by the existing markdown link hook before attribute sanitization.",
+  "fix": "Add target through markdownDomPurifyConfig.ADD_ATTR so the existing _blank and noopener noreferrer policy survives sanitization. URI and event-attribute policies are unchanged.",
+  "checks": {
+    "frontendTests": {
+      "passed": 646,
+      "failed": 0
+    },
+    "typeCheck": "passed",
+    "productionBuild": "passed",
+    "stage1Boundary": "passed",
+    "workspaceCacheTests": {
+      "passed": 10,
+      "failed": 0
+    },
+    "independentReview": "No blocking findings; minimal configuration fix confirmed against installed DOMPurify source."
+  },
+  "browser": {
+    "scope": "Actual compiled product Vue ordinary and Agent answer components; synthetic history, API responses and destination pages. No external network or deployed service.",
+    "checks": [
+      "before ordinary: actual HTTPS link click replaces the conversation tab and its unsent input",
+      "before agent: actual HTTPS link click replaces the conversation tab and its unsent input",
+      "after ordinary: HTTPS 文档 opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after ordinary: HTTP 文档 opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after ordinary: 相对地址 opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after ordinary: 同站绝对地址 opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after ordinary: 原始 HTML opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after ordinary: 原有 self opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after ordinary: JavaScript 危险链接 loses href and cannot navigate or execute",
+      "after ordinary: HTML data 危险链接 loses href and cannot navigate or execute",
+      "after ordinary: citation still opens its reference drawer and image still opens in-page preview; conversation and draft remain intact",
+      "after agent: HTTPS 文档 opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after agent: HTTP 文档 opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after agent: 相对地址 opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after agent: 同站绝对地址 opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after agent: 原始 HTML opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after agent: 原有 self opens a real new tab with no opener; conversation URL and unsent input stay intact",
+      "after agent: JavaScript 危险链接 loses href and cannot navigate or execute",
+      "after agent: HTML data 危险链接 loses href and cannot navigate or execute",
+      "after agent: citation still opens its reference drawer and image still opens in-page preview; conversation and draft remain intact"
+    ],
+    "screenshots": [
+      "before-ordinary-conversation.png",
+      "before-ordinary-conversation-replaced.png",
+      "before-agent-conversation.png",
+      "before-agent-conversation-replaced.png",
+      "after-ordinary-conversation.png",
+      "after-ordinary-new-tab.png",
+      "after-ordinary-citation-drawer.png",
+      "after-ordinary-image-preview.png",
+      "after-ordinary-conversation-retained.png",
+      "after-agent-conversation.png",
+      "after-agent-new-tab.png",
+      "after-agent-citation-drawer.png",
+      "after-agent-image-preview.png",
+      "after-agent-conversation-retained.png"
+    ],
+    "pageErrors": [],
+    "unexpectedRequests": [],
+    "linkAttributes": [
+      {
+        "mode": "before",
+        "renderer": "ordinary",
+        "attributes": [
+          {
+            "text": "HTTPS 文档",
+            "href": "https://links.example.invalid/https",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTTP 文档",
+            "href": "http://links.example.invalid/http",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "相对地址",
+            "href": "/synthetic-destination/relative",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "同站绝对地址",
+            "href": "http://127.0.0.1:50162/synthetic-destination/same-origin",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "原始 HTML",
+            "href": "https://links.example.invalid/raw",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "原有 self",
+            "href": "https://links.example.invalid/self",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "JavaScript 危险链接",
+            "href": null,
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTML data 危险链接",
+            "href": null,
+            "target": null,
+            "rel": "noopener noreferrer"
+          }
+        ]
+      },
+      {
+        "mode": "before",
+        "renderer": "agent",
+        "attributes": [
+          {
+            "text": "",
+            "href": "/platform/knowledge-bases/synthetic-kb?knowledge_id=synthetic-document",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTTPS 文档",
+            "href": "https://links.example.invalid/https",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTTP 文档",
+            "href": "http://links.example.invalid/http",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "相对地址",
+            "href": "/synthetic-destination/relative",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "同站绝对地址",
+            "href": "http://127.0.0.1:50162/synthetic-destination/same-origin",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "原始 HTML",
+            "href": "https://links.example.invalid/raw",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "原有 self",
+            "href": "https://links.example.invalid/self",
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "JavaScript 危险链接",
+            "href": null,
+            "target": null,
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTML data 危险链接",
+            "href": null,
+            "target": null,
+            "rel": "noopener noreferrer"
+          }
+        ]
+      },
+      {
+        "mode": "after",
+        "renderer": "ordinary",
+        "attributes": [
+          {
+            "text": "HTTPS 文档",
+            "href": "https://links.example.invalid/https",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTTP 文档",
+            "href": "http://links.example.invalid/http",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "相对地址",
+            "href": "/synthetic-destination/relative",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "同站绝对地址",
+            "href": "http://127.0.0.1:50162/synthetic-destination/same-origin",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "原始 HTML",
+            "href": "https://links.example.invalid/raw",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "原有 self",
+            "href": "https://links.example.invalid/self",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "JavaScript 危险链接",
+            "href": null,
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTML data 危险链接",
+            "href": null,
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          }
+        ]
+      },
+      {
+        "mode": "after",
+        "renderer": "agent",
+        "attributes": [
+          {
+            "text": "",
+            "href": "/platform/knowledge-bases/synthetic-kb?knowledge_id=synthetic-document",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTTPS 文档",
+            "href": "https://links.example.invalid/https",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTTP 文档",
+            "href": "http://links.example.invalid/http",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "相对地址",
+            "href": "/synthetic-destination/relative",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "同站绝对地址",
+            "href": "http://127.0.0.1:50162/synthetic-destination/same-origin",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "原始 HTML",
+            "href": "https://links.example.invalid/raw",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "原有 self",
+            "href": "https://links.example.invalid/self",
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "JavaScript 危险链接",
+            "href": null,
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          },
+          {
+            "text": "HTML data 危险链接",
+            "href": null,
+            "target": "_blank",
+            "rel": "noopener noreferrer"
+          }
+        ]
+      }
+    ],
+    "success": true,
+    "visualReview": {
+      "status": "passed",
+      "reviewedScreenshotCount": 14,
+      "notes": "Reviewed all scenario screenshots; fixed-viewport recapture removes drawer-transition-only empty margin. Final Agent drawer screenshot rechecked."
+    },
+    "testedScope": {
+      "role": "owner",
+      "modes": [
+        "quick-answer history rendered by AgentStreamDisplay with is-rag-mode",
+        "Agent history rendered by AgentStreamDisplay without is-rag-mode"
+      ],
+      "linkKinds": [
+        "Markdown HTTPS",
+        "Markdown HTTP",
+        "root-relative",
+        "same-origin absolute",
+        "raw HTML anchor",
+        "raw HTML anchor with target=_self"
+      ],
+      "exclusions": [
+        "independent legacy botmsg rendering",
+        "SVG/Mermaid internal anchors",
+        "deployed backend or external destination services"
+      ]
+    },
+    "status": "passed",
+    "reportPath": ".local/chat-links-20261022/browser-report.json",
+    "screenshotDirectory": "docs/assets/chat-links-20261022"
+  },
+  "limits": [
+    "Synthetic browser fixtures do not certify target deployment.",
+    "SVG/Mermaid internal links are outside this focused change.",
+    "Actual page fixtures cover quick-answer RAG and Agent histories, both through AgentStreamDisplay. Legacy botmsg-only rendering, Wiki body, and attachment preview were not separately clicked; they retain existing code and shared sanitizer policy."
+  ],
+  "delivery": {
+    "sourceOnly": true,
+    "packaged": false,
+    "deployed": false
+  },
+  "sha256": {
+    "tools/frontend-overlay/apply-chat-links.mjs": "29dc8978fb3f935527843b649956a261e7da03c19be6b265d82e3b48bbca5985",
+    ".local/chat-links-20261022/before/src/utils/markdownDomPurify.ts": "15af9f44b8d203bb891274bad39b3038c9b91f3d2eb48d79f710e18afcdfcc87",
+    ".local/chat-links-20261022/after/src/utils/markdownDomPurify.ts": "c4f7fca655a5fc9a70f2dfc7b699f8d98b9597c6727aae495a939b6e9b3476d4",
+    ".local/chat-links-20261022/frontend-check.log": "3e322d6b56b6466862c0e275074b15f04411f2f0f5c28c91e49af200d6075cb4",
+    ".local/chat-links-20261022/stage1-check.log": "9ca2056af9a41195d7af08fc23258b27361c3e0882795d253cd2c6e49217f746",
+    "tools/frontend-overlay/chat-links-browser.mjs": "6580db4490a686701bb98093f4020eef07b9d83f4315bbc75a6ebaed7e299e29"
+  },
+  "reproduction": [
+    "Prepare separate before and after frontend copies using installed dependencies; apply product overlay only to copies.",
+    "Build copies with npm run build.",
+    "Run tools/frontend-overlay/chat-links-browser.mjs with Node 24, Playwright on NODE_PATH and CHAT_LINKS_BEFORE/CHAT_LINKS_AFTER pointing to compiled copies."
+  ],
+  "screenshotSha256": {
+    "before-ordinary-conversation.png": "89a4f57751e2f32238d0534fc9e02c94de400ecb3d0d92c30b678504299612eb",
+    "before-ordinary-conversation-replaced.png": "fe052dd1ee2d2f796f3474977fa1b3626999e86531515f8ab1e0d0f4a6ec3a87",
+    "before-agent-conversation.png": "13c04d6f65b94ab2bc16f87f9ee2f5bb7585ef859c0253d083dde8ee5803add2",
+    "before-agent-conversation-replaced.png": "fe052dd1ee2d2f796f3474977fa1b3626999e86531515f8ab1e0d0f4a6ec3a87",
+    "after-ordinary-conversation.png": "89a4f57751e2f32238d0534fc9e02c94de400ecb3d0d92c30b678504299612eb",
+    "after-ordinary-new-tab.png": "fe052dd1ee2d2f796f3474977fa1b3626999e86531515f8ab1e0d0f4a6ec3a87",
+    "after-ordinary-citation-drawer.png": "1d2e566361e9892c252f312e5a65496724e63d05646ad4812ef2721ca97832ea",
+    "after-ordinary-image-preview.png": "f0a12a9468e94b7fe72deda857db4cb112ed4811ecd87d1dcfa0f338a5fec4c8",
+    "after-ordinary-conversation-retained.png": "139186eb676f037d7bdde3b19ff879f5da85c1581df30ab838f49cf6b8a09c90",
+    "after-agent-conversation.png": "13c04d6f65b94ab2bc16f87f9ee2f5bb7585ef859c0253d083dde8ee5803add2",
+    "after-agent-new-tab.png": "fe052dd1ee2d2f796f3474977fa1b3626999e86531515f8ab1e0d0f4a6ec3a87",
+    "after-agent-citation-drawer.png": "890a59d6d06d901e54c6691e6790d3e2e3f02ffc94214e4e7147413dde665ab6",
+    "after-agent-image-preview.png": "3d07047db92abf05f71f9176094a1e74ed949cbf029c29353a3847ce39e3b526",
+    "after-agent-conversation-retained.png": "da586056559891adff48cfb68e802ecdac799166cfef2380f36d73df63e9b009"
+  }
+}

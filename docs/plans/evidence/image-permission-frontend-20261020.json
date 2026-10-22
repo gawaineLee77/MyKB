@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-20",
+  "scope": "Actual compiled product Vue document and conversation pages with synthetic API responses; not deployed backend authorization acceptance.",
+  "node": "v24.21.0",
+  "success": true,
+  "frontend": {
+    "command": "Node 24 npm test; npm run type-check; npm run build in isolated overlay",
+    "tests": 629,
+    "passed": 629,
+    "failed": 0,
+    "type_check": "passed",
+    "production_build": "passed",
+    "logs": {
+      "npm-test.log": "4606cef47308c636cf6bf88eaa7a2e75e5e5b1403526347a1176412096086a31",
+      "typecheck.log": "a56bb276db4e129b0d23ef978a488dfc6f0845a00550a6cb828699323ac34625",
+      "build.log": "a5adf88f5b335a02f93d3e89c2cbca98da31d85a243fdea55b190bca5a137ac5"
+    }
+  },
+  "browser_status": "passed",
+  "browser_checks": [
+    "before owner: actual compiled document component displays unverified notice",
+    "before owner: actual quick-answer history and uploaded-image components reproduce unavailable images",
+    "after owner: actual compiled document component displays scoped historical image",
+    "after owner: actual quick-answer history and uploaded-image components use persisted session/message scopes",
+    "after admin: actual compiled document component displays scoped historical image",
+    "after admin: actual quick-answer history and uploaded-image components use persisted session/message scopes",
+    "after contributor: actual compiled document component displays scoped historical image",
+    "after contributor: actual quick-answer history and uploaded-image components use persisted session/message scopes",
+    "after viewer: actual quick-answer history and uploaded-image components use persisted session/message scopes"
+  ],
+  "additional_renderer_scope": "Production protected-image helper bundled for a focused browser harness; synthetic API fixtures, not deployed backend acceptance.",
+  "additional_renderer_checks": [
+    "409 notices preserve image anchors; permission refresh restores document and answer images using distinct authenticated scopes",
+    "focus revokes cached object URLs and revalidates both current resource scopes",
+    "permission revocation removes previously rendered images after a denied fresh request",
+    "a successful in-flight response from before revocation cannot restore revoked pixels",
+    "image request cache is separated by authentication headers; a new identity never receives cached pixels before fresh authorization"
+  ],
+  "page_errors": [],
+  "unexpected_requests": [],
+  "screenshots_inspected": true,
+  "screenshots": [
+    "../../assets/image-permission-20261020/before-owner-actual-document.png",
+    "../../assets/image-permission-20261020/before-owner-actual-conversation.png",
+    "../../assets/image-permission-20261020/after-owner-actual-document.png",
+    "../../assets/image-permission-20261020/after-owner-actual-conversation.png",
+    "../../assets/image-permission-20261020/after-admin-actual-document.png",
+    "../../assets/image-permission-20261020/after-admin-actual-conversation.png",
+    "../../assets/image-permission-20261020/after-contributor-actual-document.png",
+    "../../assets/image-permission-20261020/after-contributor-actual-conversation.png",
+    "../../assets/image-permission-20261020/after-viewer-actual-conversation.png",
+    "../../assets/image-permission-20261020/before-unverified-history-images.png",
+    "../../assets/image-permission-20261020/after-restored-document-and-answer-images.png",
+    "../../assets/image-permission-20261020/after-revoked-images-removed.png"
+  ],
+  "screenshot_sha256": {
+    "../../assets/image-permission-20261020/before-owner-actual-document.png": "ec21b00cebe7040ad789275a0e9e501f8ecceaf159484c6faff16b7651b268d7",
+    "../../assets/image-permission-20261020/before-owner-actual-conversation.png": "10f247196119ec84090499500f3192ba77bf365eb7be02db48601cd309e60ed5",
+    "../../assets/image-permission-20261020/after-owner-actual-document.png": "220286712d6d7bde3f3b55a19ba2ce60b94ee78f2c00c6c8288f6059fa6ac314",
+    "../../assets/image-permission-20261020/after-owner-actual-conversation.png": "776139caa424e395cee79de592ebd358443059794767854f221bd662f3eba3cd",
+    "../../assets/image-permission-20261020/after-admin-actual-document.png": "a3263adfd0c0cd715e369918cd091ee7be330b2173616b7fb08d1ddab18cf963",
+    "../../assets/image-permission-20261020/after-admin-actual-conversation.png": "4fe5f25d2f54acd64a6318097073d7131ec89e9b80b988f3d6fd060a159ca395",
+    "../../assets/image-permission-20261020/after-contributor-actual-document.png": "403d4d273424d3ad89585912e505c894f5edb9b5d27cdede8729699b1481c83c",
+    "../../assets/image-permission-20261020/after-contributor-actual-conversation.png": "f812c9bc00aefcd4464ec7269939149bb0599140b8d25f1ce9205390812691c3",
+    "../../assets/image-permission-20261020/after-viewer-actual-conversation.png": "b2d768d7d72be9d6fef01e7bc18c5ddfd1dbf070cd297ff0c7d56951ef3fa423",
+    "../../assets/image-permission-20261020/before-unverified-history-images.png": "699fa42f62d2b260cfc17764261013f666a541bc53ce44dd9386646e81de3716",
+    "../../assets/image-permission-20261020/after-restored-document-and-answer-images.png": "32a5110b12907d5b08e93e80ea3ca0efa246cc707bcdee2d3d22c018326b7fb5",
+    "../../assets/image-permission-20261020/after-revoked-images-removed.png": "43aa9e36f1db0a86e7629be0b3ee3689aa16e08e72abba3f858e6a2c5e493efa"
+  },
+  "source_sha256": {
+    "tools/frontend-overlay/apply-image-access.mjs": "9deeb27c5abd980bcbe4afbf3ebfd97e5f988c939d98332abedbde9ae89f83ab",
+    "tools/frontend-overlay/apply-native.mjs": "d88d80048c65980f277d6086c16d693ac84ad263768a30081c96c3dae83b6b05",
+    "tools/frontend-overlay/apply-kb-acl.mjs": "db1399e191a91dc48e84e44da9dd485e25a3a65fed86e7aee8765cb53cb5fa0b",
+    "tools/frontend-overlay/check-native.mjs": "ecab5085378ddb3ec3f7efceb0370fcf7ecedec2946dfa24ccc284e75326405d",
+    "tools/frontend-overlay/native/message-image-access.ts": "ffc4206ec0fa2cea4454bddcb80cd8dfd51d9c1e1a3bfdc08a6e735d1686220d",
+    "tools/frontend-overlay/native/message-image-access.test.ts": "9f3cdb8801e1d0587d12c0df83c6d7244fa380b0d797b4549596952151e919dd",
+    "tools/frontend-overlay/image-access-browser.mjs": "aac1cdc9c785cc01aa89445a194313b71261b5b3d997da23040a593120b3fc8c",
+    "tools/frontend-overlay/image-access-app-browser.mjs": "c68ab1eeabc2bbf6c741515792237cdbb8fe69443765ede8256f02dec78bf29d"
+  },
+  "build_sha256": {
+    "before": "1fd479d31a7662aa82ed9630edb0a0cc9950216651b1e1a06c470705ac5b7fe8",
+    "after": "e36eacf8fd11de64831370998ff182a1f667ea224f332e609f19362c163975a0"
+  },
+  "build_paths": {
+    "before": ".local/product-details-ui/after",
+    "after": ".local/enterprise-image-acl-20261020/validation-20261020T072033Z-788e2c0b/ui"
+  }
+}

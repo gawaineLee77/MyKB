@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Design version | 0.8-workspace-r5 |
-| Date | 2026-09-22 |
+| Date | 2026-10-18 |
 | Status | Approved workspace direction; R1 design and synthetic verification complete; R2 implementation and synthetic acceptance complete; R3 backend implementation and synthetic acceptance complete; R4 implementation and synthetic acceptance complete; R5 implementation and synthetic acceptance complete; R6 target deployment pending |
 | Approved upstream | WeKnora v0.8.0 (`1edcd54b43606d9079bb36650efe3f68707a79ea`) |
 | Deployment | First enterprise installation; no deployed user data to migrate |
@@ -14,20 +14,20 @@ This is the authoritative target design. [Current status](CURRENT_STATUS.md) des
 
 ## 1. Executive summary
 
-MindCreek is an enterprise workspace distribution of WeKnora. A controlled installation creates a local admin account and a default company workspace. Employees sign in through corporate OAuth2 and join that workspace as Viewer without receiving personal workspaces. Knowledge bases and agents follow native workspace roles, resource ownership and sharing rules.
+MindCreek is an enterprise workspace distribution of WeKnora. A controlled installation creates a local admin account and a default company workspace. Employees sign in through corporate OAuth2 and join that workspace as Viewer without receiving personal workspaces. Knowledge bases use product-owned per-KB visibility and operation grants layered on the four native workspace roles; agents retain native ownership with product retrieval isolation.
 
 Knowledge-base publication, catalog, subscription and Personal Notes are retired from the target product. Existing default models, identity integration, storage, document processing, retrieval, audit and deployment infrastructure remain reusable. Agent publication to an employee-only website assistant is a separate capability.
 
 ## 2. Goals and boundaries
 
 - Deliver native v0.8.0 knowledge-base and agent workflows, including document/FAQ management and supported indexing options.
-- Preserve Owner, Admin, Contributor and Viewer, including native assignment, invitation, membership and ownership rules.
+- Preserve Owner, Admin, Contributor and Viewer. Extend Admin workspace management through product adapters; retain Owner protection and enforce the approved per-KB ACL.
 - Provide a chat-oriented Viewer interface with authorized space, agent and KB selection, history and citations.
 - Keep managed Chat, Embedding, Rerank and optional VLM credentials on the server.
 - Support an independent local admin alongside corporate OAuth2 employees.
 - Reuse the pinned upstream; do not restart Phase 0, downgrade upstream or rebuild the retrieval engine.
 
-Custom roles, a new permission engine, personal workspaces, KB subscriptions, Personal Notes, anonymous assistants, and automatic department synchronization are outside this redesign. Additional custom GraphRAG, PixelRAG, ontology/Semantica and desktop work are deferred. Native Wiki/graph features are assessed separately from those custom projects. Existing exclusions for IM, mini-programs, CLI, web search, external connectors, skill sandboxes and agent memory are not automatically lifted.
+Custom roles, a general-purpose policy engine, personal workspaces, KB subscriptions, Personal Notes, anonymous assistants, and automatic department synchronization are outside this redesign. Additional custom GraphRAG, PixelRAG, ontology/Semantica and desktop work are deferred. Native Wiki/graph features are assessed separately from those custom projects. Existing exclusions for IM, mini-programs, CLI, web search, external connectors, skill sandboxes and agent memory are not automatically lifted.
 
 ## 3. Terms
 
@@ -46,19 +46,30 @@ Custom roles, a new permission engine, personal workspaces, KB subscriptions, Pe
 | Operation | Owner | Admin | Contributor | Viewer |
 |---|---|---|---|---|
 | Create KB/agent | Yes | Yes | Yes | No |
-| Modify existing resources | Native effective permission | Native effective permission | Native creator/share checks | Native creator/share checks where applicable |
-| Add/invite/remove members and change roles | Yes | No | No | No |
+| Manage knowledge bases and permissions | All current-workspace KBs | All current-workspace KBs | Own KBs while eligible | No |
+| Modify/download KB documents and chunks | Yes | Yes | Creator or explicit operation grant | No |
+| Read/query knowledge bases | All current-workspace KBs | All current-workspace KBs | Own, workspace-public or explicitly visible | Workspace-public or explicitly visible |
+| Add/invite/bulk-add/remove non-Owner members; assign Admin/Contributor/Viewer | Yes | Yes, with workspace delegation | No | No |
+| Appoint, demote or remove an Owner | Yes; retain at least one Owner | No | No | No |
+| Edit workspace name/description and permitted settings | Yes | Yes; delegated name/description writes | No | No |
+| Open API integration; create/manage own API keys | Yes | Yes, restricted capabilities and explicit KB scope | No | No |
+| View/manage other creators' or unattributed legacy API keys | Yes | No | No | No |
+| Configure API principal/signing settings | Yes | No | No | No |
 | Transfer workspace ownership | Yes; retain at least one Owner | No | No | No |
 | Use authorized KBs and runnable agents | Yes | Yes | Yes | Yes |
 | Manage embed channels | Native Admin+ rules | Native Admin+ rules | No | No |
 
-Keep the fixed native role ladder and all resource-ownership/share checks. In particular, do not add an Admin-only content-write policy or remap Contributor. A downgraded creator can retain permissions on routes using creator-or-Admin checks. Hiding Viewer management navigation does not change these native rules.
+Keep the four native roles. New and verified historical KBs default to creator plus workspace Owner/Admin; creators can make them workspace-public or select visible members. Only current Contributors receive the seven independent document/chunk operations; they cannot rename/configure/delete the KB or delegate its grants. Viewer creators lose write and grant-management privileges. Removed creators require explicit restoration after rejoining. Product migrations 000018–000019, the gateway, UI overlay and separately authorized collaborator execution implement the [approved KB ACL design](plans/KNOWLEDGE_BASE_ACL_DESIGN_ZH.md); see [implementation and rollout boundaries](guides/KNOWLEDGE_BASE_PERMISSIONS_ZH.md).
+
+Workspace delegation is an explicit, revocable Owner action. The gateway stores a server-issued native session encrypted with an installation secret; it never exposes that session or internal member credential to Admin. Every delegated request checks the actual human, current workspace/role and protected target, and records the actual actor. Owner/Admin member changes and machine member mutations share a distributed workspace lock. The upstream remains private.
+
+API key attribution lives in product migration 000017, keyed by workspace/key ID and creator. Admin lists and mutates only their own keys, with a restricted capability allowlist and explicit authorized KBs. Owner manages all ordinary keys; an Admin-origin key retains its restrictions and another creator's KB scope can only be narrowed. Internal service keys have no exposed secret or mutation controls. Unknown legacy ownership is Owner-only. Newly created keys require active workspace delegation, including Owner-created keys. Managed key use checks creator identity, current membership/role and durable revocation on API and MCP entrypoints. Suspension, downgrade, removal and leaving invalidate prior keys permanently; reactivation or promotion does not restore them. Legacy untracked machine keys retain native non-knowledge capabilities, with membership writes participating in the same lifecycle protection; knowledge access fails closed until a product scope mapping is recorded. Machine KB scope and seven content operations are explicit, and never inferred from the native Owner projection or full_access flag. See [permissions guide](guides/WORKSPACE_ADMIN_PERMISSIONS_ZH.md) and [acceptance](plans/WORKSPACE_ADMIN_ACCEPTANCE.md).
 
 Platform administration is separate from space membership. Ordinary workspace Owners cannot create additional spaces under this enterprise policy. Platform admins create spaces but access content through their effective membership; this design does not enable universal cross-workspace content access. Ownership transfer does not transfer system-admin status.
 
 ## 5. Navigation and UI
 
-Viewer navigation contains chat, conversation history, required account/logout controls and in-chat workspace/agent/KB selectors. Citations and source previews remain usable. Contributor sees native KB and Agent entry points; Owner/Admin see their native permitted management pages. Recompute navigation after login, refresh, workspace switch and role changes; direct links follow the same navigation policy without redefining backend permissions.
+Viewer navigation contains chat, conversation history, required account/logout controls and in-chat workspace/agent/KB selectors. Authorized citations remain usable; original-file previews require document.download, which is unavailable to Viewers. Contributor sees native KB and Agent entry points; Owner/Admin see their native permitted management pages. Recompute navigation after login, refresh, workspace switch and role changes; direct links follow the same navigation policy without redefining backend permissions.
 
 Restore native KB list, create, detail, document/FAQ, processing, settings and Agent pages. Retain only the necessary brand, identity, managed-model, role-navigation and employee-assistant overlays. Remove product catalog, subscription, Personal Notes and replaced KB-page routes. R4 applies these adapters to a build copy, records native-module differences and verifies before/after screenshots for all four roles. Viewer history uses the authorized keyword endpoint. Returning to the tab refreshes membership; a role or workspace change clears selections and reloads authorization context.
 
@@ -84,7 +95,7 @@ Until onboarding succeeds, allow only identity, onboarding status/retry and logo
 
 The product gateway permits space creation only to platform admins. Keep the upstream internal self-service capability available for the administrator's native create-and-own flow, while matching frontend creation capability to product policy. The upstream service stays private.
 
-Keep native member lists, direct addition, invitations, four-role changes, removal and leave flows. Employee invitations lead to corporate login; they must not enable public password signup. Native email APIs use the upstream identity email; map verified corporate identities to that value when users enter corporate email. R4 CSV/email bulk addition uses an Owner-only `POST /api/v1/mindcreek/members/preview` to resolve entered employee addresses and native memberships before calling the native add endpoint. Unknown employees are not registered and existing roles remain unchanged. Uncertain writes are reconciled before retry; local progress contains address digests and statuses only. Ownership transfer promotes the selected existing member to Owner, then separately confirms self-demotion to Admin; interrupted steps resume from actual roles. Department selection and ongoing synchronization are later extensions.
+Keep native member lists, direct addition, invitations, four-role changes, removal and leave flows. Employee invitations lead to corporate login; they must not enable public password signup. Native email APIs use the upstream identity email; map verified corporate identities to that value when users enter corporate email. CSV/email bulk addition permits Owner and Admin through `POST /api/v1/mindcreek/members/preview` to resolve entered employee addresses and native memberships before calling the native add endpoint. Unknown employees are not registered and existing roles remain unchanged. Uncertain writes are reconciled before retry; local progress contains address digests and statuses only. Ownership transfer promotes the selected existing member to Owner, then separately confirms self-demotion to Admin; interrupted steps resume from actual roles. Department selection and ongoing synchronization are later extensions.
 
 ## 7. Knowledge and model behavior
 
@@ -121,6 +132,10 @@ There is no deployed user-data migration in the current delivery. Preserve the r
 
 R2 adds product-owned installation/onboarding progress through forward migrations, with failure recovery and upgrade/rollback verification. Native users, tenants, memberships, KBs, agents and channels remain upstream-owned. Do not copy role definitions into a second role store or directly rewrite upstream `tenant_id` fields.
 
+Migration 000017 adds encrypted workspace delegation, API key creator bindings, creator revocation generations, uncertain-create recovery markers and actual-actor audit records. Its down migration refuses to erase live authorization/revocation metadata. An application downgrade to a gateway lacking these checks requires revoking managed native keys first; retaining metadata alone does not make that downgrade safe.
+
+Migration 000022 adds explicitly reviewed image-to-document associations for resources without native parser provenance. A product-owned, version-pinned read adapter verifies native resource metadata and immutable multimodal processing spans before image access. No native rows are rewritten; editable Markdown and image metadata are never ownership evidence. See the [image authorization repair](plans/IMAGE_RESOURCE_ACL_FIX.md) and [operator recovery guide](guides/IMAGE_PERMISSION_RECOVERY_ZH.md).
+
 R3 migration 000015 adds `native_session_bindings` and `native_access_events`. Bind sessions to actor kind, actor ID, workspace and the union of used KB IDs; do not adopt old sessions. An interrupted request can conservatively retain a binding. Populated binding/audit tables refuse destructive rollback. Retired tables remain unused in R3. If an existing-data rollout is introduced later, inventory and isolate private KBs/notes first; never convert subscriptions into workspace memberships or silently expand content visibility.
 
 ## 10. Authorization and employee assistants
@@ -143,7 +158,15 @@ R1 adds verification tools and design records, not production endpoints. R2 impl
 
 Preserve native request/response shapes where possible. Pass actual employee bearer identity and current space for knowledge operations; never translate all requests into a shared admin credential. Service `manage_members` keys are restricted to onboarding/member automation and cannot transfer Owner.
 
-The independent R3 composition retires product publication/catalog/subscription/note/grant/profile interfaces with HTTP 410 and `feature.retired`. Unknown routes are rejected by an exact 429-route manifest. Keep four read-only MCP tools: readable KB listing, knowledge search, authorized excerpt retrieval and agent asking. Remove `list_publications` and `list_subscriptions`; calls return standard unknown-tool errors. Authenticated discovery and execution accept employee/admin bearer or restricted API Key credentials. API keys have separate hashed machine identities, sessions, limits and audit records; native capability and KB scope checks use the original key. A key is independently revocable and does not inherit an employee or Owner identity. Read-only tools may create sessions/audits but cannot edit content, Agents or members. R5 adds the employee-channel session adapter; native anonymous embed routes remain unavailable through the product entrypoint.
+The independent R3 composition retires product publication/catalog/subscription/note/grant/profile interfaces with HTTP 410 and `feature.retired`. Unknown routes are rejected by an exact 429-route manifest. Expose six read-only MCP tools: readable KB listing, knowledge search, authorized excerpt retrieval, agent asking, Wiki search (`wiki_search`) and Wiki page reading (`wiki_read_page`). Wiki tools use original credentials, current product KB ACL and API Key scope before retrieval and before returning results; KB and slug jointly identify a page. Results and bodies are bounded and private resource locators are removed. Remove `list_publications` and `list_subscriptions`; calls return standard unknown-tool errors. Authenticated discovery and execution accept employee/admin bearer or restricted API Key credentials. API keys have separate hashed machine identities, sessions, limits and audit records; native capability and KB scope checks use the original key. A key is independently revocable and does not inherit an employee or Owner identity. Read-only tools may create sessions/audits but cannot edit content, Agents or members. R5 adds the employee-channel session adapter; native anonymous embed routes remain unavailable through the product entrypoint.
+
+### 11.1 Service appearance and Agent icons (2026-10-19)
+
+The service name and Logo are runtime installation-wide settings, independent of workspace names. Only the active installed local administrator identified by the installation record may update them; workspace Owner/Admin and API Keys cannot. The initial name is 小纳, and the administrator can change it later. Public reads contain only name, Logo URL and revision for login/shell rendering. Migration 000020 stores settings and atomic before/after audit; optimistic revisions prevent overwritten edits.
+
+Custom Agent icons use product-owned PNG bytes and short references in native `avatar`, preserving the native field and mutation ownership. Authenticated reads validate current workspace and Agent visibility; a draft belongs to its uploader. Migration 000021 stores images, enforces per-user/per-workspace quota in the repository, and refuses populated rollback. PNG/JPEG/WebP browser uploads are size-limited and normalized to PNG; the server decodes and re-encodes bounded raster images. No arbitrary image URLs or upstream source patches are required.
+
+The KB document source filter shows only All, Local Upload, URL Import, Manual and API. Documents from other sources remain visible under All. See the [operator guide](guides/SERVICE_APPEARANCE_AND_WIKI_MCP_ZH.md) and [increment acceptance](plans/SERVICE_APPEARANCE_AND_WIKI_MCP_ACCEPTANCE.md).
 
 ## 12. Audit and observation
 
@@ -181,7 +204,7 @@ See [R3 acceptance](plans/WORKSPACE_CENTRIC_R3_ACCEPTANCE.md), [R4 UI acceptance
 
 R1 records the source baseline, functional/permission/module matrices, synthetic HTTP and existing-test evidence, identified gaps and R2 tasks. It does not prove deployed R2 behavior, actual corporate OAuth or browser embedding.
 
-R2 tests installation retries, local-admin sessions, concurrent/repeated first login, restricted tenantless access and member removal. R3 tests four-role effective permissions, cross-space/API-key scope, pre-retrieval checks, session/citation/file isolation, default models and four MCP tools. R4 requires native workflow regression and four-role before/after screenshots. R5 tests real employee login and channel/session revocation across websites. R6 covers fresh installation, backup/restore, actual models/proxies, pilot quality and release evidence.
+R2 tests installation retries, local-admin sessions, concurrent/repeated first login, restricted tenantless access and member removal. R3 tests four-role effective permissions, cross-space/API-key scope, pre-retrieval checks, session/citation/file isolation, default models and the six current MCP tools. R4 requires native workflow regression and four-role before/after screenshots. R5 tests real employee login and channel/session revocation across websites. R6 covers fresh installation, backup/restore, actual models/proxies, pilot quality and release evidence.
 
 Retire obsolete feature assertions only as their code paths are retired. Current Phase 5 checks remain evidence of the old runtime, not acceptance of the new design. Missing evidence must be recorded as pending rather than inferred from upstream or cached tests.
 

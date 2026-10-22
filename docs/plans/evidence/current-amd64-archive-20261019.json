@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "release": "current-20261019-d3fafdaf",
+  "archive": "/Users/gawaine/Desktop/KnowledgeBase/images/archives/mindcreek-current-20261019-d3fafdaf-amd64.tar.gz",
+  "bytes": 3145882774,
+  "sha256": "fe1fa156269a2d93698c44a029a3ec065cf8bdd9380b802aa13c4fb1c2f02c96",
+  "verified_files": 349,
+  "outer_checksum": true,
+  "every_inner_file_checksum": true,
+  "limitation_evidence_present": true,
+  "instance_secrets_excluded": true
+}

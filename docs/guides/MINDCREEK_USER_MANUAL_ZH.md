@@ -683,7 +683,7 @@ OAuth Client Secret 不是 API Key。
 
 | 集成任务 | 能力配置 |
 |---|---|
-| 列出获准知识库、检索、读取片段 | `retrieve`，界面为“检索知识库” |
+| 列出获准知识库、检索、读取片段和 Wiki | `retrieve`，界面为“检索知识库” |
 | MCP 生成回答、调用已有知识助手 | `retrieve` 和 `chat`，后者为“对话能力” |
 | 单独读取智能体配置，不进行问答 | `read_agents`，界面为“读取智能体” |
 | 向已有知识库导入文档，并检查结果 | `ingest` 和 `retrieve` |
@@ -691,7 +691,7 @@ OAuth Client Secret 不是 API Key。
 `chat` 也允许对话所需的智能体读取。
 普通检索集成不需要成员管理、模型管理或平台管理能力。
 
-**范围注意：** 知识库范围留空表示允许全部知识库，不表示拒绝全部知识库。
+**范围注意：** 必须在产品 API Key 配置中明确选择知识库；仅 Owner 可显式开启“全部知识库”。未勾选全部且范围留空时，没有知识库访问权限。旧 Key 需完成产品范围映射，不能借用原生 Owner 身份绕过知识库权限。
 固定知识库集成必须在 Key 配置中选择知识库。
 请求中的 `knowledge_base_ids` 再次限定本次范围，但它不是服务器授权的替代品。
 
@@ -764,8 +764,10 @@ curl --fail-with-body --silent --show-error \
 | `search_knowledge` | 检索片段，不生成回答 | `query`、`knowledge_base_ids`、可选 `knowledge_ids` |
 | `get_source_excerpt` | 读取一个来源片段 | `chunk_id`、可选 `max_chars` |
 | `ask_knowledge_agent` | 生成知识问答 | `query`、可选知识库、智能体和会话 ID |
+| `wiki_search` | 检索知识库中已生成的 Wiki | `query`、可选 `knowledge_base_ids`、`limit` |
+| `wiki_read_page` | 分段读取一篇 Wiki 正文 | `knowledge_base_id`、`slug`、可选 `offset`、`max_chars` |
 
-当前只有上述四个工具。
+当前提供上述六个工具。
 `list_publications` 和 `list_subscriptions` 已删除。
 只读表示不修改知识内容、智能体或成员。
 问答仍可以创建会话和审计记录。
@@ -795,7 +797,7 @@ curl --fail-with-body --silent --show-error \
    export MC_KB_ID='替换为上一步返回的知识库ID'
    ```
 
-**结果：** 客户端可以发现四个工具，并获得获准知识库列表。
+**结果：** 客户端可以发现六个工具，并获得获准知识库列表。
 工具发现本身也要求认证。
 脚本没有默认 Key，不会自动创建知识库或上传资料。
 
@@ -981,6 +983,31 @@ JSON 正文不能包含注释、Markdown 围栏或多个拼接的 JSON 对象。
 旧协议兼容路径支持 `2025-03-26`、`2025-06-18`、`2025-11-25` 的初始化。
 旧客户端应完成自己的 `initialize` 协商，不混用现代版本的元数据规则。
 如果客户端不能满足认证和协议要求，先使用配套脚本验证接口。
+
+### 9.9 搜索和读取 Wiki
+
+Wiki 工具使用现有 `/mcp` 入口和 `retrieve` Key，无需新增凭据。目标知识库须已启用 Wiki 并生成页面。Wiki 正文读取不授予原始文件下载权限。
+
+```bash
+bash mcp.sh tools/call wiki_search \
+  "$(jq -n --arg kb "$MC_KB_ID" \
+    '{query:"冷却泵",knowledge_base_ids:[$kb],limit:10}')" \
+  > mcp-wiki-search.json
+
+jq '.result.structuredContent.results' mcp-wiki-search.json
+```
+
+每条结果包含 `knowledge_base_id`、`slug`、标题、摘要和命中片段。搜索按普通文本匹配，不接受正则表达式；省略知识库范围时使用当前凭据有权访问的范围，并跳过未启用 Wiki 的知识库。显式传入 `knowledge_base_ids: []` 或 `null` 会被拒绝，不会扩大为默认范围。`limit` 默认 10、最大 20，是本次调用的总条数。`truncated: true` 表示可能还有结果，可进一步限定知识库或搜索词。`searched_knowledge_base_ids` 列出本次实际检索的 Wiki 知识库。
+
+读取结果中的页面，必须同时提供其知识库 ID 和 `slug`，不能仅用标题或跨知识库复用同名 `slug`：
+
+```bash
+bash mcp.sh tools/call wiki_read_page \
+  "$(jq -n --arg kb "$MC_KB_ID" --arg slug 'entity/冷却泵' \
+    '{knowledge_base_id:$kb,slug:$slug,max_chars:8000}')"
+```
+
+`max_chars` 按 Unicode 字符计数，默认 8,000、最大 20,000。若正文未读完，使用返回的 `next_offset` 作为下一次请求的 `offset`；超出实际正文长度的偏移会被拒绝。上游单次响应上限为 1 MiB，超限页面返回工具不可用，不会把残缺正文当作完整结果。原始存储地址、签名链接和未验证的资源句柄会被脱敏；公开网页链接可保留。每次调用都会重新检查 Key、知识库及来源引用权限，权限被撤销后不能继续读取。MCP 不提供 Wiki 编辑、删除、重建或维护工具。
 
 ## 10 使用 REST API
 
@@ -1268,13 +1295,13 @@ unset MC_API_KEY MC_BEARER MC_AUTH_KIND
 | `-32700 Parse error` | 正文不是单个有效 JSON；顶层字段不符合契约 | 使用 `jq` 生成正文；只保留 `jsonrpc/id/method/params` |
 | `-32020 Protocol header or metadata mismatch` | 协议头与正文不一致 | 按第 9.7 节逐项核对 |
 | `-32602 Invalid tool arguments` | 字段、类型或长度错误 | 重新读取 `tools/list`；删除未声明参数 |
-| `-32602 Unknown tool` | 工具名错误或已退役 | 只使用当前四工具 |
+| `-32602 Unknown tool` | 工具名错误或已退役 | 执行 `tools/list`，只使用当前六个工具 |
 | `-32004 Resource not found` | 不存在或无权访问 | 检查 ID、Key 范围、成员关系、智能体范围 |
 | `-32000 Tool operation unavailable` | 下游或模型调用失败 | 记录请求 ID，交给管理员排查 |
 | HTTP 401 | 凭据缺失、过期或撤销 | 重新登录或更换获准 Key |
 | HTTP 403 | 空间、能力、模型读取或资源权限不足 | 核对身份及操作要求，不自动提升为全权限 |
 | HTTP 405 | 对 `/mcp` 使用 GET 或 DELETE | 改用 POST |
-| HTTP 410 / `feature.retired` | 访问旧业务接口 | 改用原生知识库或当前四工具 |
+| HTTP 410 / `feature.retired` | 访问旧业务接口 | 改用原生知识库或当前六个工具 |
 | HTTP 413 | 文件或正文超过限制 | 检查上传及代理限制，缩小测试文件 |
 | HTTP 429 | 触发请求限额 | 按 `Retry-After` 或配额窗口等待 |
 | TLS 证书验证失败 | 缺少企业 CA、域名不匹配或证书过期 | 安装正确 CA，并检查服务证书 |
@@ -1381,7 +1408,7 @@ JSON 语法通过后，仍需按第 9.7 节检查协议头和元数据。
 |---|---|
 | 网关路由 | [原生路由清单](../../config/r3-routes.json) |
 | MCP 协议与参数 | [MCP handler](../../services/gateway/internal/mcp/handler.go) |
-| MCP 原生权限与四工具 | [MCP native service](../../services/gateway/internal/mcp/native.go) |
+| MCP 原生权限与六个工具 | [MCP native service](../../services/gateway/internal/mcp/native.go)、[Wiki MCP](../../services/gateway/internal/mcp/wiki.go) |
 | 范围与会话校验 | [Scope service](../../services/gateway/internal/nativeaccess/scope.go) |
 | 模型默认值和校验 | [Model policy](../../services/gateway/internal/nativeaccess/models.go) |
 | Viewer 导航 | [Native UI policy](../../tools/frontend-overlay/native/native-policy.ts) |

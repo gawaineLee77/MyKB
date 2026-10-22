@@ -1,0 +1,134 @@
+{
+  "generated_at": "2026-10-22T07:52:29.143240+00:00",
+  "scope": "Read-only analysis of actual product-generated DOCX, Microsoft Word-provided XSL transform, and bundled LibreOffice import; no production source edits.",
+  "native_word_visual_acceptance": "Root subsequently opened annotated-arrows.docx in Microsoft Word and verified the reported tenth formula visually; see word-arrow-export-20261022.json. Additional contexts not visually checked in Word; user excluded local editing/saving.",
+  "sources": [
+    {
+      "path": "/Users/gawaine/Desktop/KnowledgeBase/.local/word-arrow-20261022/annotated-arrows.docx",
+      "sha256": "9c47e4e743757061d340b61407b93548c871961e259828ac84090649411ec6a8",
+      "document_xml_sha256": "f2c40941d1a76236c0e7a40917cfbcd4f19d910a44b72dfeec3d55e01a90f07f",
+      "equation_count": 10
+    },
+    {
+      "path": "/Users/gawaine/Desktop/KnowledgeBase/.local/word-arrow-20261022/arrow-contexts.docx",
+      "sha256": "437fdd121b32e321c9689ae97d6feb4587e3e7d0909ac175802fa63ee3b84c70",
+      "document_xml_sha256": "820eba4e967ff2040ecc1c3aa3994453be960a71ee3d9df837d2be30bdf135af",
+      "equation_count": 3
+    }
+  ],
+  "word_stylesheets": [
+    {
+      "path": "/Applications/Microsoft Word.app/Contents/Resources/omml2mathml.xsl",
+      "sha256": "76824634ab33491766276793dde1a8103c06081ab2006eaf21b4d77ae0db374d"
+    },
+    {
+      "path": "/Applications/Microsoft Word.app/Contents/Resources/mathml2omml.xsl",
+      "sha256": "a1e666f778d465911244daa0888294c0ae767fdd18733d12d1ec8298e415f276"
+    }
+  ],
+  "mathml_output": {
+    "path": "/Users/gawaine/Desktop/KnowledgeBase/.local/word-arrow-20261022/office-roundtrip-mathml.xml",
+    "sha256": "a85a5e16e455eb62a1052ebc38abfa807fcf6c8242d7e391e6ce5c4392a8249e"
+  },
+  "label_and_direction_checks": [
+    {
+      "source": "arrow-contexts.docx",
+      "equation": 1,
+      "expected_arrow": "→",
+      "expected_upper_label": "行内标签",
+      "expected_lower_label": null,
+      "arrow_is_base_of_mover": true,
+      "lower_label_preserved_in_munder": true,
+      "passed": true,
+      "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mi>a</mi><mover accent=\"false\"><mo>→</mo><mrow><mtext>行内标签</mtext></mrow></mover><mi>b</mi></math>"
+    },
+    {
+      "source": "arrow-contexts.docx",
+      "equation": 2,
+      "expected_arrow": "→",
+      "expected_upper_label": "上方",
+      "expected_lower_label": "这是更长的下方条件标签",
+      "arrow_is_base_of_mover": true,
+      "lower_label_preserved_in_munder": true,
+      "passed": true,
+      "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mi>σ</mi><munder><mrow><mover accent=\"false\"><mo>→</mo><mrow><mtext>上方</mtext></mrow></mover></mrow><mrow><mtext>这是更长的下方条件标签</mtext></mrow></munder><mi>γ</mi></math>"
+    },
+    {
+      "source": "arrow-contexts.docx",
+      "equation": 3,
+      "expected_arrow": "↔",
+      "expected_upper_label": "表格上方",
+      "expected_lower_label": "表格下方",
+      "arrow_is_base_of_mover": true,
+      "lower_label_preserved_in_munder": true,
+      "passed": true,
+      "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mi>a</mi><munder><mrow><mover accent=\"false\"><mo>↔</mo><mrow><mtext>表格上方</mtext></mrow></mover></mrow><mrow><mtext>表格下方</mtext></mrow></munder><mi>b</mi></math>"
+    },
+    {
+      "source": "annotated-arrows.docx",
+      "equation": 10,
+      "expected": [
+        {
+          "arrow": "→",
+          "upper_label": "范特西-泽尼克"
+        },
+        {
+          "arrow": "→",
+          "upper_label": "Gamo矩阵"
+        }
+      ],
+      "actual": [
+        {
+          "arrow": "→",
+          "upper_label": "范特西-泽尼克"
+        },
+        {
+          "arrow": "→",
+          "upper_label": "Gamo矩阵"
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "all_semantic_checks_passed": true,
+  "bundled_libreoffice": {
+    "executable": "/Users/gawaine/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override/soffice",
+    "observed_version": "LibreOfficeDev 26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5",
+    "source_revision_sha1": "2c87e51eeaa2b413ff4ae097b2705eea1995d8e5",
+    "source_url": "https://github.com/LibreOffice/core/blob/2c87e51eeaa2b413ff4ae097b2705eea1995d8e5/starmath/source/ooxmlimport.cxx",
+    "handleLimLowUpp_lines": [
+      425,
+      441
+    ],
+    "handleGroupChr_lines": [
+      442,
+      472
+    ],
+    "import_evidence_path": "/private/tmp/mindcreek-word-arrow-import-audit-20261022/arrow-contexts.fodt",
+    "import_evidence_sha256": "ffea41448da3567513ea89f966231e2f5a5295801298cdf13e1fbca7c9e5e83d",
+    "actual_imported_starmath": [
+      "a {\"行内标签\"} csub {→} b",
+      "σ {\"上方\"} csub {→} csub {\"这是更长的下方条件标签\"} γ",
+      "a {\"表格上方\"} csub {↔} csub {\"表格下方\"} b"
+    ],
+    "diagnosis": "handleGroupChr reads chr and pos but ignores vertJc; non-brace characters are reduced to csup/csub on the label. Outer limLow then appends another csub, creating duplicate centered subscripts for dual labels.",
+    "actual_import_matches_diagnosis": true
+  },
+  "limitations": [
+    "Microsoft Word OMML-to-MathML XSL checks structure and label/direction preservation, not native Word layout.",
+    "Word XSL does not preserve every OMML property in its MathML output, including explicit argument size.",
+    "Browser MathML is a separate rendering engine.",
+    "Dual-label groupChr width need not cover a longer lower label; exact KaTeX spacing and minimum arrow width are not claimed."
+  ],
+  "browser_mathml_preview": {
+    "path": "/Users/gawaine/Desktop/KnowledgeBase/.local/word-arrow-20261022/office-roundtrip-preview.html",
+    "sha256": "e72738080bf1d40d633a7cd825c56567db85089579fd8e34a594492a8e772276",
+    "screenshot": "/Users/gawaine/Desktop/KnowledgeBase/.local/word-arrow-20261022/screenshots/office-mathml-roundtrip.png",
+    "screenshot_sha256": "a1b27c8c7c898f93c084f55c4b2d0ff4c46dc45384cc7b09948d13cf7fddd8a1",
+    "renderer": "Google Chrome native MathML, local file URL, captured through cua_repl",
+    "visible_notice": "这是 Word 自带 OMML → MathML 转换器的结果，由浏览器原生 MathML 渲染；不是 Word 截图。",
+    "visual_checked": true,
+    "observation": "All four selected equations are visible. Arrow directions and all Chinese upper/lower labels are retained in correct relative positions. No red error markers or missing labels. Browser arrow glyphs remain short; native Word layout is not evaluated.",
+    "native_word_visual_acceptance": false
+  }
+}

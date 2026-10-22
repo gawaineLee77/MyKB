@@ -1,0 +1,43 @@
+{
+  "scope": "Actual compiled product Vue chat UI with synthetic API data; no deployed service or model provider is used.",
+  "checks": [
+    "before: returning to tab clears valid model cache, creates orange agent warnings; reselecting the same model restores UI without any configuration write",
+    "before: no model/agent configuration writes and no page errors",
+    "after: temporary model-catalog 503 retains the last successful list; successful empty catalog reflects real removal; later successful refresh restores the configured model",
+    "after: repeated focus, visibility and permission events retain configured models and ready agents; KB cache clears during revalidation and revoked selection is removed",
+    "after: Owner-to-Admin membership change still reloads the application and applies the new identity",
+    "after: no model/agent configuration writes and no page errors"
+  ],
+  "screenshots": [
+    "before-initial-configured.png",
+    "before-focus-false-model-warning.png",
+    "before-reselect-model-recovers.png",
+    "after-initial-configured.png",
+    "after-refresh-model-and-agent-remain-ready.png",
+    "after-model-catalog-503-retains-known-model.png",
+    "after-authoritative-empty-catalog-is-unconfigured.png",
+    "after-kb-revocation-model-remains-configured.png"
+  ],
+  "pageErrors": [],
+  "unexpectedRequests": [],
+  "success": true,
+  "builds": {
+    "before": ".local/image-access-ui/after/dist",
+    "after": ".local/kb-list-refresh-ui/after/dist"
+  },
+  "runtime": "v24.19.0",
+  "visualReview": {
+    "allScreenshotsInspected": true,
+    "count": 8,
+    "result": "Confirmed original false unconfigured model/agent warnings, model reselection recovery, configured models and agents after refresh, preservation during model catalog 503 and KB revocation, and true unconfigured state for an authoritative empty catalog."
+  },
+  "screenshotDirectory": "../../assets/kb-list-refresh-model-regression-20261021",
+  "compiledTreeHashes": {
+    "after": {
+      "sha256": "c735caf9ae48b4525e27e676b44669297751fb2a0723f873c1a097f5090c37fb",
+      "files": 215,
+      "algorithm": "SHA256 of concatenated sorted relative path UTF-8, NUL, raw file SHA256"
+    }
+  },
+  "buildHashReference": "./kb-list-refresh-frontend-20261021.json"
+}

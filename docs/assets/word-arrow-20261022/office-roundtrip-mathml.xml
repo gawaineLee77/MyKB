@@ -1,0 +1,243 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<office-roundtrip-audit generated_at="2026-10-22T07:52:29.134193+00:00" warning="Word-provided OMML-to-MathML transform; not a native Microsoft Word rendering or acceptance result.">
+  <document source="annotated-arrows.docx" sha256="9c47e4e743757061d340b61407b93548c871961e259828ac84090649411ec6a8" document_xml_sha256="f2c40941d1a76236c0e7a40917cfbcd4f19d910a44b72dfeec3d55e01a90f07f">
+    <equation number="1" omml_sha256="cd8c1bccded4a1c51f3a8a0b08b062d1bb0112b5156dbcd179f66854fd2b8a81">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mi>a</mi>
+        <mo>+</mo>
+        <mi>b</mi>
+        <mo>=</mo>
+        <mi>c</mi>
+      </math>
+    </equation>
+    <equation number="2" omml_sha256="40e4d69c461d6491ba06b18d2122402a2759874624fabef3207a10df8dc672e3">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <msubsup>
+          <mrow>
+            <mi>x</mi>
+          </mrow>
+          <mrow>
+            <mi>i</mi>
+          </mrow>
+          <mrow>
+            <mn>2</mn>
+          </mrow>
+        </msubsup>
+      </math>
+    </equation>
+    <equation number="3" omml_sha256="b0f63cfc1491ee0846e77afac13c15c1f5cd0afa473036ed8f0b147b37479dcf">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <msqrt>
+          <mi>x</mi>
+        </msqrt>
+      </math>
+    </equation>
+    <equation number="4" omml_sha256="136b1b63d397b27543b2dcc3f4f15be360250b7f886a457c98ff1932c07ae3d3">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mfrac>
+          <mrow>
+            <mn>1</mn>
+          </mrow>
+          <mrow>
+            <mn>2</mn>
+          </mrow>
+        </mfrac>
+      </math>
+    </equation>
+    <equation number="5" omml_sha256="0fbca9327b0670bd80c43ec706157357947a7b33d5b137c55724aa6425eaf3e1">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mrow>
+          <msubsup>
+            <mo stretchy="false">∑</mo>
+            <mrow>
+              <mi>k</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mrow>
+              <mi>n</mi>
+            </mrow>
+          </msubsup>
+          <mrow>
+            <mi>k</mi>
+          </mrow>
+        </mrow>
+      </math>
+    </equation>
+    <equation number="6" omml_sha256="52940d9609b31446a01156481770686eccab49d42fa372dd8ffa7324e1133ce8">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mrow>
+          <msubsup>
+            <mo stretchy="false">∫</mo>
+            <mrow>
+              <mn>0</mn>
+            </mrow>
+            <mrow>
+              <mn>1</mn>
+            </mrow>
+          </msubsup>
+          <mrow>
+            <mi>x</mi>
+          </mrow>
+        </mrow>
+        <mtext> </mtext>
+        <mi>d</mi>
+        <mi>x</mi>
+        <mo>=</mo>
+        <mfrac>
+          <mrow>
+            <mn>1</mn>
+          </mrow>
+          <mrow>
+            <mn>2</mn>
+          </mrow>
+        </mfrac>
+      </math>
+    </equation>
+    <equation number="7" omml_sha256="2d5e13828c64a90d362cd8909f76708924a0f4bbc2d6799dc774add6d0c95e21">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mi>A</mi>
+        <mo>=</mo>
+        <mrow>
+          <mo>(</mo>
+          <mrow>
+            <mtable>
+              <mtr>
+                <mtd>
+                  <mn>1</mn>
+                </mtd>
+                <mtd>
+                  <mn>2</mn>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mn>3</mn>
+                </mtd>
+                <mtd>
+                  <mn>4</mn>
+                </mtd>
+              </mtr>
+            </mtable>
+          </mrow>
+          <mo>)</mo>
+        </mrow>
+      </math>
+    </equation>
+    <equation number="8" omml_sha256="0b1aba21a4e5549336ab228fa5f655b645243560121e6cd7f6b6e61c29d21416">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mover accent="true">
+          <mrow>
+            <mi>x</mi>
+          </mrow>
+          <mo>^</mo>
+        </mover>
+        <mo>+</mo>
+        <mover accent="true">
+          <mrow>
+            <mi>v</mi>
+          </mrow>
+          <mo>→</mo>
+        </mover>
+      </math>
+    </equation>
+    <equation number="9" omml_sha256="2d38904e4a29051acebe95337694a6530ec28ab16583cb60c5062d71f3974f25">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <munder>
+          <mrow>
+            <mi mathvariant="normal">l</mi>
+            <mi mathvariant="normal">i</mi>
+            <mi mathvariant="normal">m</mi>
+            <mo>⁡</mo>
+          </mrow>
+          <mrow>
+            <mi>x</mi>
+            <mo>→</mo>
+            <mn>0</mn>
+          </mrow>
+        </munder>
+        <mi>f</mi>
+        <mo>(</mo>
+        <mi>x</mi>
+        <mo>)</mo>
+      </math>
+    </equation>
+    <equation number="10" omml_sha256="d9836ac36eab548a3a433165718fb555da7ba311064a8ac73155b555886dfd8c">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mi>σ</mi>
+        <mover accent="false">
+          <mo>→</mo>
+          <mrow>
+            <mtext>范特西-泽尼克</mtext>
+          </mrow>
+        </mover>
+        <mi>γ</mi>
+        <mo>(</mo>
+        <mi mathvariant="normal">Δ</mi>
+        <mi>x</mi>
+        <mo>)</mo>
+        <mover accent="false">
+          <mo>→</mo>
+          <mrow>
+            <mtext>Gamo矩阵</mtext>
+          </mrow>
+        </mover>
+        <mo>{</mo>
+        <mi>λ</mi>
+        <mo>}</mo>
+      </math>
+    </equation>
+  </document>
+  <document source="arrow-contexts.docx" sha256="437fdd121b32e321c9689ae97d6feb4587e3e7d0909ac175802fa63ee3b84c70" document_xml_sha256="820eba4e967ff2040ecc1c3aa3994453be960a71ee3d9df837d2be30bdf135af">
+    <equation number="1" omml_sha256="97b5a11815e5cd7e1e7ce2aa79d9f37429350dd983c3929c1b01e8dbd56891ff">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mi>a</mi>
+        <mover accent="false">
+          <mo>→</mo>
+          <mrow>
+            <mtext>行内标签</mtext>
+          </mrow>
+        </mover>
+        <mi>b</mi>
+      </math>
+    </equation>
+    <equation number="2" omml_sha256="c1903b5f1ae749986926b85f59fe499fad34f9a213b5338f86da92826ff5a49e">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mi>σ</mi>
+        <munder>
+          <mrow>
+            <mover accent="false">
+              <mo>→</mo>
+              <mrow>
+                <mtext>上方</mtext>
+              </mrow>
+            </mover>
+          </mrow>
+          <mrow>
+            <mtext>这是更长的下方条件标签</mtext>
+          </mrow>
+        </munder>
+        <mi>γ</mi>
+      </math>
+    </equation>
+    <equation number="3" omml_sha256="2b685ac653314b2e388bbad289b140fb04b9ef759bf457a2a62591c37af43a77">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mi>a</mi>
+        <munder>
+          <mrow>
+            <mover accent="false">
+              <mo>↔</mo>
+              <mrow>
+                <mtext>表格上方</mtext>
+              </mrow>
+            </mover>
+          </mrow>
+          <mrow>
+            <mtext>表格下方</mtext>
+          </mrow>
+        </munder>
+        <mi>b</mi>
+      </math>
+    </equation>
+  </document>
+</office-roundtrip-audit>

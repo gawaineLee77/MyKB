@@ -1,0 +1,94 @@
+{
+  "scope": "Local synthetic implementation validation; no enterprise deployment or current R5 bundle acceptance",
+  "date": "2026-10-16",
+  "checks": [
+    {
+      "command": "make phase1-gateway-test",
+      "result": "pass"
+    },
+    {
+      "command": "go test -race ./internal/workspaceadmin ./internal/server ./internal/identity ./internal/enterprise ./internal/weknora",
+      "cwd": "services/gateway",
+      "result": "pass"
+    },
+    {
+      "command": "go test -v ./internal/database -run TestWorkspaceAdminMigrationAndRepository -count=1",
+      "environment": "Disposable loopback PostgreSQL 17 permission_test database; removed after test",
+      "result": "pass"
+    },
+    {
+      "command": "python3 -m unittest tools.release.test_enterprise",
+      "result": "pass",
+      "tests": 11
+    },
+    {
+      "command": "make product-test-frontend PRODUCT_FRONTEND_TEST_ARGS=--offline",
+      "node": "24.21.0",
+      "result": "pass",
+      "tests": 611,
+      "followup": "Revoke UI fix type-checked, built and browser-tested again"
+    },
+    {
+      "command": "make stage1-check r4-check",
+      "result": "pass"
+    },
+    {
+      "command": "make phase5-check",
+      "result": "pass"
+    },
+    {
+      "command": "make r5-check",
+      "result": "historical evidence stale",
+      "reason": "R5 source and screenshot fingerprints predate this permission implementation; no old evidence rewritten"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "git -C upstream/weknora status --short",
+      "result": "clean"
+    }
+  ],
+  "source_sha256": {
+    "deploy/enterprise/compose.json": "ff41b2b618767e60e1eb02b145bc4e4e0094f1970b7e3c9a5991482200b1442b",
+    "deploy/enterprise/enterprise.env.example": "e12d5f8fd249f6f3c1b001808c6573fdaec22cc0a606a6196bcf168f9f4f7232",
+    "deploy/enterprise/mindcreek.py": "891eee785ddb6a5332342e483e170d94f520f489dfc51862e930872781b23bc6",
+    "deploy/r3/compose.native.yml": "30fe74bad67e63d0d0b955bd6e983bb8f1be244144e174c2406aaff0bef0da6b",
+    "services/gateway/cmd/gateway/native.go": "18002d8adfa2215075b1c2191f59f00fb740933de12073058f6509aa579ad202",
+    "services/gateway/internal/config/config.go": "6213917510f84e1b683bfda63e349730efc2b72a04438be1208a178e9b2d7c35",
+    "services/gateway/internal/database/migrations/000017_workspace_admin.down.sql": "86fdb7e2f0e2b64789b9751b597c6e4a832c943e43091c334c8bbabd46ef3e74",
+    "services/gateway/internal/database/migrations/000017_workspace_admin.up.sql": "95b251af01de87a4edb1ec466aee45cd668f19d9984a3aac342f551384d2e98e",
+    "services/gateway/internal/database/runner_test.go": "1603e26a4a1c97c63ab7d04b6fcebf2bcbc21b91b5fd6b9e4827a4952760d42f",
+    "services/gateway/internal/database/workspace_admin_integration_test.go": "8a20a1f15486b176ff15678901a8385fb8800ceb26086ddd7f562eac3c8db109",
+    "services/gateway/internal/diagnostics/diagnostics.go": "587266df9b192fa608eb074ed6abc852b7f0bcbced45a44b82c07739b28cbfe4",
+    "services/gateway/internal/enterprise/member_preview.go": "0c3ae095ba536c0b1e043920c95f1868884f969e1868b0959bfdaa2eb745cdd0",
+    "services/gateway/internal/enterprise/member_preview_test.go": "079994aceb066a5fb19bf8fef94700147d441e9e33a1a9f24698bae22717dcc5",
+    "services/gateway/internal/identity/admin.go": "65dcdabd09ed35d695f27ac71691d9db2d81ffe91d0c3374bca8e5638740630c",
+    "services/gateway/internal/identity/admin_keys_test.go": "792fce354ef8c9a3fc418d6cb4ee3cdc129e6fc055542d167f7b6976924bb9cd",
+    "services/gateway/internal/identity/repository.go": "1ec3268cff80c494c28c5ca4fffd060866a08e221a22a737caff8b94ee1bb5b9",
+    "services/gateway/internal/server/enterprise.go": "7c4560652aca77129dae139103c37299ee1dfff4dd96efc430998c35b4c74c4c",
+    "services/gateway/internal/server/member_preview.go": "039e435847a09601b0f96903ce4d055e72c2b6ebc9f7405461b604a1f1291a36",
+    "services/gateway/internal/server/native.go": "80ccb0a86f3765a313334522d11be78a65d8b0db4bafb3a9d71f868a8847130b",
+    "services/gateway/internal/server/server.go": "6843816f22ea2722b0179f0c2143d3dfc600c18772771fac2f598778223125ee",
+    "services/gateway/internal/server/workspace_admin.go": "f793415c2f799aeb88d8d8f5cc5aa1368d5ba9eb6a8c1527e0b9a4bad7819dc8",
+    "services/gateway/internal/server/workspace_admin_test.go": "bfc3cba9ea2d56ce64995aa43f961023012739234515f4e6a2be578f2941d5fb",
+    "services/gateway/internal/weknora/client.go": "8b7b6b6aa28216b643e23e62cb95c8d08b7df5c4a3de3a2f1db1b448cca29795",
+    "services/gateway/internal/weknora/enterprise_test.go": "47a219e4a4e558c24f357cf939dde9b640a975c70eeb943bf00f60b6c89a492c",
+    "services/gateway/internal/workspaceadmin/keys.go": "85eb619815692cc848aec687958f739e5acc269210919da31169e823fe806c30",
+    "services/gateway/internal/workspaceadmin/members.go": "236699d38e058fb270acee572e0fca799d9c5b36e54b1a9f2e8e43a374355521",
+    "services/gateway/internal/workspaceadmin/members_test.go": "ba9c5729726f7a18ca62b9e1f1d52e841ab025b9608884f7ed5929240e5c1aec",
+    "services/gateway/internal/workspaceadmin/service.go": "5b62c8129afa328d37dd58a73908c59417e3052166ec89bfb8d1f00d51e073e0",
+    "services/gateway/internal/workspaceadmin/service_test.go": "7b109fe3740579fb443c4531bb25050978dadf2928fbf14f024971e36173d80d",
+    "services/gateway/internal/workspaceadmin/store.go": "00e4d8d97b87e241d173c516dfc222867dfbc7a1c16ad9ebdd5c3afc2f2d5f2d",
+    "services/gateway/internal/workspaceadmin/store_test.go": "a89be1e7cfac4b901895107141967578098a90389678a14c0f1fb7b4d1dad4aa",
+    "tools/frontend-overlay/apply-native.mjs": "2a3f51e88c5b85a79eb429b39172859ca7e378dc5bdadefdade75eab00545510",
+    "tools/frontend-overlay/apply-workspace-admin.mjs": "9acc5dc0812bac2cc37d33ad9529bbec9a1a0ce08516683307fc47486e72a299",
+    "tools/frontend-overlay/check-native.mjs": "ffbc887a3d87317ff30e2d5b76273dfb6887aaa0c94fee60f34b457922e4a247",
+    "tools/frontend-overlay/native/EnterpriseMembers.vue": "1219b8043b7d6f0dfa014d44a26ecba63f6c9c61576888c4f12aa703fe48a86e",
+    "tools/frontend-overlay/native/WorkspaceAdminDelegation.vue": "f27723a1785531b1c82e2da356e8e0d5c6bfdc5f77f3c07cfb9198d9b70698e0",
+    "tools/frontend-overlay/native/workspace-admin-policy.test.ts": "c86a5e2b5c31735ef0d3729aa97b3920b4d3165daf90a93346a2e998c22c267e",
+    "tools/frontend-overlay/native/workspace-admin-policy.ts": "96b49f02095b4b5d60bb5466417de856d4c552a5d9361e5ddc1736be91e799d1",
+    "tools/frontend-overlay/workspace-admin-browser.mjs": "8f9b064ac53987d50ad4af4e0a974169dc86ed6199dc13aa2c939aecede9c6cf"
+  }
+}

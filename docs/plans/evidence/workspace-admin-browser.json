@@ -1,0 +1,77 @@
+{
+  "scope": "Compiled Vue UI with synthetic API fixtures only; not enterprise OAuth/backend integration acceptance.",
+  "node": "v24.21.0",
+  "checks": [
+    {
+      "mode": "before",
+      "role": "owner",
+      "delegated": true,
+      "passed": true
+    },
+    {
+      "mode": "before",
+      "role": "admin",
+      "delegated": true,
+      "passed": true
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "delegated": true,
+      "passed": true
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "delegated": true,
+      "passed": true
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "delegated": true,
+      "passed": true
+    },
+    {
+      "mode": "after",
+      "role": "viewer",
+      "delegated": true,
+      "passed": true
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "delegated": false,
+      "passed": true
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "delegated": false,
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    "before-owner-members.png",
+    "before-owner-space-config.png",
+    "before-owner-api-keys.png",
+    "before-admin-members.png",
+    "before-admin-space-config.png",
+    "before-admin-api-keys.png",
+    "after-owner-members.png",
+    "after-owner-space-config.png",
+    "after-owner-api-keys.png",
+    "after-owner-create-key.png",
+    "after-admin-members.png",
+    "after-admin-space-config.png",
+    "after-admin-api-keys.png",
+    "after-admin-create-key.png",
+    "after-contributor-api-denied.png",
+    "after-viewer-api-denied.png",
+    "after-owner-authorization-required.png",
+    "after-owner-authorization-revoked.png",
+    "after-admin-authorization-required.png"
+  ],
+  "unexpectedRequests": [],
+  "screenshot_directory": "../../assets/workspace-admin"
+}

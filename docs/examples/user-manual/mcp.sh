@@ -30,8 +30,8 @@ case "$method" in
   tools/call)
     [[ $# -ge 2 && $# -le 3 ]] || { echo 'Usage: bash mcp.sh tools/call NAME JSON_ARGUMENTS' >&2; exit 2; }
     case "$name" in
-      list_knowledge_bases|search_knowledge|get_source_excerpt|ask_knowledge_agent) ;;
-      *) echo 'Use one of the four tools from tools/list' >&2; exit 2 ;;
+      list_knowledge_bases|search_knowledge|get_source_excerpt|ask_knowledge_agent|wiki_search|wiki_read_page) ;;
+      *) echo 'Use one of the six tools from tools/list' >&2; exit 2 ;;
     esac
     jq -e 'type == "object"' <<< "$arguments" >/dev/null
     headers+=(-H "Mcp-Name: $name")

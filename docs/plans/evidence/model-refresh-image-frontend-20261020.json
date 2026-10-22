@@ -1,0 +1,102 @@
+{
+  "date": "2026-10-20",
+  "purpose": "Verify that the model-resource refresh repair preserves protected image scopes, focus revalidation, identity-separated cache and permission revocation behavior.",
+  "scope": "Actual compiled product Vue document and conversation pages with synthetic API responses; not deployed backend authorization acceptance.",
+  "node": "v24.19.0",
+  "success": true,
+  "frontend": {
+    "command": "Final release validation: Node 24.21.0 npm test; npm run type-check; npm run build in an isolated overlay.",
+    "node": "v24.21.0",
+    "tests": 629,
+    "passed": 629,
+    "failed": 0,
+    "type_check": "passed",
+    "production_build": "passed",
+    "logs": {
+      ".local/enterprise-model-refresh-20261020/validation-20261020T104611Z-87215fe6/frontend-tests.log": "5b433671a2ace1cfc9237bc98dfe499d824efd6e1313fb5798d9aa2c4eb84a6a",
+      ".local/enterprise-model-refresh-20261020/validation-20261020T104611Z-87215fe6/typecheck.log": "a56bb276db4e129b0d23ef978a488dfc6f0845a00550a6cb828699323ac34625",
+      ".local/enterprise-model-refresh-20261020/validation-20261020T104611Z-87215fe6/build.log": "5c775a7385fdc643f4038159b4d0ed78cbebb74affc1769e82849ebfcc622955"
+    },
+    "validation_path": ".local/enterprise-model-refresh-20261020/validation.json",
+    "validation_sha256": "235ee56186426f5b0c91ad69bb8a145cf8e8f9948ccf39e34fb91d658e7a58d0",
+    "browser_build_binding": "Browser scenarios ran with Node 24.19.0 against .local/model-refresh-ui/after/dist. Its complete bundle digest is identical to the final Node 24.21.0 release validation artifact.",
+    "ui_source_sha256": "3e8987316fc8626535d2ab226e22b9cbccc2a839b3bda976659cb5796e3e602d"
+  },
+  "browser_status": "passed",
+  "browser_checks": [
+    "before owner: actual compiled document component displays unverified notice",
+    "before owner: actual quick-answer history and uploaded-image components reproduce unavailable images",
+    "after owner: actual compiled document component displays scoped historical image",
+    "after owner: actual quick-answer history and uploaded-image components use persisted session/message scopes",
+    "after admin: actual compiled document component displays scoped historical image",
+    "after admin: actual quick-answer history and uploaded-image components use persisted session/message scopes",
+    "after contributor: actual compiled document component displays scoped historical image",
+    "after contributor: actual quick-answer history and uploaded-image components use persisted session/message scopes",
+    "after viewer: actual quick-answer history and uploaded-image components use persisted session/message scopes"
+  ],
+  "additional_renderer_scope": "Production protected-image helper bundled for a focused browser harness; synthetic API fixtures, not deployed backend acceptance.",
+  "additional_renderer_checks": [
+    "409 notices preserve image anchors; permission refresh restores document and answer images using distinct authenticated scopes",
+    "focus revokes cached object URLs and revalidates both current resource scopes",
+    "permission revocation removes previously rendered images after a denied fresh request",
+    "a successful in-flight response from before revocation cannot restore revoked pixels",
+    "image request cache is separated by authentication headers; a new identity never receives cached pixels before fresh authorization"
+  ],
+  "page_errors": [],
+  "unexpected_requests": [],
+  "screenshots_inspected": true,
+  "screenshots": [
+    "../../assets/model-refresh-image-20261020/before-owner-actual-document.png",
+    "../../assets/model-refresh-image-20261020/before-owner-actual-conversation.png",
+    "../../assets/model-refresh-image-20261020/after-owner-actual-document.png",
+    "../../assets/model-refresh-image-20261020/after-owner-actual-conversation.png",
+    "../../assets/model-refresh-image-20261020/after-admin-actual-document.png",
+    "../../assets/model-refresh-image-20261020/after-admin-actual-conversation.png",
+    "../../assets/model-refresh-image-20261020/after-contributor-actual-document.png",
+    "../../assets/model-refresh-image-20261020/after-contributor-actual-conversation.png",
+    "../../assets/model-refresh-image-20261020/after-viewer-actual-conversation.png",
+    "../../assets/model-refresh-image-20261020/before-unverified-history-images.png",
+    "../../assets/model-refresh-image-20261020/after-restored-document-and-answer-images.png",
+    "../../assets/model-refresh-image-20261020/after-revoked-images-removed.png"
+  ],
+  "screenshot_sha256": {
+    "../../assets/model-refresh-image-20261020/before-owner-actual-document.png": "ec21b00cebe7040ad789275a0e9e501f8ecceaf159484c6faff16b7651b268d7",
+    "../../assets/model-refresh-image-20261020/before-owner-actual-conversation.png": "10f247196119ec84090499500f3192ba77bf365eb7be02db48601cd309e60ed5",
+    "../../assets/model-refresh-image-20261020/after-owner-actual-document.png": "220286712d6d7bde3f3b55a19ba2ce60b94ee78f2c00c6c8288f6059fa6ac314",
+    "../../assets/model-refresh-image-20261020/after-owner-actual-conversation.png": "776139caa424e395cee79de592ebd358443059794767854f221bd662f3eba3cd",
+    "../../assets/model-refresh-image-20261020/after-admin-actual-document.png": "a3263adfd0c0cd715e369918cd091ee7be330b2173616b7fb08d1ddab18cf963",
+    "../../assets/model-refresh-image-20261020/after-admin-actual-conversation.png": "4fe5f25d2f54acd64a6318097073d7131ec89e9b80b988f3d6fd060a159ca395",
+    "../../assets/model-refresh-image-20261020/after-contributor-actual-document.png": "403d4d273424d3ad89585912e505c894f5edb9b5d27cdede8729699b1481c83c",
+    "../../assets/model-refresh-image-20261020/after-contributor-actual-conversation.png": "f812c9bc00aefcd4464ec7269939149bb0599140b8d25f1ce9205390812691c3",
+    "../../assets/model-refresh-image-20261020/after-viewer-actual-conversation.png": "b2d768d7d72be9d6fef01e7bc18c5ddfd1dbf070cd297ff0c7d56951ef3fa423",
+    "../../assets/model-refresh-image-20261020/before-unverified-history-images.png": "699fa42f62d2b260cfc17764261013f666a541bc53ce44dd9386646e81de3716",
+    "../../assets/model-refresh-image-20261020/after-restored-document-and-answer-images.png": "32a5110b12907d5b08e93e80ea3ca0efa246cc707bcdee2d3d22c018326b7fb5",
+    "../../assets/model-refresh-image-20261020/after-revoked-images-removed.png": "43aa9e36f1db0a86e7629be0b3ee3689aa16e08e72abba3f858e6a2c5e493efa"
+  },
+  "source_sha256": {
+    "tools/frontend-overlay/apply-image-access.mjs": "9deeb27c5abd980bcbe4afbf3ebfd97e5f988c939d98332abedbde9ae89f83ab",
+    "tools/frontend-overlay/apply-native.mjs": "aff1b613f1d6e2d57c4feae6d950c7b9b343a1799c8379ba3ee058dd73d11066",
+    "tools/frontend-overlay/apply-kb-acl.mjs": "db1399e191a91dc48e84e44da9dd485e25a3a65fed86e7aee8765cb53cb5fa0b",
+    "tools/frontend-overlay/check-native.mjs": "ecab5085378ddb3ec3f7efceb0370fcf7ecedec2946dfa24ccc284e75326405d",
+    "tools/frontend-overlay/native/message-image-access.ts": "ffc4206ec0fa2cea4454bddcb80cd8dfd51d9c1e1a3bfdc08a6e735d1686220d",
+    "tools/frontend-overlay/native/message-image-access.test.ts": "9f3cdb8801e1d0587d12c0df83c6d7244fa380b0d797b4549596952151e919dd",
+    "tools/frontend-overlay/image-access-browser.mjs": "aac1cdc9c785cc01aa89445a194313b71261b5b3d997da23040a593120b3fc8c",
+    "tools/frontend-overlay/image-access-app-browser.mjs": "c68ab1eeabc2bbf6c741515792237cdbb8fe69443765ede8256f02dec78bf29d",
+    "tools/frontend-overlay/apply-workspace-resource-cache.mjs": "cd8112ac95a15ca6188db708adbce19b31ef83a9f0f151162d434b33207352ab",
+    "tools/frontend-overlay/native/native-context.ts": "a1866ed25fce361d2df629060c3903a416925c5a2f0a5c78767be6d77cb31f41",
+    "tools/frontend-overlay/workspace-resource-cache.test.mjs": "0b6282a0acdc665f067206c7a01134edfc2e99642142655678d6bba0337731dc"
+  },
+  "browser_report_sha256": {
+    ".local/model-refresh-image-ui/app-report.json": "7c0d7aaca920b179cc83c62a6cb24a57dd97b8caf126ce732074f89ddfb9e84e",
+    ".local/model-refresh-image-ui/report.json": "55449d365749747c1e484e8de4096af890125b52198ef0c1bca16c8b2acf57c3"
+  },
+  "build_sha256": {
+    "before": "1fd479d31a7662aa82ed9630edb0a0cc9950216651b1e1a06c470705ac5b7fe8",
+    "after": "a3a9fa9e82b5342933813acb5adf7955d7ce54e7f84b858c9f102fb16aae4f59"
+  },
+  "build_paths": {
+    "before": ".local/product-details-ui/after",
+    "after": ".local/model-refresh-ui/after",
+    "release": ".local/enterprise-model-refresh-20261020/validation-20261020T104611Z-87215fe6/ui"
+  }
+}

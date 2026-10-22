@@ -1,6 +1,27 @@
 # 单条回答 Word 导出验收
 
-实施日期：2026-10-08；验收更新：2026-10-09。范围为主站普通问答及智能体最终回答的单条 `.docx` 导出；保留本轮之前的图谱浏览工作及 R1–R5 历史验收。本轮不部署企业服务、不修改上游源码、不更改后端权限。
+实施日期：2026-10-08；验收更新：2026-10-22。范围为主站普通问答及智能体最终回答的单条 `.docx` 导出；保留本轮之前的图谱浏览工作及 R1–R5 历史验收。本轮不部署企业服务、不修改上游源码、不更改后端权限。
+
+## 2026-10-22 带标注箭头源码修复
+
+旧导出器将 KaTeX 为 `\xrightarrow` 标注生成的 `mpadded` 当作不支持的结构，导致第十个公式所在的整条回答无法导出。本次只在产品 `word-math.ts` 中识别三种单线箭头（右、左、双向）的固定水平标签留白，生成 Word 原生 `groupChr` 和必要的 `limLow`；保留公式结构、上下标注及方向。不接受任意位移／遮盖节点，不自动纠正未知 LaTeX 命令。
+
+| 检查 | 结果 |
+|---|---|
+| 完整前端 | 最终源码 646 项测试、类型检查和生产构建通过 |
+| `make stage1-check` | 产品覆盖层及上游边界通过，上游未修改 |
+| 浏览器真实转换函数 | 修复前复现第 10 个公式 `mpadded` 错误；修复后 10 个可编辑公式和 1 个表格成功导出 |
+| 新增公式回归 | 17 种方向／上下标注／空标注／复杂标注／嵌套组合，以及行内、独立公式和表格通过；9 种不支持排版或未知命令明确拒绝。共 276 条检查（包括 ZIP 各 XML 文件有效性），无外联、图片降级或页面脚本错误 |
+| 浏览器前后截图 | 已检查；是调用真实导出函数的验证页，不是 Word 窗口截图 |
+| DOCX 渲染 | 已用 bundled LibreOffice 实际渲染两份样例并检查全部两页；发现其 `groupChr` 导入不兼容，不能据此判定 Word 视觉验收通过 |
+| 原生 Word 显示 | 用户解锁后，已打开主样例并核对第十个公式：两条箭头、完整中英标注、γ／λ 显示正确，无修复提示；[实际 Word 截图](../assets/word-arrow-20261022/word-native-tenth-formula.png)。额外双标签样例仅完成结构验证，不冒充 Word 窗口实测 |
+| 本机编辑保存 | 用户明确本轮不要求尝试本机 Word 修改，以导出内容正确、界面无报错为准。按此范围收尾；未将编辑保存记为通过，也未更改 Office 激活或账户状态 |
+
+兼容性检查已确认：本机 Word 官方 `omml2mathml.xsl` 可从生成文件恢复箭头与上下标签；这是结构验证，不代替 Word 实际打开、编辑、保存。LibreOffice 26.8 开发版的导入器忽略 `vertJc`，把标签错误放在基线、箭头变成下标；双标注形成重复下标而报错。见[精确版本导入源码](https://github.com/LibreOffice/core/blob/2c87e51eeaa2b413ff4ae097b2705eea1995d8e5/starmath/source/ooxmlimport.cxx)。本次保留 Word 原生结构。
+
+`groupChr` 基线和标注字号依据 [Microsoft 分组字符属性](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.math.groupcharproperties?view=openxml-3.0.1)、[参数字号](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.math.argumentsize?view=openxml-3.0.1)及本机 Word 自带转换器核对。Word 不精确复制 KaTeX 的留白和最小长度；双标注中下方更长时仍可能超过箭头宽度。
+
+可重复执行入口：`tools/word-export/check-arrow-browser.mjs`，样例：`testdata/word-export/annotated-arrows.md`。需准备 `.local/word-arrow-20261022/ui` 隔离前端、依赖及 `before-word-math.ts` 基线；`WORD_EXPORT_BUILD` 可指定其他目录。[本轮证据](evidence/word-arrow-export-20261022.json)记录源码、产物指纹和验证边界。本次已完成用户要求的功能修复与验证，仅交付源码，未封包、构建镜像或部署；不是新的完整发布验收。
 
 ## 实现
 

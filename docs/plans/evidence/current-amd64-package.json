@@ -1,30 +1,30 @@
 {
-  "release": "current-20261009-a86981ad",
+  "release": "current-20261020-699031ce-104658",
   "status": "passed_with_limitations",
   "platform": "linux/amd64",
-  "time": "2026-10-09T01:15:15.983614+00:00",
+  "time": "2026-10-20T11:23:49.955946+00:00",
   "host_execution": "ARM64 Docker Desktop AMD64 emulation",
-  "package_runtime_sha256": "af768b771790eecb81cb4a0f41376cb8129ca2ff332ca22bbcb7ce51c6dcb8e8",
+  "package_runtime_sha256": "39c6a95a7c6593561031921bdc56d144d7629b387c541ae290dc46f635438bb7",
   "images": [
     {
-      "name": "mindcreek-ui:current-20261009-a86981ad",
-      "id": "sha256:1955541340d177f8885ce19e3b1e249b6f6fa03598046fd49accfdb779442274",
+      "name": "mindcreek-ui:current-20261020-699031ce-104658",
+      "id": "sha256:b86a2c67197c17c5cbf7b0feaa0062390132a5bc0178512a309399b977022b73",
       "os": "linux",
       "architecture": "amd64",
       "repo_digests": [
-        "mindcreek-ui@sha256:1955541340d177f8885ce19e3b1e249b6f6fa03598046fd49accfdb779442274"
+        "mindcreek-ui@sha256:b86a2c67197c17c5cbf7b0feaa0062390132a5bc0178512a309399b977022b73"
       ],
-      "config_digest": "sha256:e0595a6b6a4bc52e4a481f1813be2573f640a74c7af3df023a12451ed17cab43"
+      "config_digest": "sha256:881a03c95ee228d39fec072479cee890f04200d1d65be71e3f9af5c017d63aa4"
     },
     {
-      "name": "mindcreek-gateway:current-20261009-a86981ad",
-      "id": "sha256:c2c5d74ca0740c13d94c6aa818c9074dba401c5a928701293d3245d9ec1467b8",
+      "name": "mindcreek-gateway:current-20261020-699031ce-104658",
+      "id": "sha256:3a2e4da93cc7ebf118a4b47c4b8005781a431733b02aa69a5468340512cd76b4",
       "os": "linux",
       "architecture": "amd64",
       "repo_digests": [
-        "mindcreek-gateway@sha256:c2c5d74ca0740c13d94c6aa818c9074dba401c5a928701293d3245d9ec1467b8"
+        "mindcreek-gateway@sha256:3a2e4da93cc7ebf118a4b47c4b8005781a431733b02aa69a5468340512cd76b4"
       ],
-      "config_digest": "sha256:659ed03eac8af35dc3b20d7d68fa7f40060bc17eb231497089036e36f7fdec7b"
+      "config_digest": "sha256:30679f4e33657078fb454a28bd6bb5031efe1d780d1720afb25722a3f3441022"
     },
     {
       "name": "wechatopenai/weknora-app:v0.8.0",
@@ -108,19 +108,50 @@
       "status": "reproduced_in_this_release",
       "impact": "BM25/hybrid retrieval is not accepted on this ARM host emulator. Run the included database preflight on physical AMD64 before importing business data; no default index configuration was changed.",
       "evidence": "database-preflight.json"
+    },
+    {
+      "code": "amd64_emulation_bm25_abort",
+      "status": "unresolved_on_physical_amd64",
+      "observed": "Default hybrid retrieval and a minimal BM25 query abort the AMD64 PostgreSQL process under this ARM64 Docker Desktop host. Same-version cached ARM64 query passes. Cause is not proven; JIT/parallel switches did not resolve it.",
+      "evidence": "bm25-diagnostic.json",
+      "impact": "Hybrid/keyword retrieval is not accepted. Vector-only KB question answering is tested separately; shipped native defaults are unchanged. Run bin/check-database on the target Linux AMD64 host before installing business data."
     }
   ],
-  "fresh_checks": 32,
-  "upgrade_checks": 35,
-  "upgrade_from": "r4-20260916-118b8af3",
-  "frontend_tests": 608,
-  "python312_tests": 29,
+  "fresh_checks": 54,
+  "upgrade_baselines": {
+    "r4-20260916-118b8af3": {
+      "checks": 61,
+      "cold_rollback": "passed",
+      "graph_preserved": true
+    },
+    "current-20261009-a86981ad": {
+      "checks": 61,
+      "cold_rollback": "passed",
+      "graph_preserved": true
+    },
+    "current-20261019-d3fafdaf": {
+      "checks": 64,
+      "cold_rollback": "passed",
+      "graph_preserved": true
+    }
+  },
+  "frontend_tests": 629,
+  "python312_tests": 57,
+  "gateway_source_sha256": "699031ce4e69e2bbc55f93a2c9f48ed42c8f546ba7ed45555f8eaa47f409ee45",
+  "ui_source_sha256": "3e8987316fc8626535d2ab226e22b9cbccc2a839b3bda976659cb5796e3e602d",
+  "release_inputs_sha256": "8b71582ac3c5ee878dd7001711b1af56df66958f8822110227f3f8665a015c9b",
+  "validation_sha256": "235ee56186426f5b0c91ad69bb8a145cf8e8f9948ccf39e34fb91d658e7a58d0",
+  "browser_proof_sha256": "23b2fb25d1391c63cf7ce445e233f38d23df46c8f3e0df5acb0f6ad3d77dd4c4",
+  "browser_proof_path": "/Users/gawaine/Desktop/KnowledgeBase/docs/plans/evidence/model-refresh-frontend-20261020.json",
+  "browser_limitations": [],
+  "product_migration_version": 22,
   "old_graph_survives_upgrade": true,
   "pre_upgrade_cold_rollback_passed": true,
   "checks": [
     {
-      "name": "configuration_and_8_amd64_image_locks",
-      "passed": true
+      "name": "configuration_and_amd64_image_locks",
+      "passed": true,
+      "image_count": 9
     },
     {
       "name": "private_admin_bootstrap",
@@ -167,12 +198,21 @@
       "passed": true
     },
     {
+      "name": "current_kb_default_creator_private",
+      "passed": true
+    },
+    {
+      "name": "current_public_kb_viewer_content_without_original_file",
+      "passed": true
+    },
+    {
       "name": "viewer_read_and_write_download_boundaries",
       "passed": true
     },
     {
-      "name": "four_authenticated_mcp_tools",
-      "passed": true
+      "name": "authenticated_mcp_tools",
+      "passed": true,
+      "tool_count": 6
     },
     {
       "name": "employee_mcp_vector_only_model_answer_references",
@@ -203,6 +243,78 @@
       "passed": true
     },
     {
+      "name": "current_global_branding_default",
+      "passed": true
+    },
+    {
+      "name": "current_global_branding_local_admin_and_public_logo",
+      "passed": true
+    },
+    {
+      "name": "current_agent_icon_upload_reference_and_draft_isolation",
+      "passed": true
+    },
+    {
+      "name": "current_six_mcp_tools",
+      "passed": true
+    },
+    {
+      "name": "current_wiki_mcp_search_and_read",
+      "passed": true
+    },
+    {
+      "name": "current_wiki_mcp_private_and_empty_scope_denied",
+      "passed": true
+    },
+    {
+      "name": "current_workspace_admin_explicit_delegation",
+      "passed": true
+    },
+    {
+      "name": "current_kb_collaboration_explicit_delegation",
+      "passed": true
+    },
+    {
+      "name": "current_admin_own_keys_owner_all_keys",
+      "passed": true
+    },
+    {
+      "name": "current_machine_key_scope_and_role_revocation",
+      "passed": true
+    },
+    {
+      "name": "image_historical_parser_provenance_restores_owner_and_visible_member",
+      "passed": true
+    },
+    {
+      "name": "image_unverified_manager_read_and_member_fail_closed",
+      "passed": true
+    },
+    {
+      "name": "image_operator_audit_review_apply_restores_legacy",
+      "passed": true
+    },
+    {
+      "name": "image_admin_reads_space_images_and_demotion_rechecks",
+      "passed": true
+    },
+    {
+      "name": "image_forged_visible_kb_reference_denied",
+      "passed": true
+    },
+    {
+      "name": "image_private_creator_and_shared_contributor",
+      "passed": true
+    },
+    {
+      "name": "image_answer_proxy_and_session_ownership",
+      "passed": true
+    },
+    {
+      "name": "image_visibility_revocation_blocks_document_and_answer",
+      "passed": true
+    },
+    {
       "name": "current_r5_employee_channel_question_history",
       "passed": true
     },
@@ -223,11 +335,19 @@
       "passed": true
     },
     {
-      "name": "current_isolated_restore_preserves_r5_bindings",
+      "name": "current_isolated_restore_preserves_permissions_icons_and_r5",
       "passed": true
     },
     {
       "name": "current_isolated_restore_preserves_graph",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_branding",
+      "passed": true
+    },
+    {
+      "name": "image_isolated_restore_preserves_reviewed_bindings_and_png",
       "passed": true
     },
     {
@@ -247,8 +367,9 @@
       "passed": true
     },
     {
-      "name": "configuration_and_8_amd64_image_locks",
-      "passed": true
+      "name": "configuration_and_amd64_image_locks",
+      "passed": true,
+      "image_count": 8
     },
     {
       "name": "private_admin_bootstrap",
@@ -299,8 +420,9 @@
       "passed": true
     },
     {
-      "name": "four_authenticated_mcp_tools",
-      "passed": true
+      "name": "authenticated_mcp_tools",
+      "passed": true,
+      "tool_count": 4
     },
     {
       "name": "employee_mcp_vector_only_model_answer_references",
@@ -319,7 +441,17 @@
       "passed": true
     },
     {
-      "name": "upgrade_recognizes_old_graph_and_ui_pins",
+      "name": "source_expected_product_migrations",
+      "passed": true,
+      "source_release": "r4-20260916-118b8af3",
+      "migration_version": 15
+    },
+    {
+      "name": "source_legacy_key_can_read_selected_kb",
+      "passed": true
+    },
+    {
+      "name": "upgrade_recognizes_source_release_and_graph",
       "passed": true
     },
     {
@@ -327,7 +459,19 @@
       "passed": true
     },
     {
-      "name": "upgrade_old_admin_employee_sessions_and_document_survive",
+      "name": "upgrade_preserves_preexisting_graph_marker",
+      "passed": true
+    },
+    {
+      "name": "upgrade_old_admin_employee_sessions_and_owner_document_survive",
+      "passed": true
+    },
+    {
+      "name": "current_kb_default_creator_private",
+      "passed": true
+    },
+    {
+      "name": "current_public_kb_viewer_content_without_original_file",
       "passed": true
     },
     {
@@ -340,6 +484,82 @@
     },
     {
       "name": "current_graph_viewer_denied",
+      "passed": true
+    },
+    {
+      "name": "current_global_branding_default",
+      "passed": true
+    },
+    {
+      "name": "current_global_branding_local_admin_and_public_logo",
+      "passed": true
+    },
+    {
+      "name": "current_agent_icon_upload_reference_and_draft_isolation",
+      "passed": true
+    },
+    {
+      "name": "current_six_mcp_tools",
+      "passed": true
+    },
+    {
+      "name": "current_wiki_mcp_search_and_read",
+      "passed": true
+    },
+    {
+      "name": "current_wiki_mcp_private_and_empty_scope_denied",
+      "passed": true
+    },
+    {
+      "name": "current_workspace_admin_explicit_delegation",
+      "passed": true
+    },
+    {
+      "name": "current_kb_collaboration_explicit_delegation",
+      "passed": true
+    },
+    {
+      "name": "upgrade_legacy_machine_key_requires_explicit_mapping",
+      "passed": true
+    },
+    {
+      "name": "current_admin_own_keys_owner_all_keys",
+      "passed": true
+    },
+    {
+      "name": "current_machine_key_scope_and_role_revocation",
+      "passed": true
+    },
+    {
+      "name": "image_historical_parser_provenance_restores_owner_and_visible_member",
+      "passed": true
+    },
+    {
+      "name": "image_unverified_manager_read_and_member_fail_closed",
+      "passed": true
+    },
+    {
+      "name": "image_operator_audit_review_apply_restores_legacy",
+      "passed": true
+    },
+    {
+      "name": "image_admin_reads_space_images_and_demotion_rechecks",
+      "passed": true
+    },
+    {
+      "name": "image_forged_visible_kb_reference_denied",
+      "passed": true
+    },
+    {
+      "name": "image_private_creator_and_shared_contributor",
+      "passed": true
+    },
+    {
+      "name": "image_answer_proxy_and_session_ownership",
+      "passed": true
+    },
+    {
+      "name": "image_visibility_revocation_blocks_document_and_answer",
       "passed": true
     },
     {
@@ -363,11 +583,527 @@
       "passed": true
     },
     {
-      "name": "current_isolated_restore_preserves_r5_bindings",
+      "name": "current_isolated_restore_preserves_permissions_icons_and_r5",
       "passed": true
     },
     {
       "name": "current_isolated_restore_preserves_graph",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_branding",
+      "passed": true
+    },
+    {
+      "name": "image_isolated_restore_preserves_reviewed_bindings_and_png",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_real_employee_document_and_history",
+      "passed": true
+    },
+    {
+      "name": "current_original_instance_can_resume_after_backup",
+      "passed": true
+    },
+    {
+      "name": "ops_quiesced_files_and_redis_backup",
+      "passed": true
+    },
+    {
+      "name": "database_backup_restore_native_and_product_schemas",
+      "passed": true
+    },
+    {
+      "name": "configuration_and_amd64_image_locks",
+      "passed": true,
+      "image_count": 9
+    },
+    {
+      "name": "private_admin_bootstrap",
+      "passed": true
+    },
+    {
+      "name": "idempotent_admin_and_default_space",
+      "passed": true
+    },
+    {
+      "name": "six_runtime_services_healthy",
+      "passed": true
+    },
+    {
+      "name": "native_ui_admin_entry_retired_embed_and_tls",
+      "passed": true
+    },
+    {
+      "name": "admin_gateway_login_and_owner_membership",
+      "passed": true
+    },
+    {
+      "name": "oauth_over_custom_ca_and_first_viewer_onboarding",
+      "passed": true
+    },
+    {
+      "name": "native_kb_managed_model_defaults",
+      "passed": true
+    },
+    {
+      "name": "synthetic_kb_explicit_native_vector_only",
+      "passed": true
+    },
+    {
+      "name": "real_docreader_markdown_upload_and_processing",
+      "passed": true
+    },
+    {
+      "name": "real_docreader_text_pdf_upload_and_processing",
+      "passed": true
+    },
+    {
+      "name": "native_faq_create",
+      "passed": true
+    },
+    {
+      "name": "viewer_read_and_write_download_boundaries",
+      "passed": true
+    },
+    {
+      "name": "authenticated_mcp_tools",
+      "passed": true,
+      "tool_count": 4
+    },
+    {
+      "name": "employee_mcp_vector_only_model_answer_references",
+      "passed": true
+    },
+    {
+      "name": "legacy_business_retired",
+      "passed": true
+    },
+    {
+      "name": "public_password_registration_closed",
+      "passed": true
+    },
+    {
+      "name": "gateway_restart_preserves_admin_session",
+      "passed": true
+    },
+    {
+      "name": "source_expected_product_migrations",
+      "passed": true,
+      "source_release": "current-20261009-a86981ad",
+      "migration_version": 16
+    },
+    {
+      "name": "source_legacy_key_can_read_selected_kb",
+      "passed": true
+    },
+    {
+      "name": "upgrade_recognizes_source_release_and_graph",
+      "passed": true
+    },
+    {
+      "name": "upgrade_preserves_identity_models_password_graph_and_links",
+      "passed": true
+    },
+    {
+      "name": "upgrade_preserves_preexisting_graph_marker",
+      "passed": true
+    },
+    {
+      "name": "upgrade_old_admin_employee_sessions_and_owner_document_survive",
+      "passed": true
+    },
+    {
+      "name": "current_kb_default_creator_private",
+      "passed": true
+    },
+    {
+      "name": "current_public_kb_viewer_content_without_original_file",
+      "passed": true
+    },
+    {
+      "name": "current_optional_neo4j_apoc_healthy",
+      "passed": true
+    },
+    {
+      "name": "current_graph_browser_real_neo4j",
+      "passed": true
+    },
+    {
+      "name": "current_graph_viewer_denied",
+      "passed": true
+    },
+    {
+      "name": "current_global_branding_default",
+      "passed": true
+    },
+    {
+      "name": "current_global_branding_local_admin_and_public_logo",
+      "passed": true
+    },
+    {
+      "name": "current_agent_icon_upload_reference_and_draft_isolation",
+      "passed": true
+    },
+    {
+      "name": "current_six_mcp_tools",
+      "passed": true
+    },
+    {
+      "name": "current_wiki_mcp_search_and_read",
+      "passed": true
+    },
+    {
+      "name": "current_wiki_mcp_private_and_empty_scope_denied",
+      "passed": true
+    },
+    {
+      "name": "current_workspace_admin_explicit_delegation",
+      "passed": true
+    },
+    {
+      "name": "current_kb_collaboration_explicit_delegation",
+      "passed": true
+    },
+    {
+      "name": "upgrade_legacy_machine_key_requires_explicit_mapping",
+      "passed": true
+    },
+    {
+      "name": "current_admin_own_keys_owner_all_keys",
+      "passed": true
+    },
+    {
+      "name": "current_machine_key_scope_and_role_revocation",
+      "passed": true
+    },
+    {
+      "name": "image_historical_parser_provenance_restores_owner_and_visible_member",
+      "passed": true
+    },
+    {
+      "name": "image_unverified_manager_read_and_member_fail_closed",
+      "passed": true
+    },
+    {
+      "name": "image_operator_audit_review_apply_restores_legacy",
+      "passed": true
+    },
+    {
+      "name": "image_admin_reads_space_images_and_demotion_rechecks",
+      "passed": true
+    },
+    {
+      "name": "image_forged_visible_kb_reference_denied",
+      "passed": true
+    },
+    {
+      "name": "image_private_creator_and_shared_contributor",
+      "passed": true
+    },
+    {
+      "name": "image_answer_proxy_and_session_ownership",
+      "passed": true
+    },
+    {
+      "name": "image_visibility_revocation_blocks_document_and_answer",
+      "passed": true
+    },
+    {
+      "name": "current_r5_employee_channel_question_history",
+      "passed": true
+    },
+    {
+      "name": "current_r5_channel_history_not_visible_through_main_api",
+      "passed": true
+    },
+    {
+      "name": "current_r5_nginx_dynamic_frame_policy",
+      "passed": true
+    },
+    {
+      "name": "current_cold_backup_includes_all_volumes",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_installation",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_permissions_icons_and_r5",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_graph",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_branding",
+      "passed": true
+    },
+    {
+      "name": "image_isolated_restore_preserves_reviewed_bindings_and_png",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_real_employee_document_and_history",
+      "passed": true
+    },
+    {
+      "name": "current_original_instance_can_resume_after_backup",
+      "passed": true
+    },
+    {
+      "name": "ops_quiesced_files_and_redis_backup",
+      "passed": true
+    },
+    {
+      "name": "database_backup_restore_native_and_product_schemas",
+      "passed": true
+    },
+    {
+      "name": "configuration_and_amd64_image_locks",
+      "passed": true,
+      "image_count": 9
+    },
+    {
+      "name": "private_admin_bootstrap",
+      "passed": true
+    },
+    {
+      "name": "idempotent_admin_and_default_space",
+      "passed": true
+    },
+    {
+      "name": "six_runtime_services_healthy",
+      "passed": true
+    },
+    {
+      "name": "native_ui_admin_entry_retired_embed_and_tls",
+      "passed": true
+    },
+    {
+      "name": "admin_gateway_login_and_owner_membership",
+      "passed": true
+    },
+    {
+      "name": "oauth_over_custom_ca_and_first_viewer_onboarding",
+      "passed": true
+    },
+    {
+      "name": "native_kb_managed_model_defaults",
+      "passed": true
+    },
+    {
+      "name": "synthetic_kb_explicit_native_vector_only",
+      "passed": true
+    },
+    {
+      "name": "real_docreader_markdown_upload_and_processing",
+      "passed": true
+    },
+    {
+      "name": "real_docreader_text_pdf_upload_and_processing",
+      "passed": true
+    },
+    {
+      "name": "native_faq_create",
+      "passed": true
+    },
+    {
+      "name": "current_kb_default_creator_private",
+      "passed": true
+    },
+    {
+      "name": "current_public_kb_viewer_content_without_original_file",
+      "passed": true
+    },
+    {
+      "name": "viewer_read_and_write_download_boundaries",
+      "passed": true
+    },
+    {
+      "name": "authenticated_mcp_tools",
+      "passed": true,
+      "tool_count": 6
+    },
+    {
+      "name": "employee_mcp_vector_only_model_answer_references",
+      "passed": true
+    },
+    {
+      "name": "legacy_business_retired",
+      "passed": true
+    },
+    {
+      "name": "public_password_registration_closed",
+      "passed": true
+    },
+    {
+      "name": "gateway_restart_preserves_admin_session",
+      "passed": true
+    },
+    {
+      "name": "image_source_1019_reproduces_binding_failure",
+      "passed": true
+    },
+    {
+      "name": "source_expected_product_migrations",
+      "passed": true,
+      "source_release": "current-20261019-d3fafdaf",
+      "migration_version": 21
+    },
+    {
+      "name": "source_existing_acl_key_delegation_authorized",
+      "passed": true
+    },
+    {
+      "name": "source_legacy_key_can_read_selected_kb",
+      "passed": true
+    },
+    {
+      "name": "upgrade_recognizes_source_release_and_graph",
+      "passed": true
+    },
+    {
+      "name": "upgrade_preserves_identity_models_password_graph_and_links",
+      "passed": true
+    },
+    {
+      "name": "upgrade_preserves_preexisting_graph_marker",
+      "passed": true
+    },
+    {
+      "name": "upgrade_old_admin_employee_sessions_and_owner_document_survive",
+      "passed": true
+    },
+    {
+      "name": "upgrade_existing_kb_policy_preserved",
+      "passed": true
+    },
+    {
+      "name": "current_optional_neo4j_apoc_healthy",
+      "passed": true
+    },
+    {
+      "name": "current_graph_browser_real_neo4j",
+      "passed": true
+    },
+    {
+      "name": "current_graph_viewer_denied",
+      "passed": true
+    },
+    {
+      "name": "current_global_branding_default",
+      "passed": true
+    },
+    {
+      "name": "current_global_branding_local_admin_and_public_logo",
+      "passed": true
+    },
+    {
+      "name": "current_agent_icon_upload_reference_and_draft_isolation",
+      "passed": true
+    },
+    {
+      "name": "current_six_mcp_tools",
+      "passed": true
+    },
+    {
+      "name": "current_wiki_mcp_search_and_read",
+      "passed": true
+    },
+    {
+      "name": "current_wiki_mcp_private_and_empty_scope_denied",
+      "passed": true
+    },
+    {
+      "name": "current_workspace_admin_explicit_delegation",
+      "passed": true
+    },
+    {
+      "name": "current_kb_collaboration_explicit_delegation",
+      "passed": true
+    },
+    {
+      "name": "upgrade_existing_machine_key_scope_preserved",
+      "passed": true
+    },
+    {
+      "name": "current_admin_own_keys_owner_all_keys",
+      "passed": true
+    },
+    {
+      "name": "current_machine_key_scope_and_role_revocation",
+      "passed": true
+    },
+    {
+      "name": "image_historical_parser_provenance_restores_owner_and_visible_member",
+      "passed": true
+    },
+    {
+      "name": "image_unverified_manager_read_and_member_fail_closed",
+      "passed": true
+    },
+    {
+      "name": "image_operator_audit_review_apply_restores_legacy",
+      "passed": true
+    },
+    {
+      "name": "image_admin_reads_space_images_and_demotion_rechecks",
+      "passed": true
+    },
+    {
+      "name": "image_forged_visible_kb_reference_denied",
+      "passed": true
+    },
+    {
+      "name": "image_private_creator_and_shared_contributor",
+      "passed": true
+    },
+    {
+      "name": "image_answer_proxy_and_session_ownership",
+      "passed": true
+    },
+    {
+      "name": "image_visibility_revocation_blocks_document_and_answer",
+      "passed": true
+    },
+    {
+      "name": "current_r5_employee_channel_question_history",
+      "passed": true
+    },
+    {
+      "name": "current_r5_channel_history_not_visible_through_main_api",
+      "passed": true
+    },
+    {
+      "name": "current_r5_nginx_dynamic_frame_policy",
+      "passed": true
+    },
+    {
+      "name": "current_cold_backup_includes_all_volumes",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_installation",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_permissions_icons_and_r5",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_graph",
+      "passed": true
+    },
+    {
+      "name": "current_isolated_restore_preserves_branding",
+      "passed": true
+    },
+    {
+      "name": "image_isolated_restore_preserves_reviewed_bindings_and_png",
       "passed": true
     },
     {
@@ -388,15 +1124,18 @@
     }
   ],
   "evidence_sha256": {
-    "smoke.json": "6f3f81a21470e02675728c17abd2eb57e36fa796089065d6892f35d924402536",
-    "upgrade-smoke/smoke.json": "01c162049625a29cd866d7e6e40a6095e8d156bd32b4c4a0c651185999f34686",
-    "upgrade-marker.json": "42bde1afaae8c8efe2ddc953b7af052c3c9b551c5b0b510295ff7140ecbd8de1",
-    "cold-rollback.json": "a5dc07250d4c1012b4685585c2e9e3007312882d5d924492c332b903e91551c4",
-    "archive-check.json": "f99bf71e7526696395236226ad2936a4ac8aa5567db8dd96e5ac84c91f2fc1ae",
-    "database-preflight.json": "d23de4e2f3d2c3ef4760c905008c7a825ec253a6d3d63dafd5b7eaef5c11251f",
-    "gateway-tests.log": "683c3da453676132a75b48f0ec0376131366032f47d971e3599495ed90ec65e8",
-    "frontend-tests.log": "b82976d396edc3903e5ff6bf3ff236c2ac4a808f0d373fbea182469524c278e9",
-    "installer-python312.log": "f8d5b94f2fb633ec62fd7878afc5ae42c13a6c39cca7fbfdddc4b39c4f6903a0"
+    "fresh-smoke/smoke.json": "1d0a1d15859af6bf14af84ce385ccf2e2d8c3849bd0b11b07741aee3cecb5471",
+    "archive-check.json": "41a4c134da9b4dd2bb8fd926637f3d073b875ff29ffa7444188f9db5b1ffa265",
+    "database-preflight.json": "47662f0cd46f3f2350b97395fde6fffde6a31324c069a4f54a2b2f9c33b0fca7",
+    "upgrade-r4/smoke.json": "ad0d8896d4c372f92b29f7d43ba1ec2862c4d41221f0b81ec6dc17fb600ddef5",
+    "upgrade-r4/upgrade-marker.json": "cc0975079ff1e17655fd30db37185df3990c0616fe5589a14bf20b119f1b64dc",
+    "upgrade-r4/cold-rollback.json": "880516a35fc75abae0e86c460603a26121ef04e75a0052619bacf60a1a98a981",
+    "upgrade-1009/smoke.json": "0a8cc1e2b9d77fde6adf75c8f583432570910e5a430f682c1026e2cb57fb9e7b",
+    "upgrade-1009/upgrade-marker.json": "3a14b1b6184bda0945e170308fcd485081c915dc45e00aab43f402042ad9fe08",
+    "upgrade-1009/cold-rollback.json": "1e75ee03ae95ea9694648933582462a670c0bb0948cda71ddfbae74cec3967bf",
+    "upgrade-1019/smoke.json": "512e891438429957ef386380d1d7704db2097e91fffae4b5260026c3575816ef",
+    "upgrade-1019/upgrade-marker.json": "ecd270c9c45264cb78eee2a749c023faa7452d3eaf6560f3d4ea346aa1060bfb",
+    "upgrade-1019/cold-rollback.json": "09ad50d4c085c29e09c1a2b72423a6e21779eb80ba97b082f06166d04d32a382"
   },
   "upstream_clean": true,
   "company_deployed": false

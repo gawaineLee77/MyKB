@@ -1,0 +1,2719 @@
+{
+  "scope": "Actual compiled product Vue knowledge-base list and Viewer chat UI; synthetic API data only.",
+  "builds": {
+    "before": "/Users/gawaine/Desktop/KnowledgeBase/.local/model-refresh-ui/after/dist",
+    "after": "/Users/gawaine/Desktop/KnowledgeBase/.local/kb-list-refresh-ui/after/dist"
+  },
+  "checks": [
+    {
+      "mode": "before",
+      "role": "admin",
+      "name": "initial-authorized-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "before",
+      "role": "admin",
+      "name": "reproduced-old-focus-race-with-valid-store",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "emptyText": "暂无知识库点击左侧快捷操作\"新建知识库\"按钮创建第一个知识库 新建知识库",
+        "cards": [],
+        "alerts": []
+      },
+      "refreshRequests": 2
+    },
+    {
+      "mode": "before",
+      "role": "admin",
+      "name": "reproduced-old-ACL-loading-false-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "emptyText": "暂无知识库点击左侧快捷操作\"新建知识库\"按钮创建第一个知识库 新建知识库",
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "before",
+      "role": "admin",
+      "name": "reproduced-old-ACL-failure-false-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "emptyText": "暂无知识库点击左侧快捷操作\"新建知识库\"按钮创建第一个知识库 新建知识库",
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "initial-authorized-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "focus-race-recovers-without-navigation",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1"
+        ],
+        "alerts": []
+      },
+      "refreshRequests": 1
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "ACL-pending-is-loading-not-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "ACL-503-is-error-not-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [],
+        "alerts": [
+          "部分知识库的访问权限未能核验，请重试。重试"
+        ]
+      }
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "ACL-retry-restores-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "list-503-is-error-not-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [],
+        "selectedKBIDs": [],
+        "cards": [],
+        "alerts": [
+          "空间访问状态刷新失败，请重试。重试"
+        ]
+      }
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "list-retry-restores-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "successful-empty-list-is-real-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [],
+        "selectedKBIDs": [],
+        "emptyText": "暂无知识库点击左侧快捷操作\"新建知识库\"按钮创建第一个知识库 新建知识库",
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "authoritative-ACL-revocation-hides-KB",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "emptyText": "暂无知识库点击左侧快捷操作\"新建知识库\"按钮创建第一个知识库 新建知识库",
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "name": "later-authorization-restores-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "owner",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "initial-authorized-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "focus-race-recovers-without-navigation",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      },
+      "refreshRequests": 1
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "ACL-pending-is-loading-not-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "ACL-503-is-error-not-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [],
+        "alerts": [
+          "部分知识库的访问权限未能核验，请重试。重试"
+        ]
+      }
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "ACL-retry-restores-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "list-503-is-error-not-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [],
+        "selectedKBIDs": [],
+        "cards": [],
+        "alerts": [
+          "空间访问状态刷新失败，请重试。重试"
+        ]
+      }
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "list-retry-restores-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "successful-empty-list-is-real-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [],
+        "selectedKBIDs": [],
+        "emptyText": "暂无知识库点击左侧快捷操作\"新建知识库\"按钮创建第一个知识库 新建知识库",
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "authoritative-ACL-revocation-hides-KB",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "emptyText": "暂无知识库点击左侧快捷操作\"新建知识库\"按钮创建第一个知识库 新建知识库",
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "name": "later-authorization-restores-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "admin",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "initial-authorized-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "focus-race-recovers-without-navigation",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      },
+      "refreshRequests": 1
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "ACL-pending-is-loading-not-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "ACL-503-is-error-not-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [],
+        "alerts": [
+          "部分知识库的访问权限未能核验，请重试。重试"
+        ]
+      }
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "ACL-retry-restores-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "list-503-is-error-not-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [],
+        "selectedKBIDs": [],
+        "cards": [],
+        "alerts": [
+          "空间访问状态刷新失败，请重试。重试"
+        ]
+      }
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "list-retry-restores-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "successful-empty-list-is-real-empty",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [],
+        "selectedKBIDs": [],
+        "emptyText": "暂无知识库点击左侧快捷操作\"新建知识库\"按钮创建第一个知识库 新建知识库",
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "authoritative-ACL-revocation-hides-KB",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "emptyText": "暂无知识库点击左侧快捷操作\"新建知识库\"按钮创建第一个知识库 新建知识库",
+        "cards": [],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "name": "later-authorization-restores-library",
+      "state": {
+        "url": "/platform/knowledge-bases?scope=all",
+        "role": "contributor",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [],
+        "cards": [
+          "合成知识库 · 访问验证无描述1合成 Owner"
+        ],
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "viewer",
+      "name": "Viewer-selects-authorized-KB-without-management-access",
+      "state": {
+        "url": "/platform/creatChat",
+        "role": "viewer",
+        "storeKBIDs": [
+          "synthetic-kb"
+        ],
+        "selectedKBIDs": [
+          "synthetic-kb"
+        ],
+        "cards": [],
+        "modelName": "合成问答模型",
+        "alerts": []
+      }
+    },
+    {
+      "mode": "after",
+      "role": "viewer",
+      "name": "Viewer-revocation-clears-selection-and-removes-KB-option",
+      "state": {
+        "url": "/platform/creatChat",
+        "role": "viewer",
+        "storeKBIDs": [],
+        "selectedKBIDs": [],
+        "cards": [],
+        "modelName": "合成问答模型",
+        "alerts": []
+      }
+    }
+  ],
+  "screenshots": [
+    "before-admin-initial-library.png",
+    "before-admin-race-false-empty-library.png",
+    "before-admin-acl-pending-false-empty.png",
+    "before-admin-acl-503-false-empty.png",
+    "after-owner-restored-library.png",
+    "after-admin-initial-library.png",
+    "after-admin-race-safe-library.png",
+    "after-admin-acl-pending-loading.png",
+    "after-admin-acl-503-retry.png",
+    "after-admin-list-503-retry.png",
+    "after-admin-authoritative-empty.png",
+    "after-admin-revoked-library.png",
+    "after-admin-restored-library.png",
+    "after-contributor-restored-library.png",
+    "after-viewer-authorized-question-selection.png",
+    "after-viewer-revoked-question-selection.png"
+  ],
+  "pageErrors": [],
+  "unexpectedRequests": [],
+  "scenarios": [
+    {
+      "mode": "before",
+      "role": "admin",
+      "calls": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/capabilities",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/info",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/tenants/kv/retrieval-config",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/me/invitations/pending-count",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/capabilities",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/info",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/tenants/kv/retrieval-config",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/me/invitations/pending-count",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 503
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "role": "owner",
+      "calls": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/capabilities",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/info",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/tenants/kv/retrieval-config",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/me/invitations/pending-count",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 503
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 503
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "role": "admin",
+      "calls": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/capabilities",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/info",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/tenants/kv/retrieval-config",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/me/invitations/pending-count",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 503
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 503
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "role": "contributor",
+      "calls": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/capabilities",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/user/favorites",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/info",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/tenants/kv/retrieval-config",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/me/invitations/pending-count",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 503
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 503
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/kb-permissions/synthetic-kb/effective",
+          "method": "GET",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "role": "viewer",
+      "calls": [
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/auth/config",
+          "method": "GET"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/onboarding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/capabilities",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/mindcreek/branding",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/info",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/system/parser-engines",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [
+            "synthetic-kb"
+          ],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents/builtin-quick-answer/suggested-questions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/organizations",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/sessions",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/me/invitations/pending-count",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases/synthetic-kb/tags",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge/search",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge-bases",
+          "method": "GET",
+          "kbIDs": [],
+          "status": 200
+        },
+        {
+          "path": "/api/v1/agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-agents",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/models",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/shared-knowledge-bases",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/knowledge/search",
+          "method": "GET",
+          "status": 200
+        }
+      ]
+    }
+  ],
+  "success": true,
+  "visualReview": {
+    "allFinalScreenshotsInspected": true,
+    "count": 16,
+    "result": "All before/after screenshots checked: known bugs reproduced before; loading, retry errors, valid empty/revocation, restored cards, and Viewer selection verified after."
+  },
+  "execution": {
+    "runtime": "Node.js 24.19.0",
+    "browser": "Local Google Chrome via Playwright, headless",
+    "environment": "Local synthetic API fixtures only; no enterprise connection or release package build."
+  },
+  "compiledTreeHashes": {
+    "before": {
+      "sha256": "232e7e5c3a0a469c47db3b179afe4b7c61ed93b5f4193091bb6006833351705f",
+      "files": 214,
+      "algorithm": "SHA256 of concatenated sorted relative path UTF-8, NUL, raw file SHA256"
+    },
+    "after": {
+      "sha256": "c735caf9ae48b4525e27e676b44669297751fb2a0723f873c1a097f5090c37fb",
+      "files": 215,
+      "algorithm": "SHA256 of concatenated sorted relative path UTF-8, NUL, raw file SHA256"
+    }
+  },
+  "scriptSHA256": "58c1a6867dcf390a8df7f45f1ce4a61c293326736b858c106150b51e233fd948",
+  "screenshotDirectory": "../../assets/kb-list-refresh-20261021",
+  "sourceVerification": {
+    "date": "2026-10-21",
+    "productFrontend": {
+      "command": "make product-test-frontend PRODUCT_FRONTEND_TEST_ARGS=--offline",
+      "tests": 646,
+      "failures": 0,
+      "typeCheck": "passed",
+      "productionBuild": "passed",
+      "runtime": "Node.js 24.19.0",
+      "logSHA256": "4bc0c71fb93b1869158b7506e3eb04e20a5d26e450df7d0a08380dc2338fc517"
+    },
+    "cacheRegression": {
+      "command": "node --test tools/frontend-overlay/workspace-resource-cache.test.mjs",
+      "tests": 10,
+      "failures": 0
+    },
+    "productBoundary": {
+      "command": "make stage1-check",
+      "result": "passed",
+      "upstreamDirty": false,
+      "upstreamCommit": "1edcd54b43606d9079bb36650efe3f68707a79ea",
+      "logSHA256": "08c0ceca79923d8641a184ce37c5288c60900b0c78ca094c13521395b33dc37e"
+    },
+    "modelRegression": "kb-list-refresh-model-regression-20261021.json",
+    "sourceSHA256": {
+      "tools/frontend-overlay/native/native-context.ts": "491f0e04b9f3e3557c87707897615e2bf574d3ab84eabeb2e2f78316079f1621",
+      "tools/frontend-overlay/native/workspace-refresh.ts": "79a275e5be8b25a77d8eac4a4a7896338e199bc99f221431e689993e8598f423",
+      "tools/frontend-overlay/native/workspace-refresh.test.ts": "5ffb4c8835a48e066289f3a2f8f05476e701155559310e14a5be510e259784f3",
+      "tools/frontend-overlay/native/kb-list-refresh.ts": "7eeda41c320872f5976cf0064cb2d19ef959e3cfe79ad00205a790c9d88b2852",
+      "tools/frontend-overlay/native/kb-list-refresh.test.ts": "5ffcb37cd643eb03ac7a3d965700cc2f654374dbf041c57f803f8212fd397535",
+      "tools/frontend-overlay/apply-kb-acl.mjs": "226afcfb4b32c0498e00a83c13af1abf43cf8ffc5355bc76d6324c3012d76b3f",
+      "tools/frontend-overlay/apply-workspace-resource-cache.mjs": "1cf7d3382d6920f176e8a58df6e85c41b2db17ac47d1f570af9061e131172bb5",
+      "tools/frontend-overlay/workspace-resource-cache.test.mjs": "5e342431e92184a7bfd26d8ad600aa0ef663aab159499618bd8d361f11c9ddab"
+    },
+    "delivery": {
+      "sourceOnly": true,
+      "releasePackageBuilt": false,
+      "imagesBuilt": false,
+      "deployed": false
+    }
+  }
+}

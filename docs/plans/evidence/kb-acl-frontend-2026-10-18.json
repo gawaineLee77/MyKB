@@ -1,0 +1,153 @@
+{
+  "scope": "Compiled Vue UI with synthetic API fixtures only; not enterprise OAuth/backend integration acceptance.",
+  "node": "v24.21.0",
+  "checks": [
+    "before: Viewer retains chat navigation and no management entry",
+    "owner: seven independent Contributor operations, Viewer read-only, public warning, conflict reload and revision save",
+    "Owner collaboration authorization is separate and successful DELETE clears status",
+    "admin: seven independent Contributor operations, Viewer read-only, public warning, conflict reload and revision save",
+    "Contributor document.create: independent upload, preview, chunk delete/export; parsed reading retained, KB management hidden",
+    "Contributor document.update: independent upload, preview, chunk delete/export; parsed reading retained, KB management hidden",
+    "Contributor document.delete: independent upload, preview, chunk delete/export; parsed reading retained, KB management hidden",
+    "Contributor document.download: independent upload, preview, chunk delete/export; parsed reading retained, KB management hidden",
+    "Contributor chunk.update: independent upload, preview, chunk delete/export; parsed reading retained, KB management hidden",
+    "Contributor chunk.delete: independent upload, preview, chunk delete/export; parsed reading retained, KB management hidden",
+    "Contributor chunk.export: independent upload, preview, chunk delete/export; parsed reading retained, KB management hidden",
+    "after: Viewer retains chat navigation and no management entry"
+  ],
+  "screenshots": [
+    "../../assets/kb-acl-2026-10-18/before-owner-knowledge-base.png",
+    "../../assets/kb-acl-2026-10-18/before-owner-library.png",
+    "../../assets/kb-acl-2026-10-18/before-owner-machine-key-scope.png",
+    "../../assets/kb-acl-2026-10-18/before-admin-knowledge-base.png",
+    "../../assets/kb-acl-2026-10-18/before-contributor-knowledge-base.png",
+    "../../assets/kb-acl-2026-10-18/before-viewer-chat.png",
+    "../../assets/kb-acl-2026-10-18/after-owner-access-panel.png",
+    "../../assets/kb-acl-2026-10-18/after-owner-conflict.png",
+    "../../assets/kb-acl-2026-10-18/after-owner-library-and-recovery.png",
+    "../../assets/kb-acl-2026-10-18/after-owner-machine-key-knowledge-scope.png",
+    "../../assets/kb-acl-2026-10-18/after-owner-separate-collaboration-authorization.png",
+    "../../assets/kb-acl-2026-10-18/after-admin-access-panel.png",
+    "../../assets/kb-acl-2026-10-18/after-admin-conflict.png",
+    "../../assets/kb-acl-2026-10-18/after-admin-library-and-recovery.png",
+    "../../assets/kb-acl-2026-10-18/after-admin-machine-key-knowledge-scope.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-document_create.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-document_create.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-document_update.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-document_update.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-document_delete.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-document_delete.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-document_download.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-document_download.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-chunk_update.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-chunk_update.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-chunk_delete.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-chunk_delete.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-chunk_export.png",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-chunk_export.png",
+    "../../assets/kb-acl-2026-10-18/after-viewer-chat.png"
+  ],
+  "unexpectedRequests": [],
+  "success": true,
+  "date": "2026-10-18",
+  "checks_summary": {
+    "browser_scenarios": 12,
+    "screenshots": 30,
+    "unexpected_external_requests": 0,
+    "frontend_tests": 617,
+    "frontend_tests_failed": 0
+  },
+  "verification": [
+    {
+      "command": "PATH=<Node 24.21.0>/bin:$PATH make product-test-frontend PRODUCT_FRONTEND_TEST_ARGS=--offline",
+      "result": "pass",
+      "tests": 617,
+      "typecheck": "pass",
+      "production_build": "pass",
+      "local_log": ".local/kb-acl-frontend-make-final.log"
+    },
+    {
+      "command": "PATH=<Node 24.21.0>/bin:$PATH tools/frontend-overlay/check.sh",
+      "result": "pass"
+    },
+    {
+      "command": "NODE_PATH=<bundled Playwright> node tools/frontend-overlay/kb-acl-browser.mjs",
+      "result": "pass",
+      "fixture": "Compiled Vue frontend with fully synthetic intercepted API responses"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "git -C upstream/weknora status --porcelain --untracked-files=all",
+      "result": "clean"
+    },
+    {
+      "command": "./scripts/check-design-docs.sh",
+      "result": "pass"
+    }
+  ],
+  "visual_baseline": "Previous workspace-admin overlaid compiled frontend before KB ACL changes; synthetic users and documents in both versions.",
+  "limitations": [
+    "No live backend, enterprise identity provider, migration, deployment, or production acceptance performed by this browser run.",
+    "FAQ and Wiki adapters passed source boundary checks, TypeScript checking, and production build; they were not exercised end to end by this browser fixture.",
+    "Creation recovery was rendered but not submitted; restore-creator was not exercised by the browser fixture.",
+    "Original-file preview was a text/plain synthetic response. The run verifies the permission gate and request, not the Chrome PDF renderer."
+  ],
+  "source_sha256": {
+    "tools/frontend-overlay/apply-kb-acl.mjs": "db1399e191a91dc48e84e44da9dd485e25a3a65fed86e7aee8765cb53cb5fa0b",
+    "tools/frontend-overlay/apply-native.mjs": "bd04186f1fa6b06c0ef236806c580aea41b1a9afe73c445c38710387ed423848",
+    "tools/frontend-overlay/check-native.mjs": "eb02a9b3b9a6a21b09c61e7a369215d338dbb4561113d605e3b69c7c7e26f4a2",
+    "tools/frontend-overlay/kb-acl-browser.mjs": "41cce32d15287e2161965e37a54829419ee2c139962f6266408285bfd3954c65",
+    "tools/frontend-overlay/native/KBAccessPanel.vue": "263f78c99e2ac722f52f214f84fd7a7a9dd0584d4cc6ebf11421006396c5306d",
+    "tools/frontend-overlay/native/KBChunkActions.vue": "2273d98c2099026046d0d61835b54c6ac127b19e0bfd0007a34a4b4ce77d5ade",
+    "tools/frontend-overlay/native/KBCollaborationDelegation.vue": "46430db1ccde00a02ba10f1c75ea59979b4469ae8fd9d0729a36e87c6a49acff",
+    "tools/frontend-overlay/native/KBCreationRecovery.vue": "348b6e09d57827c71db600793c0e2d396eae91635fdb5b90fe6288fa98a5a86c",
+    "tools/frontend-overlay/native/KBEffectiveNotice.vue": "2a02da8a355c35a8ec29f6d37052840fe506ca9c904abccc1c516cbbed1a5340",
+    "tools/frontend-overlay/native/kb-permissions-policy.ts": "1ebb602915fec923f0c5833ba82e7eeb5cbb95bc3dfe5b5e8e83f55ed55badd6",
+    "tools/frontend-overlay/native/kb-permissions-policy.test.ts": "81a7d8dc6bebe3f9ba4ea75982a3c07af7b568870a79d2948d7311c53d1c1438",
+    "tools/frontend-overlay/native/kb-permissions.ts": "388b5eff1dfeebcbed2801a66a5cade2786fbb1019d3aeea0c43aadc035d5c79",
+    "tools/frontend-overlay/native/kb-creation.ts": "cfc168e48a4300d44fd7fac0a53b79fe6195081ca372af9c0db43e530e6e82ba",
+    "tools/frontend-overlay/native/native-context.ts": "3aabbd2b09b5a4b2bcf88a55ee8d49ba6124008b359c5a51187625808c098b61",
+    "tools/frontend-overlay/native/native-policy.ts": "4d6e50b549be8eedc7eb2be3684879e6d63b0d5a99c552321f027a0bf161d92c",
+    "tools/frontend-overlay/native/native-policy.test.ts": "7f0d76cb4c233a16c482662d435b182e5b5b6daf7fdce9b2ddc72260d2a0caed",
+    "tools/frontend-overlay/native/native-problems.ts": "91cfe3e900421099c625f79e2cda30f74ed09eb333eb2008697f05fba4a956be"
+  },
+  "screenshot_sha256": {
+    "../../assets/kb-acl-2026-10-18/before-owner-knowledge-base.png": "6eb1f94fdd3dbaee9a34b950009ac9372d981a574d468cad5a593ea7f4be0947",
+    "../../assets/kb-acl-2026-10-18/before-owner-library.png": "beafd013fc18e3fd666be5e184726efa5cad607f93692c6d1b06ff7c70404c9b",
+    "../../assets/kb-acl-2026-10-18/before-owner-machine-key-scope.png": "9b10752b69799edefaac0bfacac8f3871842bbcb935c82e5d9a6c3faae21c6be",
+    "../../assets/kb-acl-2026-10-18/before-admin-knowledge-base.png": "b25a87dc7324cc25cabe1f7680f11a943809a2e32efc732cc7d8ecf3cdc32d05",
+    "../../assets/kb-acl-2026-10-18/before-contributor-knowledge-base.png": "0de2f0e1a2991c8964f68f1728e930f5f3e433089e89347addbd3cf6f76503e0",
+    "../../assets/kb-acl-2026-10-18/before-viewer-chat.png": "6ac6d8e99f83d666435b6fb72c90891e1ba8b55e1454a071509a7ea082961b6b",
+    "../../assets/kb-acl-2026-10-18/after-owner-access-panel.png": "90fb2e94d9702a43f1af8d0126e4d04c1a5a03c9a2b35515bd18bd3ec759dc1e",
+    "../../assets/kb-acl-2026-10-18/after-owner-conflict.png": "45f15397c7c375f2a6ee4a86c9bb3e9c5ccb65e6b9b6f421f3d35c50427fec31",
+    "../../assets/kb-acl-2026-10-18/after-owner-library-and-recovery.png": "3c4b6ef6391457711ca934585e13f60f90f911f5de88e921cddd6ad6ac6d2df9",
+    "../../assets/kb-acl-2026-10-18/after-owner-machine-key-knowledge-scope.png": "dd6a394887b049916d0708516e055d79b5838b367fbf20bb8342a92f22e2d6a1",
+    "../../assets/kb-acl-2026-10-18/after-owner-separate-collaboration-authorization.png": "04b70ef36adeb7545d386f6f49e0474a439c8a5b4cf2e652de63cf5670c6e21f",
+    "../../assets/kb-acl-2026-10-18/after-admin-access-panel.png": "7c624dcadf9938a5f3f47da7f1638162a7b5e953804c673b7fffd3ddd043ae3c",
+    "../../assets/kb-acl-2026-10-18/after-admin-conflict.png": "ecf84a99142db0236c10d53a9e0bd0ba37aacf45c657f4da64ad78a19357a847",
+    "../../assets/kb-acl-2026-10-18/after-admin-library-and-recovery.png": "3d7595a810cbfde47a827af1866a11b5cf20b42f907e9885bfdf38fca6c0ff4f",
+    "../../assets/kb-acl-2026-10-18/after-admin-machine-key-knowledge-scope.png": "5378efdb1bed1c32d9273b8cbc0529cdc6d1fbef3b1c030b4c565190079f575f",
+    "../../assets/kb-acl-2026-10-18/after-contributor-document_create.png": "7143d990ca25a6470ee64102313168a4cd65065281142201d3fe34578de22f49",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-document_create.png": "e575509e279051c70335c38286b972477b5c38d95789dfe1b56e29876ebb153b",
+    "../../assets/kb-acl-2026-10-18/after-contributor-document_update.png": "57cf77577bd284e34144b781740c0e824c9bc1aed02c844aeb174775a69dfee9",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-document_update.png": "deef14ffd8906baa055ff6ace6fd28e97183eb1ff26b43e2f3dbca27efece260",
+    "../../assets/kb-acl-2026-10-18/after-contributor-document_delete.png": "b61e447db41058e6174fb4e2091f61aa5d92d467940d7b60a57b896e54400e67",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-document_delete.png": "0bc557c6456fcd36ce972f83efaab25068f25485d614baaf6938322ecfcfc38d",
+    "../../assets/kb-acl-2026-10-18/after-contributor-document_download.png": "dd90b185ea17b2f8d48fbb63efe764ec77fbad29f3bff31bd67da4f1a93b646a",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-document_download.png": "1ceca97b4b7991022e850f6baeca5468985293454e049afb083a53ac776fd86b",
+    "../../assets/kb-acl-2026-10-18/after-contributor-chunk_update.png": "6241cc5c466b9f12772e794023650e5b184b645d18db29d464ffb8ebea34d1ce",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-chunk_update.png": "b904e80058895b3b0bc4e56b09a2f481e0592f8b9863e1e3ba1b2ca848bf3a70",
+    "../../assets/kb-acl-2026-10-18/after-contributor-chunk_delete.png": "658c71391bf4b6e3fdacccde3837cebab629decdac70e9d8a323232d904ad2ea",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-chunk_delete.png": "d376918d5ca085a933c50b775b77a85a21376be454dbcaedb76ec12105fac39d",
+    "../../assets/kb-acl-2026-10-18/after-contributor-chunk_export.png": "e160a0ad3f45abf5f42f45ab20b716f301165ccb91f018836f775306ff622c9a",
+    "../../assets/kb-acl-2026-10-18/after-contributor-parsed-chunk_export.png": "3e7e173c12c20473826010d41da6467d21fa631c78ae61ada01cf96179e6e678",
+    "../../assets/kb-acl-2026-10-18/after-viewer-chat.png": "6ac6d8e99f83d666435b6fb72c90891e1ba8b55e1454a071509a7ea082961b6b"
+  },
+  "compiled_index_sha256": {
+    "before": "9e1847ed994e700e983f6272d71f5a5ea98efdd713c3f01d1c81de8f1ee18a34",
+    "after": "0b3bb913624ffdc823dd737bd94f541ced79a350b1e7686d1f626e6eacff1a44"
+  }
+}
