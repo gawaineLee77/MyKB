@@ -24,6 +24,8 @@ PROJECT='mindcreek-amd64-smoke-'+secrets.token_hex(4)
 os.environ.update(MINDCREEK_STATE_DIR=str(STATE),MINDCREEK_PROJECT=PROJECT)
 spec=importlib.util.spec_from_file_location('deployment',PACKAGE/'bin/mindcreek',loader=__import__('importlib.machinery').machinery.SourceFileLoader('deployment',str(PACKAGE/'bin/mindcreek')))
 dep=importlib.util.module_from_spec(spec);spec.loader.exec_module(dep)
+CURRENT_FEATURES=os.environ.get('MINDCREEK_CURRENT_SMOKE') == 'true' and (
+ os.environ.get('MINDCREEK_UPGRADE_SMOKE') != 'true' or dep.release().get('product_migration_version', 0) >= 18)
 password='Synthetic-'+secrets.token_hex(8)+'!'
 dep.initialize(password)
 values=dep.read_env()
@@ -64,7 +66,7 @@ report['package_runtime_sha256']=dep.release()['package_runtime_sha256']
 def check(name,condition=True,**facts):
  if not condition: raise AssertionError(name)
  report['checks'].append({'name':name,'passed':True,**facts});print('PASS '+name,flush=True)
-transport='''import base64,json,sys,urllib.request,urllib.error,ssl
+transport='''import base64,hashlib,json,sys,urllib.request,urllib.error,ssl
 class NoRedirect(urllib.request.HTTPRedirectHandler):
  def redirect_request(self,*args):return None
 p=json.load(sys.stdin);body=base64.b64decode(p['raw']) if p.get('raw') else None if p['body'] is None else json.dumps(p['body']).encode()
@@ -74,13 +76,14 @@ try:r=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect(),u
 except urllib.error.HTTPError as e:r=e
 raw=r.read()
 try:body=json.loads(raw)
-except ValueError:body={'raw':raw.decode(errors='replace')}
+except ValueError:body={'raw':raw.decode(errors='replace'),'sha256':hashlib.sha256(raw).hexdigest(),'byte_length':len(raw)}
 print(json.dumps({'status':r.code,'headers':dict(r.headers),'body':body}))
 '''
 cookies={}
 cmd=['docker','compose','-p',PROJECT,'--project-directory',str(PACKAGE),'--env-file','/dev/null','-f',str(PACKAGE/'compose.json'),'-f',str(STATE/'compose.override.json')]
 def request(path,method='GET',body=None,token=None,tenant=None,headers=None,expected=(200,),raw=None):
  hdr={'Content-Type':'application/json',**(headers or {})}
+ if method == 'POST' and path == '/api/v1/knowledge-bases':hdr.setdefault('Idempotency-Key','release-smoke-'+secrets.token_hex(16))
  if token:hdr['Authorization']='Bearer '+token
  if tenant:hdr['X-Tenant-ID']=str(tenant)
  if cookies:hdr['Cookie']='; '.join(k+'='+v for k,v in cookies.items())
@@ -112,7 +115,7 @@ if os.environ.get('MINDCREEK_UPGRADE_SMOKE') == 'true':
  from current_smoke import prepare_old_addons
  prepare_old_addons(globals())
 try:
- dep.validate();dep.verify_images();check('configuration_and_8_amd64_image_locks')
+ dep.validate();dep.verify_images();check('configuration_and_amd64_image_locks',all(i['architecture']=='amd64' for i in dep.release()['images']),image_count=len(dep.release()['images']))
  dep.up_services(['identity','models'])
  dep.install(['admin']);first=json.loads(dep.install_command(['status'],True))
  check('private_admin_bootstrap',first['stage']=='account_ready')
@@ -155,12 +158,16 @@ try:
  request(f"/api/v1/knowledge-bases/{faq['id']}/faq/entry",'POST',{'standard_question':'What is the synthetic code?','answers':['AMD64-VERIFIED'],'is_enabled':True},token=token,tenant=tenant)
  check('native_faq_create')
  request('/api/v1/knowledge-bases','POST',{'name':'viewer denied'},token=employee_token,tenant=tenant,expected=(403,))
- request(f"/api/v1/knowledge/{upload['id']}/preview",token=employee_token,tenant=tenant)
+ if CURRENT_FEATURES:
+  from current_smoke import publish_synthetic_kb
+  publish_synthetic_kb(globals())
+ else:request(f"/api/v1/knowledge/{upload['id']}/preview",token=employee_token,tenant=tenant)
  request(f"/api/v1/knowledge/{upload['id']}/download",token=employee_token,tenant=tenant,expected=(403,))
  check('viewer_read_and_write_download_boundaries')
  rpc=lambda method,params:request('/mcp','POST',{'jsonrpc':'2.0','id':1,'method':method,'params':params},token=employee_token,tenant=tenant,headers={'MCP-Protocol-Version':'2025-11-25'})[0]
  tools=rpc('tools/list',{})['result']['tools']
- check('four_authenticated_mcp_tools',len(tools)==4)
+ expected_tools=6 if CURRENT_FEATURES else 4
+ check('authenticated_mcp_tools',len(tools)==expected_tools,tool_count=expected_tools)
  answer=rpc('tools/call',{'name':'ask_knowledge_agent','arguments':{'query':'What is the synthetic recovery code?','knowledge_base_ids':[kb['id']]}})
  value=answer.get('result',{}).get('structuredContent',{})
  if not (value.get('answer') and value.get('references')):

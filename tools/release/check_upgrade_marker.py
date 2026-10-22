@@ -1,35 +1,26 @@
 #!/usr/bin/env python3
-"""Independent Neo4j data-preservation probe during the disposable old-package upgrade."""
-import datetime
+"""Validate the synchronous graph-marker evidence from one completed upgrade smoke.
+
+Seeding and post-upgrade reads happen inside current_smoke.additional_checks,
+before backup and after startup respectively. This verifier never races a run.
+"""
 import json
 import os
 from pathlib import Path
-import subprocess
-import time
-from current_smoke import load
-ROOT=Path(__file__).resolve().parents[2];LOCAL=ROOT/'.local/enterprise-current'
-run=LOCAL/'upgrade-smoke';state=Path((run/'smoke-state').read_text().strip());project=(run/'smoke-project').read_text().strip()
-os.environ.update(MINDCREEK_STATE_DIR=str(state),MINDCREEK_PROJECT=project)
-old=load(Path((run/'package-path').read_text().strip())/'bin/mindcreek','marker_source')
-new=load(Path((LOCAL/'package-path').read_text().strip())/'bin/mindcreek','marker_target')
-name=project+'-neo4j-1';deadline=time.monotonic()+900
-while time.monotonic()<deadline:
-    r=subprocess.run(['docker','inspect',name,'--format','{{.State.Health.Status}}'],capture_output=True,text=True)
-    if r.returncode==0 and r.stdout.strip()=='healthy':break
-    time.sleep(2)
-else:raise RuntimeError('Old graph not ready')
-assert not (state/'upgrade-pending.json').exists() and not (state/'backup/before-upgrade').exists(), 'Seed must precede backup'
-def query(dep,sql):
-    return dep.compose(['exec','-T','neo4j','sh','-c','NEO4J_USERNAME=neo4j NEO4J_PASSWORD="${NEO4J_AUTH#neo4j/}" cypher-shell -a bolt://localhost:7687 "$1"','sh',sql],True)
-query(old,"CREATE (:CURRENT_UPGRADE_MARKER {value:'preserved-synthetic-graph'})")
-while time.monotonic()<deadline:
-    if (state/'active-release.json').exists():break
-    time.sleep(2)
-else:raise RuntimeError('Upgrade not completed')
-result=query(new,'MATCH (n:CURRENT_UPGRADE_MARKER) RETURN n.value')
-assert 'preserved-synthetic-graph' in result
-record={'status':'passed','release':new.release()['release'],'source_release':old.release()['release'],
-        'project':project,'old_graph_seeded_before_backup':True,'graph_preserved_after_upgrade':True,
-        'time':datetime.datetime.now(datetime.timezone.utc).isoformat()}
-(LOCAL/'upgrade-marker.json').write_text(json.dumps(record,indent=2)+'\n')
-print('PASS old Neo4j data preserved after upgrade')
+from current_smoke import CURRENT_WORKDIR, SOURCE_RELEASES
+
+run = Path(os.environ.get('MINDCREEK_RELEASE_WORKDIR', CURRENT_WORKDIR / 'upgrade-r4'))
+report = json.loads((run / 'smoke.json').read_text())
+marker = json.loads((run / 'upgrade-marker.json').read_text())
+target = Path((CURRENT_WORKDIR / 'package-path').read_text().strip())
+release = json.loads((target / 'RELEASE.json').read_text())
+assert report['status'] == 'passed_with_limitations' and report['disposable_project_removed']
+assert marker['status'] == 'passed'
+assert marker['project'] == report['project']
+assert marker['release'] == report['release'] == release['release']
+assert marker['upgrade_from'] == report['upgrade_from'] in SOURCE_RELEASES
+assert marker['source_release'] == marker['upgrade_from']
+assert marker['package_runtime_sha256'] == report['package_runtime_sha256'] == release['package_runtime_sha256']
+assert marker['old_graph_seeded_before_backup'] and marker['graph_preserved_after_upgrade']
+assert marker['source_database_facts'] == report['source_database_facts']
+print('PASS synchronous pre-upgrade Neo4j marker preserved: ' + marker['upgrade_from'])

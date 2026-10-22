@@ -48,6 +48,7 @@ def assemble():
         'deploy/enterprise/enterprise.env.example':'enterprise.env.example',
         'deploy/enterprise/mindcreek.py':'bin/mindcreek',
         'deploy/enterprise/check_database.py':'bin/check-database',
+        'deploy/enterprise/image_resources.py':'bin/image-resources',
         'deploy/enterprise/release_ops.py':'bin/release',
         'deploy/graph/graph.py':'bin/graph_support.py',
         'deploy/enterprise/tls.conf':'config/tls.conf',
@@ -58,11 +59,11 @@ def assemble():
         'deploy/phase5/builtin_models.yaml.tmpl':'deploy/phase5/builtin_models.yaml.tmpl',
         'scripts/render-phase5-models.py':'scripts/render-phase5-models.py',
         'upstream/weknora/LICENSE':'licenses/WeKnora-LICENSE',
-        '.local/enterprise-amd64/public-ca.crt':'config/public-ca.crt',
     }
     for name in ['phase1-route-policy.json','phase2-route-actions.json','r3-routes.json','r3-capabilities.json']:
         mapping['config/'+name]='config/'+name
     for src,dest in mapping.items(): shutil.copy2(ROOT/src,target/dest)
+    shutil.copy2(LOCAL/'public-ca.crt', target/'config/public-ca.crt')
     (target/'bin/mindcreek').chmod(0o755)
     guide=ROOT/'docs/guides/ENTERPRISE_DEPLOYMENT_AND_UPGRADE_ZH.md'
     if guide.exists():

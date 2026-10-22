@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Portable enterprise deployment helper; requires Python 3.10+ and Docker Compose."""
 from __future__ import annotations
+import base64
 import getpass
 import hashlib
 import importlib.util
@@ -70,7 +71,8 @@ def initialize(password):
     for n in ['DB_PASSWORD','JWT_SECRET','REDIS_PASSWORD','BROKER_SECRET']: values[n] = secrets.token_hex(32)
     content = (ROOT / 'enterprise.env.example').read_text()
     for n, v in values.items(): content = content.replace('__' + n + '__', v)
-    for path, data in [(STATE/'enterprise.env', content), (STATE/'secrets/admin-password', password+'\n')]:
+    for path, data in [(STATE/'enterprise.env', content), (STATE/'secrets/admin-password', password+'\n'),
+                       (STATE/'secrets/workspace-admin-key', base64.b64encode(secrets.token_bytes(32)).decode()+'\n')]:
         with open(path, 'x', opener=lambda p, flags: os.open(p, flags, 0o600)) as f: f.write(data)
 
 
@@ -139,6 +141,15 @@ def validate():
     if int(values['MINDCREEK_UID']) != (STATE/'secrets/admin-password').stat().st_uid:
         raise ValueError('MINDCREEK_UID must own the secret directory and its files')
     validate_password((STATE/'secrets/admin-password').read_text().rstrip('\n'))
+    if values.get('MINDCREEK_WORKSPACE_ADMIN_SECRET_FILE'):
+        if values['MINDCREEK_WORKSPACE_ADMIN_SECRET_FILE'] != '/run/mindcreek-enterprise/workspace-admin-key':
+            raise ValueError('Use the mounted workspace-admin-key path for delegation encryption')
+        key_path = STATE/'secrets/workspace-admin-key'
+        private(key_path)
+        if int(values['MINDCREEK_UID']) != key_path.stat().st_uid:
+            raise ValueError('MINDCREEK_UID must own workspace-admin-key')
+        if len(base64.b64decode(key_path.read_text().strip(), validate=True)) != 32:
+            raise ValueError('workspace-admin-key must be base64-encoded 32 random bytes')
     whitelist = [v.strip() for v in values.get('SSRF_WHITELIST_EXTRA','').split(',') if v.strip()]
     if any('*' in h or '/' in h or ':' in h for h in whitelist):
         raise ValueError('SSRF_WHITELIST_EXTRA accepts exact hostnames or IPv4 addresses only')

@@ -1,4 +1,5 @@
 """Safety and recovery contracts of the portable installer; no real services."""
+import base64
 import importlib.util
 import json
 import os
@@ -36,10 +37,11 @@ class InstallerTests(unittest.TestCase):
 
     def test_init_secrets_private_random_and_never_overwritten(self):
         m.initialize('Admin-0123456789!')
-        for p in [m.STATE/'enterprise.env',m.STATE/'secrets/admin-password']:
+        for p in [m.STATE/'enterprise.env',m.STATE/'secrets/admin-password',m.STATE/'secrets/workspace-admin-key']:
             self.assertEqual(p.stat().st_mode & 0o777,0o600)
         v=m.read_env();self.assertEqual(len(v['SYSTEM_AES_KEY'].encode()),32)
         self.assertNotEqual(v['DB_PASSWORD'],v['JWT_SECRET'])
+        self.assertEqual(len(base64.b64decode((m.STATE/'secrets/workspace-admin-key').read_text())),32)
         with self.assertRaises(ValueError):m.initialize('Another-0123456!')
         self.assertEqual((m.STATE/'secrets/admin-password').read_text(),'Admin-0123456789!\n')
 

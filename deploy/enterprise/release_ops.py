@@ -6,6 +6,7 @@ absolute state directory and project name. Backups contain secrets.
 """
 from __future__ import annotations
 import argparse
+import base64
 import contextlib
 import datetime
 import fcntl
@@ -32,6 +33,9 @@ OLD_GATEWAYS = {'mindcreek-gateway:' + v for v in (
 OLD_UIS = {'mindcreek-ui:r4-20260916-118b8af3', 'mindcreek-ui:r4-20260918-links1'}
 POLICIES = {'/etc/mindcreek/r3-routes.json': 'routes.json',
             '/etc/mindcreek/r3-capabilities.json': 'capabilities.json'}
+DELEGATION_KEY_SETTING = 'MINDCREEK_WORKSPACE_ADMIN_SECRET_FILE'
+DELEGATION_KEY_PATH = '/run/mindcreek-enterprise/workspace-admin-key'
+HISTORICAL_MIGRATIONS = {'r4-20260916-118b8af3': 15, 'current-20261009-a86981ad': 16}
 
 
 def sha(path):
@@ -51,6 +55,77 @@ def atomic_json(path, data):
         os.replace(name, path)
     finally:
         Path(name).unlink(missing_ok=True)
+
+
+def delegation_configuration(dep, apply=False):
+    """Prepare missing installation encryption material without rotating a key.
+
+    Plan is read-only. Upgrade applies this first to its isolated preflight copy,
+    then to the actual instance only after the old version's cold backup.
+    """
+    if int(dep.release().get('product_migration_version', 0)) < 17:
+        return []
+    values = dep.read_env()
+    configured = values.get(DELEGATION_KEY_SETTING, '')
+    if configured and configured != DELEGATION_KEY_PATH:
+        raise ValueError('Review custom workspace delegation key path before upgrade')
+    directory = dep.STATE / 'secrets'
+    if directory.is_symlink() or not directory.is_dir():
+        raise ValueError('Workspace delegation secrets must use the existing regular directory')
+    path = directory / 'workspace-admin-key'
+    changes = []
+    if path.is_symlink():
+        raise ValueError('Workspace delegation key must not be a symlink')
+    if path.exists():
+        dep.private(path)
+        if len(base64.b64decode(path.read_text().strip(), validate=True)) != 32:
+            raise ValueError('Existing workspace delegation key is invalid; it will not be replaced')
+        if path.stat().st_uid != int(values['MINDCREEK_UID']):
+            raise ValueError('MINDCREEK_UID must own the existing workspace delegation key')
+    elif configured:
+        # A configured but lost key might protect existing encrypted sessions.
+        raise ValueError('Configured workspace delegation key is missing; restore it from a matching backup')
+    else:
+        if os.getuid() != int(values['MINDCREEK_UID']):
+            raise ValueError('Run upgrade as MINDCREEK_UID to create the workspace delegation key')
+        changes.append('create private workspace delegation encryption key')
+        if apply:
+            with open(path, 'x', opener=lambda name, flags: os.open(name, flags | os.O_NOFOLLOW, 0o600)) as stream:
+                stream.write(base64.b64encode(secrets.token_bytes(32)).decode() + '\n')
+                stream.flush(); os.fsync(stream.fileno())
+    if not configured:
+        changes.append('configure workspace delegation encryption file')
+        if apply:
+            env = dep.STATE / 'enterprise.env'
+            dep.private(env)
+            content = env.read_text()
+            line = DELEGATION_KEY_SETTING + '=' + DELEGATION_KEY_PATH
+            pattern = r'(?m)^[ \t]*' + DELEGATION_KEY_SETTING + r'[ \t]*=[^\r\n]*'
+            if re.search(pattern, content):
+                content = re.sub(pattern, lambda _: line, content)
+            else:
+                content += ('' if content.endswith('\n') else '\n') + line + '\n'
+            fd, temporary = tempfile.mkstemp(prefix='.enterprise.env.', dir=dep.STATE)
+            try:
+                with os.fdopen(fd, 'w') as stream:
+                    stream.write(content); stream.flush(); os.fsync(stream.fileno())
+                os.replace(temporary, env)
+            finally:
+                Path(temporary).unlink(missing_ok=True)
+    return changes
+
+
+def access_review(release):
+    if int(release.get('product_migration_version', 0)) < 18:
+        return []
+    return [
+        'Owner inventories historical knowledge bases; default visibility becomes restricted to creator and Owner/Admin',
+        'Owner explicitly grants public/member visibility and document/chunk operations; upgrade never publishes knowledge bases',
+        'Owner reviews legacy API keys and saves explicit product knowledge-base scope before integrations resume',
+        'Owner enables separate workspace administration and knowledge collaboration delegations as needed',
+        'Verify workspace memory is disabled and existing agents use supported read-only configurations',
+        'Verify Owner/Admin/Contributor/Viewer, retrieval, downloads, revocation and Wiki MCP before reopening traffic',
+    ]
 
 
 def module(path, name):
@@ -135,6 +210,14 @@ def checked_source(old, new):
     if old.get('upstream_commit') != UPSTREAM or new.get('upstream_commit') != UPSTREAM:
         raise ValueError('Only the pinned WeKnora v0.8.0 enterprise runtime can upgrade in place; legacy Phase 5 needs a separate migration')
     if old.get('platform') != 'linux/amd64': raise ValueError('Source release must be AMD64')
+    versions = []
+    for release in (old, new):
+        version = release.get('product_migration_version', HISTORICAL_MIGRATIONS.get(release.get('release')))
+        if type(version) is not int or version < 1:
+            raise ValueError('Unknown product migration version; review this release before upgrading')
+        versions.append(version)
+    if versions[0] > versions[1]:
+        raise ValueError('In-place downgrade is forbidden; restore the matching cold backup into an isolated instance')
     for prefix in ('paradedb/', 'redis:', 'wechatopenai/weknora-app:', 'wechatopenai/weknora-docreader:'):
         before = next((i for i in old['images'] if i['name'].startswith(prefix)), None)
         after = next((i for i in new['images'] if i['name'].startswith(prefix)), None)
@@ -194,10 +277,13 @@ def plan(old_package, dep):
     if override.is_symlink(): raise ValueError('Override must not be a symlink')
     current = json.loads(override.read_text()) if override.exists() else {}
     updated, changes = override_plan(current, dep.STATE, old.release(), dep.release())
+    configuration_changes = delegation_configuration(dep)
     config = resolved(old); confirm_instance(old, config)
     volumes = volumes_for(old, config)
     return old, updated, {'from_release': old.release()['release'], 'to_release': dep.release()['release'],
         'project': dep.PROJECT, 'state': str(dep.STATE), 'volumes': volumes, 'changes': changes,
+        'configuration_changes': configuration_changes,
+        'access_review_required': access_review(dep.release()),
         'database': 'preserve native/product schemas; gateway applies forward-only pending product migrations',
         'recovery': 'cold backup of all named volumes and instance configuration; restore into a new isolated project'}
 
@@ -318,16 +404,21 @@ def upgrade(dep, old_package, destination):
         shutil.copytree(dep.STATE, copy, ignore=shutil.ignore_patterns('backup', '.release.lock'))
         atomic_json(copy / 'compose.override.json', updated)
         actual = dep.STATE
-        try: dep.STATE = copy; dep.validate()
+        try:
+            dep.STATE = copy
+            delegation_configuration(dep, apply=True)
+            dep.validate()
         finally: dep.STATE = actual
     metadata = backup(old, destination)
+    atomic_json(dep.STATE / 'upgrade-pending.json', {**report, 'backup': str(destination)})
+    delegation_configuration(dep, apply=True)
     atomic_json(dep.STATE / 'compose.override.json', updated)
     refresh_policies(dep, updated)
-    atomic_json(dep.STATE / 'upgrade-pending.json', {**report, 'backup': str(destination)})
     start(dep, metadata['running_services'])
-    atomic_json(dep.STATE / 'active-release.json', {**report, 'backup': str(destination), 'status': 'started'})
+    status = 'started_requires_access_review' if report['access_review_required'] else 'started'
+    atomic_json(dep.STATE / 'active-release.json', {**report, 'backup': str(destination), 'status': status})
     (dep.STATE / 'upgrade-pending.json').unlink()
-    print('Upgrade started successfully. Complete browser/OAuth/model acceptance before reopening traffic.')
+    print('Upgrade started successfully. Complete knowledge/API-key access review and browser/OAuth/model acceptance before reopening traffic.')
 
 
 def restore(dep, source):

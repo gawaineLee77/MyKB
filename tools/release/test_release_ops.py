@@ -1,6 +1,8 @@
 """Upgrade safety contracts: identity, released overrides, cold backup and recovery."""
 import importlib.util
+import base64
 import json
+import os
 import shutil
 from pathlib import Path
 import tempfile
@@ -12,6 +14,92 @@ spec=importlib.util.spec_from_file_location('ops', ROOT/'deploy/enterprise/relea
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 
 class ReleaseTests(unittest.TestCase):
+    def delegation_instance(self, directory):
+        spec = importlib.util.spec_from_file_location('delegation_fixture', ROOT/'deploy/enterprise/mindcreek.py')
+        dep = importlib.util.module_from_spec(spec); spec.loader.exec_module(dep)
+        dep.STATE = Path(directory)
+        dep.release = lambda: {'product_migration_version': 21}
+        (dep.STATE/'secrets').mkdir(mode=0o700)
+        (dep.STATE/'enterprise.env').write_text('# Keep operator comments\nMINDCREEK_UID='+str(os.getuid())+'\nKEEP=literal$&value\n')
+        (dep.STATE/'enterprise.env').chmod(0o600)
+        return dep
+
+    def test_delegation_plan_is_read_only_and_apply_preserves_existing_settings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            dep = self.delegation_instance(directory)
+            original = (dep.STATE/'enterprise.env').read_bytes()
+            self.assertEqual(len(m.delegation_configuration(dep)), 2)
+            self.assertEqual((dep.STATE/'enterprise.env').read_bytes(), original)
+            self.assertFalse((dep.STATE/'secrets/workspace-admin-key').exists())
+            m.delegation_configuration(dep, apply=True)
+            key = dep.STATE/'secrets/workspace-admin-key'
+            first = key.read_bytes()
+            self.assertEqual(len(base64.b64decode(first.strip(), validate=True)), 32)
+            self.assertEqual(key.stat().st_mode & 0o777, 0o600)
+            self.assertTrue((dep.STATE/'enterprise.env').read_bytes().startswith(original))
+            self.assertEqual(dep.read_env()[m.DELEGATION_KEY_SETTING], m.DELEGATION_KEY_PATH)
+            self.assertEqual(m.delegation_configuration(dep, apply=True), [])
+            self.assertEqual(key.read_bytes(), first)
+
+    def test_existing_unconfigured_key_is_reused_and_blank_setting_replaced(self):
+        with tempfile.TemporaryDirectory() as directory:
+            dep = self.delegation_instance(directory)
+            key = dep.STATE/'secrets/workspace-admin-key'
+            original = base64.b64encode(b'x'*32)+b'\n'
+            key.write_bytes(original); key.chmod(0o600)
+            with (dep.STATE/'enterprise.env').open('a') as stream:
+                stream.write(m.DELEGATION_KEY_SETTING+'=\n')
+            self.assertEqual(len(m.delegation_configuration(dep, apply=True)), 1)
+            self.assertEqual(key.read_bytes(), original)
+            self.assertEqual(dep.read_env()[m.DELEGATION_KEY_SETTING], m.DELEGATION_KEY_PATH)
+
+    def test_missing_configured_or_invalid_key_is_never_replaced(self):
+        with tempfile.TemporaryDirectory() as directory:
+            dep = self.delegation_instance(directory)
+            env = dep.STATE/'enterprise.env'
+            with env.open('a') as stream:
+                stream.write(m.DELEGATION_KEY_SETTING+'='+m.DELEGATION_KEY_PATH+'\n')
+            original = env.read_bytes()
+            key = dep.STATE/'secrets/workspace-admin-key'
+            with self.assertRaisesRegex(ValueError, 'restore it'):
+                m.delegation_configuration(dep, apply=True)
+            self.assertFalse(key.exists())
+            for value in (b'invalid', base64.b64encode(b'too-short')):
+                key.write_bytes(value); key.chmod(0o600)
+                with self.assertRaises(ValueError): m.delegation_configuration(dep, apply=True)
+                self.assertEqual(key.read_bytes(), value)
+            key.unlink(); key.symlink_to(env)
+            with self.assertRaisesRegex(ValueError, 'symlink'): m.delegation_configuration(dep, apply=True)
+            self.assertEqual(env.read_bytes(), original)
+
+    def test_upgrade_backs_up_old_settings_before_adding_key_and_retains_failure_marker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            dep = self.delegation_instance(directory)
+            actual = dep.STATE
+            original = (actual/'enterprise.env').read_bytes()
+            dep.verify_images = lambda: None
+            dep.validate = lambda: self.assertTrue((dep.STATE/'secrets/workspace-admin-key').exists())
+            report = {'access_review_required': m.access_review(dep.release())}
+            def backup(old, destination):
+                self.assertEqual((actual/'enterprise.env').read_bytes(), original)
+                self.assertFalse((actual/'secrets/workspace-admin-key').exists())
+                return {'running_services': []}
+            def fail_start(current, services):
+                self.assertTrue((actual/'secrets/workspace-admin-key').exists())
+                self.assertTrue((actual/'upgrade-pending.json').exists())
+                raise ValueError('synthetic startup failure')
+            with patch.object(m, 'plan', return_value=(dep, {}, report)), patch.object(m, 'backup', side_effect=backup), patch.object(m, 'refresh_policies'), patch.object(m, 'start', side_effect=fail_start):
+                with self.assertRaisesRegex(ValueError, 'synthetic startup failure'):
+                    m.upgrade(dep, Path('/old'), actual/'backup')
+            self.assertEqual(dep.STATE, actual)
+            self.assertTrue((actual/'upgrade-pending.json').exists())
+            self.assertFalse((actual/'active-release.json').exists())
+
+    def test_access_review_is_required_only_for_acl_releases(self):
+        self.assertEqual(m.access_review({}), [])
+        self.assertEqual(m.access_review({'product_migration_version': 17}), [])
+        self.assertTrue(m.access_review({'product_migration_version': 21}))
+
     def test_known_addons_unpinned_and_ui_links_preserved(self):
         state=Path('/instance')
         current={'services':{'gateway':{'image':'mindcreek-gateway:r4-20260916-graph1','volumes':['/instance/graph/routes.json:/etc/mindcreek/r3-routes.json:ro']},
@@ -40,12 +128,23 @@ class ReleaseTests(unittest.TestCase):
 
     def test_legacy_and_database_changes_are_rejected(self):
         images=[{'name':p+'test','id':'same'} for p in ('paradedb/','redis:','wechatopenai/weknora-app:','wechatopenai/weknora-docreader:')]
-        good={'upstream_commit':m.UPSTREAM,'platform':'linux/amd64','images':images}
+        good={'upstream_commit':m.UPSTREAM,'platform':'linux/amd64','images':images,'product_migration_version':21}
         m.checked_source(good,good)
         bad=json.loads(json.dumps(good));bad['upstream_commit']='legacy'
         with self.assertRaises(ValueError):m.checked_source(bad,good)
         bad=json.loads(json.dumps(good));bad['images'][0]['id']='new-database'
         with self.assertRaises(ValueError):m.checked_source(bad,good)
+
+    def test_upgrade_rejects_downgrade_and_unknown_schema_without_touching_data(self):
+        images=[{'name':p+'test','id':'same'} for p in ('paradedb/','redis:','wechatopenai/weknora-app:','wechatopenai/weknora-docreader:')]
+        latest={'upstream_commit':m.UPSTREAM,'platform':'linux/amd64','images':images,'product_migration_version':21}
+        for release in m.HISTORICAL_MIGRATIONS:
+            previous={k:v for k,v in latest.items() if k!='product_migration_version'}
+            previous['release']=release
+            m.checked_source(previous,latest)
+            with self.assertRaisesRegex(ValueError,'downgrade'):m.checked_source(latest,previous)
+        unknown={k:v for k,v in latest.items() if k!='product_migration_version'}
+        with self.assertRaisesRegex(ValueError,'Unknown product migration'):m.checked_source(unknown,latest)
 
     def test_explicit_instance_and_project_are_required(self):
         for env in ({},{'MINDCREEK_STATE_DIR':'relative','MINDCREEK_PROJECT':'test'},{'MINDCREEK_STATE_DIR':'/tmp/test','MINDCREEK_PROJECT':'--bad'}):
